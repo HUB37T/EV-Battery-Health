@@ -55,6 +55,10 @@ mlruns/
 lightning_logs/
 *.log
 
+# Recomputed row-level EDA intermediates; curated aggregate tables stay tracked.
+results/eda/temporal_pairs.csv
+results/eda/battery_age_means.csv
+
 # Editor / OS files
 .vscode/
 .idea/

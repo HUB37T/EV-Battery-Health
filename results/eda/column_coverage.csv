@@ -1,0 +1,36 @@
+column,dtype,unit,description,example_value,missing_train,unique_train_non_null,analysis_role
+battery_id,string,-,"Unique identifier for a physical battery pack (2,600 unique batteries)",BATT_00123,0,1820,excluded
+observation_id,string,-,Unique identifier for a single longitudinal observation/reading,OBS_004521,0,34929,excluded
+chemistry,categorical,-,"Cell chemistry: LFP, NMC, NCA, or LMO",NMC,2405,4,primary
+manufacturer,categorical,-,Battery pack manufacturer (synthetic brand names),VoltaCore,1765,8,primary
+vehicle_model,categorical,-,EV model/platform the pack is installed in,Crossover-X2,2413,8,primary
+pack_capacity_kwh,float,kWh,Nominal (rated new) pack energy capacity,75.4,1584,550,primary
+manufacture_date,date,YYYY-MM-DD,Date the battery pack was manufactured,2022-11-23,1356,1225,excluded
+observation_date,date,YYYY-MM-DD,Date of this telemetry/health observation,2024-10-16,1581,2064,excluded
+battery_age_days,int,days,Days elapsed since manufacture at time of observation,693,2115,2064,primary
+cycle_count,int,cycles,Cumulative equivalent full charge cycles at time of observation,991,1592,2768,primary
+climate_zone,categorical,-,Operating climate zone of the vehicle,cold,1950,5,primary
+avg_daily_distance_km,float,km,Average daily driving distance,120.3,1485,2052,primary
+avg_charging_power_kw,float,kW,Average charging power used,74.7,1513,1475,primary
+fast_charge_ratio,float,ratio 0-1,Fraction of charging sessions that are DC fast charges,0.569,2366,871,primary
+avg_depth_of_discharge_pct,float,%,Average depth of discharge per cycle,74.2,1996,856,primary
+avg_state_of_charge_pct,float,%,Average state of charge maintained,51.2,2151,607,primary
+charge_cycles_per_month,float,count/month,Average number of charge cycles per month,47.4,1426,526,primary
+total_energy_throughput_kwh,float,kWh,Cumulative energy throughput since manufacture,86773.6,2362,31799,primary
+avg_ambient_temp_c,float,°C,Average ambient operating temperature,-7.6,2270,1186,primary
+humidity_pct,float,%,Average relative humidity of operating environment,34.5,1936,941,primary
+altitude_m,float,meters,Approximate operating altitude above sea level,1873,1632,1587,primary
+internal_resistance_mohm,float,mΩ,Measured internal resistance (rises as battery ages),49.95,1464,7991,excluded
+voltage_avg_v,float,V,Average pack voltage during operation,357.3,1927,702,excluded
+current_avg_a,float,A,Average current draw during operation,176.0,1772,1458,excluded
+charge_time_avg_min,float,minutes,Average time to complete a charge session,38.0,1413,4659,excluded
+peak_temp_during_fast_charge_c,float,°C,Peak cell temperature recorded during fast charging,5.3,1490,1277,primary
+capacity_fade_pct,float,%,Cumulative capacity fade from nominal (100 - SOH),8.19,1335,3098,excluded
+service_count,int,count,Number of service/maintenance events to date,0,1104,15,primary
+last_service_date,date,YYYY-MM-DD,Date of most recent service event (NaN if never serviced),2023-12-25,13198,2027,excluded
+bms_firmware_version,categorical,-,Battery Management System firmware version installed,BMS_v3.2,1581,5,primary
+recall_flag,binary,0/1,Whether this battery/vehicle was subject to a manufacturer recall,0,1845,2,primary
+state_of_health_pct,float [TARGET],%,State of Health: current capacity as % of nominal — primary regression target,91.81,0,3124,target
+remaining_useful_life_cycles,int [TARGET],cycles,Estimated remaining cycles until SOH reaches 80% (end-of-life threshold),1739,0,4596,excluded
+failure_risk_label,categorical [TARGET],-,Classification target: Low / Medium / High near-term failure risk (imbalanced),Low,0,3,excluded
+degradation_category,categorical [TARGET],-,Classification target: Normal / Accelerated / Critical degradation pattern,Normal,0,3,excluded

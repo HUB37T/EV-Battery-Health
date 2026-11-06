@@ -4,7 +4,7 @@ Dokumen kerja kelompok untuk EDA, preprocessing, dan eksperimen Multi Layer Perc
 
 > Konteks kuliah: proyek akhir Jaringan Saraf Tiruan. Model eksperimen dibatasi pada Multi Layer Perceptron (MLP) dengan pelatihan backpropagation. Model JST lain yang telah dipelajari hanya menjadi landasan teori.
 >
-> Status dokumen: panduan kerja dengan audit data awal yang sudah dijalankan pada 6 November 2026. Belum ada hasil training atau evaluasi model. Persyaratan yang berasal dari tugas, rekomendasi metodologis, dan tambahan bersyarat dibedakan di bagian 29.
+> Status dokumen: panduan kerja dengan audit dan EDA mendalam train yang sudah dijalankan pada 6 November 2026. Belum ada hasil training atau evaluasi model. Persyaratan yang berasal dari tugas, rekomendasi metodologis, dan tambahan bersyarat dibedakan di bagian 29.
 
 ## Ringkasan keputusan audit — 6 November 2026
 
@@ -15,7 +15,9 @@ Dokumen kerja kelompok untuk EDA, preprocessing, dan eksperimen Multi Layer Perc
 - capacity_fade_pct adalah tepat 100 − SOH pada 48.131 nilai terisi; dilarang menjadi input. Tiga target alternatif juga dikeluarkan.
 - Ada 21 kandidat fitur mentah baseline: 15 numerik, 5 kategori, 1 biner. Jumlah neuron input baru dihitung setelah encoding. Empat kandidat sensor ditahan untuk ablation terpisah karena risiko proxy sintetis.
 - Timesteps ditunda: observation_date hilang pada 2.216 baris, dan counter siklus/energi tidak selalu monoton. Missing tanggal servis sebagian bersifat struktural.
-- Belum ada preprocessing fit, training, atau skor model. EDA lengkap setiap fitur adalah tahap berikutnya.
+- [EDA mendalam train](notebooks/01_eda_train.ipynb) sudah selesai: 18 gambar PNG/SVG, tabel pendukung, [laporan](results/eda/EDA_REPORT.md), dan [HTML baca](results/eda/EDA_READING.html).
+- Temuan EDA: target didominasi SOH tinggi, umur/siklus/energi kuat dan redundan, pola kimia berbeda pada rentang umur sama, missing servis berkaitan dengan usia, dan SOH naik pada 32,86% pasangan bertanggal valid. Semua kesimpulan bersifat deskriptif pada simulator.
+- Belum ada preprocessing fit, feature selection final, training, atau skor model. Data asli, kontrak fitur, dan split dipertahankan.
 
 ## Cara memakai panduan ini
 
@@ -844,4 +846,4 @@ Website, aplikasi deployment, dashboard, model selain MLP, atau klasifikasi tamb
 - [ ] Setiap anggota dapat menjelaskan bagian 28 dengan bahasanya sendiri.
 - [ ] Laporan, slide, dan tabel hasil menyebut angka final yang sama.
 
-Audit CSV dan lembar keputusan awal sudah tersedia. Tahap berikutnya: pendalaman EDA train, lalu pipeline preprocessing sebelum eksperimen MLP. Keputusan implementasi dari nol/framework masih mengikuti ketentuan dosen.
+Audit CSV, lembar keputusan awal, dan EDA mendalam train sudah tersedia. Pekerjaan saat ini berhenti pada EDA. Tahap selanjutnya adalah pipeline preprocessing sebelum eksperimen MLP. Keputusan implementasi dari nol/framework masih mengikuti ketentuan dosen.

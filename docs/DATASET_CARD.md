@@ -56,7 +56,7 @@ Keputusan: baseline tabular; windowing/timesteps ditunda. Data tidak otomatis di
 
 ## Batas kesimpulan
 
-Audit tidak melatih model dan belum menerapkan imputasi/scaling. EDA awal train belum menggantikan EDA lengkap. Group split menguji baterai baru pada simulator ini, bukan distribusi dunia nyata atau periode kalender masa depan. Tidak ada skor performa yang dapat diklaim pada tahap ini.
+Audit tidak melatih model dan belum menerapkan imputasi/scaling. EDA mendalam train sudah tersedia di [laporan EDA](../results/eda/EDA_REPORT.md), mencakup distribusi, hubungan bersyarat, pengamatan berulang, missingness, outlier, dan kualitas temporal. Group split menguji baterai baru pada simulator ini, bukan distribusi dunia nyata atau periode kalender masa depan. Tidak ada skor performa yang dapat diklaim pada tahap ini.
 
 ## Reproduksi
 

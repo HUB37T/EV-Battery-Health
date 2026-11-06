@@ -4,9 +4,12 @@ Proyek kelompok untuk menganalisis dataset kesehatan baterai kendaraan listrik d
 
 ## Status proyek
 
-**Audit dataset dan EDA awal train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing final, pelatihan, dan evaluasi model belum dijalankan.
+**Audit dataset dan EDA mendalam train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing final, pelatihan, dan evaluasi model belum dijalankan.
 
-- [Notebook audit yang sudah dieksekusi](notebooks/00_data_audit.ipynb).
+- [EDA mendalam: notebook yang sudah dieksekusi](notebooks/01_eda_train.ipynb).
+- [Laporan EDA dengan 18 gambar dan interpretasi](results/eda/EDA_REPORT.md).
+- [Salinan baca HTML tanpa kode](results/eda/EDA_READING.html) — unduh lalu buka di browser.
+- [Notebook audit dasar](notebooks/00_data_audit.ipynb).
 - [Ringkasan temuan dan grafik](results/audit/AUDIT_REPORT.md).
 - [Kartu dataset dan keputusan metode](docs/DATASET_CARD.md).
 - [Kontrak fitur awal](configs/feature_contract.json) dan [manifest split](data/splits/battery_split.csv).
@@ -51,20 +54,22 @@ EV-Battery-Health/
 │   └── splits/         # Manifest split baterai bersama
 ├── configs/            # Kontrak target dan fitur
 ├── docs/               # Kartu dataset
-├── src/                # Logika audit bersama
+├── src/                # Logika audit dan EDA bersama
 ├── scripts/            # Eksekusi notebook
-├── requirements.txt    # Dependensi audit yang diuji
+├── requirements.txt    # Dependensi audit/EDA yang diuji
 ├── notebooks/
 │   ├── 00_data_audit.ipynb
+│   ├── 01_eda_train.ipynb
 │   └── README.md       # Status dan urutan notebook
 ├── models/
 │   └── README.md       # Aturan penyimpanan model/pipeline
 └── results/
-    ├── audit/          # Laporan, tabel, grafik, provenance
+    ├── audit/          # Audit kualitas dasar dan split
+    ├── eda/            # EDA mendalam, PNG/SVG, tabel, HTML
     └── README.md       # Aturan pencatatan hasil dan artefak
 ```
 
-Notebook audit sudah tersedia dan dieksekusi. Model belum dilatih; folder model masih berupa kerangka.
+Notebook audit dan EDA sudah tersedia dan dieksekusi. Model belum dilatih; folder model masih berupa kerangka.
 
 ## Mulai bekerja
 
@@ -88,17 +93,31 @@ python -m venv .venv
 
 CSV, `README.md`, dan `data_dictionary .csv` dari arsip Kaggle harus tersedia di `data/raw/`. Spasi pada nama kamus memang berasal dari arsip. Perintah audit membuat ulang laporan/tabel/grafik; perintah notebook mengeksekusi semua sel dan menyimpan output. CSV asli tidak diubah. Versi CSV yang berbeda dan manifest split yang berubah ditolak. Notebook dapat dibuka di editor notebook dengan lingkungan Python yang sama.
 
-Dependensi ini khusus audit, belum termasuk framework MLP. Matriks versi dan hash sumber ada di `results/audit/provenance.json`.
+Dependensi ini khusus audit/EDA, belum termasuk framework MLP. Matriks versi dan hash sumber ada di `results/audit/provenance.json`.
+
+## Menjalankan EDA mendalam
+
+Dengan lingkungan Python yang sama dan dataset/manifest yang tersedia:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.eda
+.\.venv\Scripts\python.exe scripts/run_notebook.py notebooks/01_eda_train.ipynb
+.\.venv\Scripts\python.exe scripts/export_eda.py
+```
+
+Perintah pertama membuat ulang tabel/grafik/laporan; eksekusi notebook juga membuat ulang hasil tersebut lalu menyimpan output sel. Ekspor HTML memberi salinan baca tanpa kode dengan gambar tertanam. Untuk pekerjaan harian cukup jalankan notebook dan ekspor jika ingin memperbarui salinan HTML.
+
+EDA mencakup semua 35 kolom, 18 gambar, korelasi dengan jumlah pasangan, hubungan kimia–umur berbobot per baterai, bootstrap per baterai, pola bersyarat, missingness, outlier, serta kualitas temporal. EDA hanya menggunakan 34.929 baris / 1.820 baterai train. Data mentah, manifest split, dan kontrak fitur tidak berubah. Detail antarobservasi/per-baterai-bin dihasilkan ulang secara lokal; ringkasan dipublikasikan.
 
 ## Pekerjaan berikutnya
 
 1. Baca panduan dan sepakati pembagian kerja.
 2. Tinjau temuan audit, target, saat prediksi, manifest split, dan kontrak fitur awal bersama kelompok.
-3. Perdalam EDA train, lalu buat pipeline preprocessing yang fit hanya pada train.
+3. Bahas temuan dan keterbatasan EDA; tahap selanjutnya adalah pipeline preprocessing yang fit hanya pada train.
 4. Tentukan apakah dosen mengharuskan backpropagation dari nol atau memperbolehkan framework.
 5. Sesudah pipeline diverifikasi, buat baseline MLP dan eksperimen menggunakan validation. Test tetap untuk evaluasi final.
 
-Belum ada perintah training. EDA lengkap, preprocessing final, dan implementasi MLP adalah tahap berikutnya.
+Belum ada perintah training. Pekerjaan saat ini berhenti pada EDA; preprocessing final dan implementasi MLP belum dilakukan.
 
 ## Aturan kerja kelompok
 
