@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "run_id": "run_b5ff9581a95f",
+  "fingerprint": "b5ff9581a95f56af2b6ece2eef8f397d46f17fb7cc49cf4f47d3eccf45610ead",
+  "config": {
+    "recipe": "fe_chemistry",
+    "hidden_layers": [
+      32
+    ],
+    "activation": "sigmoid",
+    "loss": "mae",
+    "huber_delta": 1.0,
+    "learning_rate": 0.001,
+    "batch_size": 256,
+    "max_epochs": 200,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta_pp": 0.001,
+    "weight_decay": 0.0001,
+    "dropout": 0.0,
+    "seed": 42
+  },
+  "input_features": 83,
+  "parameters": 2721,
+  "epochs_actual": 67,
+  "best_epoch": 55,
+  "stopped_early": true,
+  "optimizer_updates": 9179,
+  "training_seconds": 5.574763399999938,
+  "train": {
+    "mae": 0.9414905044769787,
+    "rmse": 1.4780082783408042,
+    "r2": 0.9577746625587321,
+    "bias_pp": 0.04892775232005226,
+    "outside_0_100_pct": 0.5210570013455867,
+    "battery_mean_mae": 0.941590629431984
+  },
+  "validation": {
+    "mae": 0.9865553130737605,
+    "rmse": 1.523950595222498,
+    "r2": 0.9528680290946926,
+    "bias_pp": -0.025566254589056505,
+    "outside_0_100_pct": 0.4133884517935725,
+    "battery_mean_mae": 0.989805266726601
+  },
+  "train_objective_scaled": 0.13089577853679657,
+  "validation_objective_scaled": 0.13716113567352295,
+  "first_update": {
+    "batch_loss_scaled": 0.6148956418037415,
+    "gradient_l2_norm": 0.6216910110135089,
+    "first_layer_gradient_l2_norm": 0.3359066843986511,
+    "first_layer_max_weight_change": 0.0010000020265579224
+  },
+  "checkpoint_best": "models/mlp/run_b5ff9581a95f/best.pt",
+  "checkpoint_last": "models/mlp/run_b5ff9581a95f/last.pt",
+  "identity": {
+    "config": {
+      "recipe": "fe_chemistry",
+      "hidden_layers": [
+        32
+      ],
+      "activation": "sigmoid",
+      "loss": "mae",
+      "huber_delta": 1.0,
+      "learning_rate": 0.001,
+      "batch_size": 256,
+      "max_epochs": 200,
+      "early_stopping": true,
+      "patience": 15,
+      "min_delta_pp": 0.001,
+      "weight_decay": 0.0001,
+      "dropout": 0.0,
+      "seed": 42
+    },
+    "data_fingerprint": "7e0d3d0a036cd8e4e71607f33fa528442c478fe4db58df02670ab9acdeff7aaf",
+    "training_source_sha256": "54492bf7b0f745f1b6c695cc37cda6f5a6bfc901810ad060a69a95e5ececcd6a",
+    "torch": "2.11.0+cpu",
+    "threads": 2,
+    "device": "cpu"
+  }
+}

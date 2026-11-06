@@ -1,6 +1,6 @@
 # Artefak model lokal
 
-Model prediksi MLP sudah dilatih melalui backpropagation dalam 17 run unik, hanya menggunakan train/validation. Checkpoint best/last serta endpoint epoch tertentu tersedia lokal di `mlp/<run_id>/`; test belum dievaluasi. Fitted preprocessing bundle tersedia lokal di `preprocessing/<recipe>.joblib` setelah notebook 02/modul preprocessing dijalankan. Isi folder ini diabaikan Git kecuali README ini.
+Model prediksi MLP sudah dilatih melalui backpropagation dalam study 17 run unik, ditambah 6 run final ablation feature engineering, hanya menggunakan train/validation. Checkpoint best/last serta endpoint epoch tertentu tersedia lokal di `mlp/<run_id>/`; test belum dievaluasi. Fitted preprocessing bundle tersedia lokal di `preprocessing/<recipe>.joblib` setelah notebook 02/modul preprocessing dijalankan. Isi folder ini diabaikan Git kecuali README ini.
 
 Saat pelatihan tersedia, simpan model bersama:
 - Pipeline imputasi, encoding, dan scaling yang cocok.
@@ -13,3 +13,5 @@ Jangan memasukkan model besar ke riwayat Git biasa. Bila model perlu dibagikan, 
 Bundle preprocessing menyertakan preprocessor, target scaler, urutan fitur, resep, versi library, provenance, dan hash state. Gunakan `src.preprocessing.load_prepared_split` untuk memeriksa kecocokannya dengan array. Artefak ini dapat dibuat ulang dari data asli dan konfigurasi yang tersimpan; joblib tidak diunggah ke Git.
 
 Checkpoint MLP menyimpan state_dict (bukan seluruh objek model), konfigurasi, nama fitur, epoch, fingerprint input, optimizer, dan RNG. Gunakan `src.mlp_experiments.load_checkpoint` dengan data preprocessing yang cocok. Metadata/hasil run dibagikan di results/experiments, sedangkan bobot tidak dikomit. File checkpoint yang tidak ada pada clone baru dibuat ulang saat study dijalankan. Resume tengah-epoch belum diimplementasikan.
+
+Bundle feature engineering tersimpan lokal di `feature_engineering/<variant>.joblib`. Bundle menggabungkan frozen base preprocessing dan transformasi ekstra; fingerprint parameter tetap sama setelah serialisasi. Array FE hanya train/validation pada tahap 03b. Gunakan `src.feature_engineering.load_engineered_data` untuk memeriksa pasangan pipeline/array sebelum memuat checkpoint MLP yang cocok.

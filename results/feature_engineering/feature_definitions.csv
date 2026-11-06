@@ -1,0 +1,7 @@
+block,feature,formula,unit
+usage_rates,fe_cycles_per_day,cycle_count / battery_age_days,siklus/hari; rasio snapshot
+usage_rates,fe_energy_per_cycle_kwh,total_energy_throughput_kwh / cycle_count,kWh/siklus
+context,fe_charge_ambient_delta_c,peak_temp_during_fast_charge_c - avg_ambient_temp_c,°C
+context,fe_fastcharge_dod_interaction,fast_charge_ratio * avg_depth_of_discharge_pct / 100,interaksi rasio
+chemistry,fe_chem_<kimia>_log_cycles,I(chemistry=kimia) * log1p(cycle_count),interaksi; 4 kolom dari kimia train
+chemistry,fe_chem_<kimia>_log_age_years,I(chemistry=kimia) * log1p(battery_age_days / 365.25),interaksi; 4 kolom dari kimia train

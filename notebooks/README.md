@@ -1,6 +1,6 @@
 # Notebook proyek
 
-Notebook 00–03 sudah dibuat dan seluruh selnya berhasil dieksekusi. Notebook 04 belum dibuat. Kerjakan berurutan:
+Notebook 00–03 serta 03b sudah dibuat dan seluruh selnya berhasil dieksekusi. Notebook 04 belum dibuat. Kerjakan berurutan:
 
 1. `00_data_audit.ipynb`: skema, kualitas dasar, target, ID/waktu, kamus data, dan manifest split.
 2. `01_eda_train.ipynb`: analisis train, grafik, interpretasi, dan rekomendasi fitur.
@@ -47,3 +47,12 @@ python scripts/export_eda.py --stage experiments
 ```
 
 Notebook 03 berisi forward/backward, 17 run unik, perbandingan preprocessing/arsitektur/aktivasi/loss/regularisasi, checkpoint best/last, budget epoch 50/100/200, dan konfirmasi tiga seed. Metrik hanya train/validation; test tidak dimuat. Caching memerlukan fingerprint dan checkpoint lokal yang cocok. Kode di src/mlp_experiments.py; laporan/kurva/rekap di results/experiments; checkpoint lokal di models/mlp.
+
+Untuk ablation feature engineering:
+
+```powershell
+python scripts/run_notebook.py notebooks/03b_feature_engineering_ablation.ipynb --timeout 3600
+python scripts/export_eda.py --stage features
+```
+
+Notebook 03b menguji empat varian fitur pada kontrol kandidat 03 yang dibekukan, kemudian mengonfirmasi FE terbaik pada tiga seed. Terdapat 6 run training baru dalam versi final. Hasil/laporan di results/feature_engineering. Tidak mengubah study 03 atau memakai test. Rekomendasi praktis tetap kontrol karena gain agregat FE belum melewati ambang yang ditetapkan.

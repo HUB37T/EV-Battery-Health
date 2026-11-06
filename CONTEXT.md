@@ -21,7 +21,7 @@ Dokumen kerja kelompok untuk EDA, preprocessing, dan eksperimen Multi Layer Perc
 - Median/modus, kategori one-hot, batas cap alternatif, serta scaler fitur/target berasal dari train. Tidak menghapus baris, menyeimbangkan kelas regresi, atau mengubah target asli.
 - [Notebook MLP](notebooks/03_mlp_experiments.ipynb) sudah menjalankan 17 run unik; [laporan](results/experiments/EXPERIMENT_REPORT.md) memuat checkpoint, kurva, perbandingan faktor, dan tiga seed. Mean validation MAE baseline 1,0468 ± 0,0024; kandidat 0,9752 ± 0,0024 poin SOH.
 - Kandidat sementara: log_sensor_caps, input 67, hidden [32], sigmoid, output linear, loss MAE, Adam lr 0,001, weight_decay 1e-4. Batch aktual 256 pada semua run menggantikan rekomendasi awal 32 demi CPU training; early stopping memakai patience 15/min_delta 0,001 poin.
-- Epoch 50/100/200 dibandingkan melalui endpoint satu trajectory tanpa early stopping. Trajectory diagnostik tidak dipromosikan diam-diam ke kandidat. Domain feature engineering belum ditambahkan.
+- Epoch 50/100/200 dibandingkan melalui endpoint satu trajectory tanpa early stopping. Trajectory diagnostik tidak dipromosikan diam-diam ke kandidat. Domain feature engineering sudah diuji terpisah pada notebook 03b: empat varian, enam run baru, konfirmasi tiga seed. Mean MAE kontrol 0,97525 dan FE terbaik 0,96938; gain 0,00587 poin belum melewati ambang praktis 0,01 poin, sehingga rekomendasi utama tetap kontrol. Lihat results/feature_engineering/FEATURE_ENGINEERING_REPORT.md.
 - Test belum dimuat/dievaluasi. Data asli, kontrak fitur awal, dan split dipertahankan. Pemilihan final masih perlu mempertimbangkan keterbatasan validation berulang dan error SOH rendah.
 
 ## Cara memakai panduan ini
@@ -681,7 +681,7 @@ Jangan mengisi angka contoh seolah-olah hasil. Kesimpulan “lebih banyak layer 
 
 ## 24. Rencana notebook dan fungsi setiap tahap
 
-Struktur berikut menjelaskan peran artefak: notebook 00–03 sudah dibuat dan dijalankan; notebook 04 belum dibuat.
+Struktur berikut menjelaskan peran artefak: notebook 00–03 dan 03b sudah dibuat dan dijalankan; notebook 04 belum dibuat.
 
 ### 00_data_audit
 - Membaca data asli dan memeriksa skema.
@@ -851,4 +851,4 @@ Website, aplikasi deployment, dashboard, model selain MLP, atau klasifikasi tamb
 - [ ] Setiap anggota dapat menjelaskan bagian 28 dengan bahasanya sendiri.
 - [ ] Laporan, slide, dan tabel hasil menyebut angka final yang sama.
 
-Audit, EDA, preprocessing, dan study MLP dengan validation sudah tersedia. Feature engineering domain dapat diuji sebagai tahap lanjutan; setelah konfigurasi/seed dikunci, notebook 04 akan mengevaluasi test. Keputusan implementasi dari nol/framework masih mengikuti ketentuan dosen.
+Audit, EDA, preprocessing, dan study MLP dengan validation sudah tersedia. Ablation feature engineering selesai pada validation; rekomendasi sementara tetap kontrol kandidat 03 menurut aturan praktis yang ditetapkan. Setelah konfigurasi/seed dikunci, notebook 04 akan mengevaluasi test. Keputusan implementasi dari nol/framework masih mengikuti ketentuan dosen.

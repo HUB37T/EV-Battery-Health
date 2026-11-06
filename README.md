@@ -4,8 +4,9 @@ Proyek kelompok untuk menganalisis dataset kesehatan baterai kendaraan listrik d
 
 ## Status proyek
 
-**Audit dataset dan EDA mendalam train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing train-only sudah dijalankan untuk tiga resep kandidat. Eksperimen MLP/backpropagation sudah menjalankan 17 run unik dan konfirmasi tiga seed. Kandidat sementara dipilih dari validation; test belum dimuat/dievaluasi.
+**Audit dataset dan EDA mendalam train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing train-only sudah dijalankan untuk tiga resep kandidat. Eksperimen MLP/backpropagation sudah menjalankan 17 run unik dan konfirmasi tiga seed. Kandidat sementara dipilih dari validation. Ablation feature engineering menambah 6 run baru; test belum dievaluasi.
 
+- [Ablation feature engineering](notebooks/03b_feature_engineering_ablation.ipynb), [laporan](results/feature_engineering/FEATURE_ENGINEERING_REPORT.md), dan [HTML baca](results/feature_engineering/FEATURE_ENGINEERING_READING.html).
 - [Notebook eksperimen MLP/backpropagation](notebooks/03_mlp_experiments.ipynb).
 - [Laporan eksperimen](results/experiments/EXPERIMENT_REPORT.md) dan [HTML baca](results/experiments/EXPERIMENT_READING.html).
 - [Rekap konfigurasi dan metrik](results/experiments/run_summary.csv), [perbandingan tahap](results/experiments/stage_comparisons.csv), [konfirmasi seed](results/experiments/seed_summary.csv).
@@ -70,6 +71,7 @@ EV-Battery-Health/
 │   ├── 01_eda_train.ipynb
 │   ├── 02_preprocessing.ipynb
 │   ├── 03_mlp_experiments.ipynb
+│   ├── 03b_feature_engineering_ablation.ipynb
 │   └── README.md       # Status dan urutan notebook
 ├── models/
 │   └── README.md       # Aturan penyimpanan model/pipeline
@@ -78,6 +80,7 @@ EV-Battery-Health/
     ├── eda/            # EDA mendalam, PNG/SVG, tabel, HTML
     ├── preprocessing/  # Resep, parameter train, pemeriksaan, HTML
     ├── experiments/    # Run log, kurva, checkpoint metadata, validation
+    ├── feature_engineering/ # Ablation fitur dan konfirmasi seed
     └── README.md       # Aturan pencatatan hasil dan artefak
 ```
 
@@ -155,17 +158,32 @@ Notebook juga dapat menjalankan study/report secara langsung. Run identik yang l
 
 **Hasil validation (bukan test):** baseline mean MAE tiga seed **1,0468 ± 0,0024** poin SOH; kandidat **0,9752 ± 0,0024**. Kandidat sementara: log_sensor_caps, input 67, hidden [32], sigmoid, output linear, MAE, Adam lr=0,001, weight_decay=1e-4. Pencarian bertahap bukan full factorial dan tidak membuktikan optimum global.
 
-Loss dilatih pada y_scaled, metrik dikembalikan ke SOH asli. Best checkpoint dipilih dengan validation MAE; last/endpoint tidak disamakan dengan best. Seluruh seed dan hasil kurang baik tetap tercatat. Test tetap tidak dimuat oleh runner. Feature engineering domain masih dapat diuji sebelum konfigurasi final dibekukan.
+Loss dilatih pada y_scaled, metrik dikembalikan ke SOH asli. Best checkpoint dipilih dengan validation MAE; last/endpoint tidak disamakan dengan best. Seluruh seed dan hasil kurang baik tetap tercatat. Test tetap tidak dimuat oleh runner. Feature engineering domain sudah diuji terpisah pada notebook 03b, dengan training loop dan kontrol yang sama; hasilnya tidak menimpa study awal.
+
+## Ablation feature engineering
+
+```powershell
+.\.venv\Scripts\python.exe -m src.feature_engineering
+.\.venv\Scripts\python.exe -m src.feature_reporting
+.\.venv\Scripts\python.exe scripts/run_notebook.py notebooks/03b_feature_engineering_ablation.ipynb --timeout 3600
+.\.venv\Scripts\python.exe scripts/export_eda.py --stage features
+```
+
+Notebook juga dapat menjalankan study/report langsung. Empat varian menguji rasio penggunaan, konteks suhu/fast charge–DOD, interaksi kimia–paparan, dan gabungannya. Prefix 67 fitur lama tidak berubah. Ekstra fit hanya train; target scaler dipakai ulang; model [32]/sigmoid/MAE/Adam dan prosedur tetap.
+
+Mean MAE validation tiga seed: kontrol kandidat 03 **0,97525 ± 0,00236**, FE gabungan **0,96938 ± 0,00532** poin. Gain **0,00587 poin** dengan parameter 2.209 → 2.977. FE menang tiga seed tetapi tidak memenuhi ambang gain rerata 0,01 poin yang ditetapkan sebelum training; rekomendasi sementara tetap kontrol. Ini heuristik praktis, bukan uji signifikansi. Pada SOH <70%, error turun sekitar 3,46 → 3,25 poin; lihat dukungan/variasi seed di laporan.
+
+Config/provenance berada di configs/feature_engineering.json dan results/feature_engineering/study.json. Array hanya train/validation, lokal di data/processed/<variant>; bundle inference di models/feature_engineering. Tidak membuat atau mengevaluasi test FE pada tahap ini. Kontrol dan studi 03 dipertahankan, sehingga efek fitur dapat ditelusuri.
 
 ## Pekerjaan berikutnya
 
 1. Baca panduan dan sepakati pembagian kerja.
 2. Tinjau temuan audit, target, saat prediksi, manifest split, dan kontrak fitur awal bersama kelompok.
-3. Tinjau learning curves, kestabilan seed, dan error per rentang SOH; putuskan kebutuhan feature engineering sebelum evaluasi final.
+3. Tinjau ablation FE dan trade-off error/kompleksitas; rekomendasi sementara tetap kontrol kandidat 03.
 4. Tentukan apakah dosen mengharuskan backpropagation dari nol atau memperbolehkan framework.
 5. Setelah seluruh eksperimen disepakati, kunci konfigurasi serta seed sebelum menjalankan evaluasi test pada notebook 04.
 
-Baseline dan study MLP sudah selesai pada validation. Pekerjaan berikutnya adalah eksperimen lanjutan yang disepakati (misalnya feature engineering), penguncian konfigurasi/seed, lalu evaluasi test terpisah pada notebook 04.
+Study MLP dan ablation feature engineering selesai pada validation. Berikutnya adalah penguncian konfigurasi/seed, lalu evaluasi test terpisah pada notebook 04; jangan menggunakan test untuk memilih fitur atau ambang keputusan.
 
 ## Aturan kerja kelompok
 
