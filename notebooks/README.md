@@ -1,6 +1,6 @@
 # Notebook proyek
 
-Notebook 00–02 sudah dibuat dan seluruh selnya berhasil dieksekusi. Notebook 03–04 belum dibuat. Kerjakan berurutan:
+Notebook 00–03 sudah dibuat dan seluruh selnya berhasil dieksekusi. Notebook 04 belum dibuat. Kerjakan berurutan:
 
 1. `00_data_audit.ipynb`: skema, kualitas dasar, target, ID/waktu, kamus data, dan manifest split.
 2. `01_eda_train.ipynb`: analisis train, grafik, interpretasi, dan rekomendasi fitur.
@@ -38,3 +38,12 @@ python -m unittest discover -s tests -v
 ```
 
 Notebook 02 memuat tiga resep, parameter fit train-only, imputasi/encoding/scaling, outlier/log dan feature ablation, kesiapan X/y, uji kasus baru, serta pemakaian bundle. Hasil lokal di data/processed dan models/preprocessing; laporan di results/preprocessing. Belum ada model prediksi yang dilatih atau pemilihan resep menggunakan skor.
+
+Untuk eksperimen MLP:
+
+```powershell
+python scripts/run_notebook.py notebooks/03_mlp_experiments.ipynb --timeout 3600
+python scripts/export_eda.py --stage experiments
+```
+
+Notebook 03 berisi forward/backward, 17 run unik, perbandingan preprocessing/arsitektur/aktivasi/loss/regularisasi, checkpoint best/last, budget epoch 50/100/200, dan konfirmasi tiga seed. Metrik hanya train/validation; test tidak dimuat. Caching memerlukan fingerprint dan checkpoint lokal yang cocok. Kode di src/mlp_experiments.py; laporan/kurva/rekap di results/experiments; checkpoint lokal di models/mlp.

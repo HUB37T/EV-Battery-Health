@@ -4,8 +4,11 @@ Proyek kelompok untuk menganalisis dataset kesehatan baterai kendaraan listrik d
 
 ## Status proyek
 
-**Audit dataset dan EDA mendalam train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing train-only sudah dijalankan untuk tiga resep kandidat. Resep terbaik belum dipilih; pelatihan dan evaluasi model belum dijalankan.
+**Audit dataset dan EDA mendalam train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing train-only sudah dijalankan untuk tiga resep kandidat. Eksperimen MLP/backpropagation sudah menjalankan 17 run unik dan konfirmasi tiga seed. Kandidat sementara dipilih dari validation; test belum dimuat/dievaluasi.
 
+- [Notebook eksperimen MLP/backpropagation](notebooks/03_mlp_experiments.ipynb).
+- [Laporan eksperimen](results/experiments/EXPERIMENT_REPORT.md) dan [HTML baca](results/experiments/EXPERIMENT_READING.html).
+- [Rekap konfigurasi dan metrik](results/experiments/run_summary.csv), [perbandingan tahap](results/experiments/stage_comparisons.csv), [konfirmasi seed](results/experiments/seed_summary.csv).
 - [Notebook preprocessing yang sudah dieksekusi](notebooks/02_preprocessing.ipynb).
 - [Laporan preprocessing dan hasil pemeriksaan](results/preprocessing/PREPROCESSING_REPORT.md).
 - [Salinan baca preprocessing tanpa kode](results/preprocessing/PREPROCESSING_READING.html).
@@ -58,7 +61,7 @@ EV-Battery-Health/
 │   └── splits/         # Manifest split baterai bersama
 ├── configs/            # Kontrak target dan fitur
 ├── docs/               # Kartu dataset
-├── src/                # Logika audit, EDA, dan preprocessing
+├── src/                # Audit, EDA, preprocessing, training, reporting
 ├── scripts/            # Eksekusi notebook
 ├── requirements.txt    # Dependensi data/preprocessing yang diuji
 ├── tests/              # Uji perilaku dan keamanan artefak preprocessing
@@ -66,6 +69,7 @@ EV-Battery-Health/
 │   ├── 00_data_audit.ipynb
 │   ├── 01_eda_train.ipynb
 │   ├── 02_preprocessing.ipynb
+│   ├── 03_mlp_experiments.ipynb
 │   └── README.md       # Status dan urutan notebook
 ├── models/
 │   └── README.md       # Aturan penyimpanan model/pipeline
@@ -73,10 +77,11 @@ EV-Battery-Health/
     ├── audit/          # Audit kualitas dasar dan split
     ├── eda/            # EDA mendalam, PNG/SVG, tabel, HTML
     ├── preprocessing/  # Resep, parameter train, pemeriksaan, HTML
+    ├── experiments/    # Run log, kurva, checkpoint metadata, validation
     └── README.md       # Aturan pencatatan hasil dan artefak
 ```
 
-Notebook audit, EDA, dan preprocessing sudah tersedia dan dieksekusi. Model belum dilatih; folder model masih berupa kerangka.
+Notebook 00–03 sudah tersedia dan dieksekusi. Fitted preprocessing dan checkpoint MLP tersedia lokal, diabaikan Git. Training pada clone baru membuatnya ulang dari konfigurasi/data.
 
 ## Mulai bekerja
 
@@ -100,7 +105,7 @@ python -m venv .venv
 
 CSV, `README.md`, dan `data_dictionary .csv` dari arsip Kaggle harus tersedia di `data/raw/`. Spasi pada nama kamus memang berasal dari arsip. Perintah audit membuat ulang laporan/tabel/grafik; perintah notebook mengeksekusi semua sel dan menyimpan output. CSV asli tidak diubah. Versi CSV yang berbeda dan manifest split yang berubah ditolak. Notebook dapat dibuka di editor notebook dengan lingkungan Python yang sama.
 
-Dependensi ini untuk audit, EDA, dan preprocessing, belum termasuk framework MLP. Matriks versi dan hash sumber ada di `results/audit/provenance.json`.
+Dependensi mencakup PyTorch 2.11.0 untuk MLP serta library audit/EDA/preprocessing. Matriks versi dan hash sumber ada di `results/audit/provenance.json`.
 
 ## Menjalankan EDA mendalam
 
@@ -135,17 +140,32 @@ X_train, y_train_scaled = train_data['X'], train_data['y_scaled']
 
 Pipeline menangani median numerik + indikator missing, kategori missing eksplisit + one-hot, recall biner, standardisasi fitur/target, dan alternatif log/cap/fitur compact. Tidak ada resampling target atau penghapusan SOH rendah. Loader memeriksa kecocokan pipeline/array. Gunakan artefak joblib tepercaya.
 
-Default `baseline_standard` menghasilkan **67 input**; `log_sensor_caps` juga 67; `compact_log_sensor_caps` 63. Ketiganya belum diperingkat berdasarkan skor model. Preprocessing membantu optimasi dan kualitas input, tetapi overfitting/underfitting perlu dibuktikan melalui train–validation curves dan eksperimen MLP. Untuk CV, fit ulang pipeline/target scaler pada setiap fold-train; array precomputed hanya untuk split tetap ini.
+Default `baseline_standard` menghasilkan **67 input**; `log_sensor_caps` juga 67; `compact_log_sensor_caps` 63. Ketiganya sudah dibandingkan pada tahap awal study MLP; konfigurasi lengkap dan konteks seleksi tersedia di laporan eksperimen. Preprocessing membantu optimasi dan kualitas input, tetapi overfitting/underfitting perlu dibuktikan melalui train–validation curves dan eksperimen MLP. Untuk CV, fit ulang pipeline/target scaler pada setiap fold-train; array precomputed hanya untuk split tetap ini.
+
+## Menjalankan MLP dengan backpropagation
+
+```powershell
+.\.venv\Scripts\python.exe -m src.mlp_experiments
+.\.venv\Scripts\python.exe -m src.experiment_reporting
+.\.venv\Scripts\python.exe scripts/run_notebook.py notebooks/03_mlp_experiments.ipynb --timeout 3600
+.\.venv\Scripts\python.exe scripts/export_eda.py --stage experiments
+```
+
+Notebook juga dapat menjalankan study/report secara langsung. Run identik yang lengkap dengan fingerprint cocok dipakai ulang. Checkpoint disimpan lokal di `models/mlp/<run_id>/`; bila belum ada pada clone baru, model dilatih ulang. Array preprocessing harus dibuat lebih dahulu. Baseline saja: `python -m src.mlp_experiments --baseline`.
+
+**Hasil validation (bukan test):** baseline mean MAE tiga seed **1,0468 ± 0,0024** poin SOH; kandidat **0,9752 ± 0,0024**. Kandidat sementara: log_sensor_caps, input 67, hidden [32], sigmoid, output linear, MAE, Adam lr=0,001, weight_decay=1e-4. Pencarian bertahap bukan full factorial dan tidak membuktikan optimum global.
+
+Loss dilatih pada y_scaled, metrik dikembalikan ke SOH asli. Best checkpoint dipilih dengan validation MAE; last/endpoint tidak disamakan dengan best. Seluruh seed dan hasil kurang baik tetap tercatat. Test tetap tidak dimuat oleh runner. Feature engineering domain masih dapat diuji sebelum konfigurasi final dibekukan.
 
 ## Pekerjaan berikutnya
 
 1. Baca panduan dan sepakati pembagian kerja.
 2. Tinjau temuan audit, target, saat prediksi, manifest split, dan kontrak fitur awal bersama kelompok.
-3. Tinjau hasil preprocessing dan mulai baseline MLP dengan resep baseline_standard; bandingkan alternatif secara terkontrol menggunakan validation.
+3. Tinjau learning curves, kestabilan seed, dan error per rentang SOH; putuskan kebutuhan feature engineering sebelum evaluasi final.
 4. Tentukan apakah dosen mengharuskan backpropagation dari nol atau memperbolehkan framework.
-5. Sesudah pipeline diverifikasi, buat baseline MLP dan eksperimen menggunakan validation. Test tetap untuk evaluasi final.
+5. Setelah seluruh eksperimen disepakati, kunci konfigurasi serta seed sebelum menjalankan evaluasi test pada notebook 04.
 
-Belum ada perintah training. Tiga pipeline preprocessing sudah siap; pemilihan resep final, implementasi MLP, dan evaluasi generalisasi masih tahap berikutnya.
+Baseline dan study MLP sudah selesai pada validation. Pekerjaan berikutnya adalah eksperimen lanjutan yang disepakati (misalnya feature engineering), penguncian konfigurasi/seed, lalu evaluasi test terpisah pada notebook 04.
 
 ## Aturan kerja kelompok
 

@@ -56,7 +56,7 @@ Keputusan: baseline tabular; windowing/timesteps ditunda. Data tidak otomatis di
 
 ## Batas kesimpulan
 
-Audit dasar tidak melatih model. Tahap [preprocessing train-only](../results/preprocessing/PREPROCESSING_REPORT.md) kini sudah menerapkan imputasi, encoding, scaling fitur/target, dan dua alternatif resep; belum ada model prediksi atau pemilihan resep final. EDA mendalam train sudah tersedia di [laporan EDA](../results/eda/EDA_REPORT.md), mencakup distribusi, hubungan bersyarat, pengamatan berulang, missingness, outlier, dan kualitas temporal. Group split menguji baterai baru pada simulator ini, bukan distribusi dunia nyata atau periode kalender masa depan. Tidak ada skor performa yang dapat diklaim pada tahap ini.
+Audit dasar tidak melatih model. Tahap [preprocessing train-only](../results/preprocessing/PREPROCESSING_REPORT.md) kini sudah menerapkan imputasi, encoding, scaling fitur/target, dan dua alternatif resep; study MLP/backpropagation kini tersedia di [laporan eksperimen](../results/experiments/EXPERIMENT_REPORT.md), dengan kandidat sementara dari validation dan tanpa evaluasi test. EDA mendalam train sudah tersedia di [laporan EDA](../results/eda/EDA_REPORT.md), mencakup distribusi, hubungan bersyarat, pengamatan berulang, missingness, outlier, dan kualitas temporal. Group split menguji baterai baru pada simulator ini, bukan distribusi dunia nyata atau periode kalender masa depan. Tidak ada skor performa yang dapat diklaim pada tahap ini.
 
 ## Reproduksi
 

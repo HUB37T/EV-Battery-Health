@@ -59,6 +59,10 @@ lightning_logs/
 results/eda/temporal_pairs.csv
 results/eda/battery_age_means.csv
 
+# Recomputed row-level validation predictions; aggregate experiment results stay tracked.
+!/results/experiments/runs/
+results/experiments/runs/*/validation_predictions.csv
+
 # Editor / OS files
 .vscode/
 .idea/

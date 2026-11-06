@@ -1,0 +1,25 @@
+{
+  "config": {
+    "recipe": "log_sensor_caps",
+    "hidden_layers": [
+      32
+    ],
+    "activation": "sigmoid",
+    "loss": "mse",
+    "huber_delta": 1.0,
+    "learning_rate": 0.001,
+    "batch_size": 256,
+    "max_epochs": 200,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta_pp": 0.001,
+    "weight_decay": 0.0,
+    "dropout": 0.0,
+    "seed": 42
+  },
+  "data_fingerprint": "5a1ec612c42eaf854e9fd409adf3e48a1da726536226155acc722d42140a6e03",
+  "training_source_sha256": "54492bf7b0f745f1b6c695cc37cda6f5a6bfc901810ad060a69a95e5ececcd6a",
+  "torch": "2.11.0+cpu",
+  "threads": 2,
+  "device": "cpu"
+}

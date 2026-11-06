@@ -4,7 +4,7 @@ Dokumen kerja kelompok untuk EDA, preprocessing, dan eksperimen Multi Layer Perc
 
 > Konteks kuliah: proyek akhir Jaringan Saraf Tiruan. Model eksperimen dibatasi pada Multi Layer Perceptron (MLP) dengan pelatihan backpropagation. Model JST lain yang telah dipelajari hanya menjadi landasan teori.
 >
-> Status dokumen: panduan kerja dengan audit dan EDA mendalam train yang sudah dijalankan pada 6 November 2026. Belum ada hasil training atau evaluasi model. Persyaratan yang berasal dari tugas, rekomendasi metodologis, dan tambahan bersyarat dibedakan di bagian 29.
+> Status dokumen: panduan kerja dengan audit dan EDA mendalam train yang sudah dijalankan pada 6 November 2026. Training MLP serta metrik train/validation sudah tersedia; test belum dimuat/dievaluasi. Persyaratan yang berasal dari tugas, rekomendasi metodologis, dan tambahan bersyarat dibedakan di bagian 29.
 
 ## Ringkasan keputusan audit — 6 November 2026
 
@@ -19,7 +19,10 @@ Dokumen kerja kelompok untuk EDA, preprocessing, dan eksperimen Multi Layer Perc
 - Temuan EDA: target didominasi SOH tinggi, umur/siklus/energi kuat dan redundan, pola kimia berbeda pada rentang umur sama, missing servis berkaitan dengan usia, dan SOH naik pada 32,86% pasangan bertanggal valid. Semua kesimpulan bersifat deskriptif pada simulator.
 - [Preprocessing](notebooks/02_preprocessing.ipynb) sudah di-fit hanya pada train. Resep lengkap baseline/log-cap menghasilkan 67 input; compact 63. [Laporan](results/preprocessing/PREPROCESSING_REPORT.md) dan [HTML](results/preprocessing/PREPROCESSING_READING.html) tersedia.
 - Median/modus, kategori one-hot, batas cap alternatif, serta scaler fitur/target berasal dari train. Tidak menghapus baris, menyeimbangkan kelas regresi, atau mengubah target asli.
-- Pemilihan resep/fitur final, training, dan skor model belum tersedia. Data asli, kontrak fitur awal, dan split dipertahankan. Overfitting/underfitting harus dinilai saat training, bukan disimpulkan dari preprocessing saja.
+- [Notebook MLP](notebooks/03_mlp_experiments.ipynb) sudah menjalankan 17 run unik; [laporan](results/experiments/EXPERIMENT_REPORT.md) memuat checkpoint, kurva, perbandingan faktor, dan tiga seed. Mean validation MAE baseline 1,0468 ± 0,0024; kandidat 0,9752 ± 0,0024 poin SOH.
+- Kandidat sementara: log_sensor_caps, input 67, hidden [32], sigmoid, output linear, loss MAE, Adam lr 0,001, weight_decay 1e-4. Batch aktual 256 pada semua run menggantikan rekomendasi awal 32 demi CPU training; early stopping memakai patience 15/min_delta 0,001 poin.
+- Epoch 50/100/200 dibandingkan melalui endpoint satu trajectory tanpa early stopping. Trajectory diagnostik tidak dipromosikan diam-diam ke kandidat. Domain feature engineering belum ditambahkan.
+- Test belum dimuat/dievaluasi. Data asli, kontrak fitur awal, dan split dipertahankan. Pemilihan final masih perlu mempertimbangkan keterbatasan validation berulang dan error SOH rendah.
 
 ## Cara memakai panduan ini
 
@@ -249,13 +252,13 @@ Peran boleh dirangkap sesuai jumlah anggota. Semua anggota harus memahami target
 5. Apakah ada ketentuan framework, jumlah eksperimen, format laporan, dan tenggat?
 6. Siapa pemilik tiap hasil dan kapan titik pemeriksaan internalnya?
 
-Dokumen ini berisi rancangan pelaksanaan dan keputusan audit awal; hasil eksperimen model belum tersedia. Perbarui keputusan bila EDA train/preprocessing mengungkap kebutuhan perubahan, dan jangan menggunakan test untuk menentukannya.
+Dokumen ini berisi panduan dan keputusan aktual hingga eksperimen MLP train/validation. Detail angka dan konfigurasi yang benar-benar dijalankan ada di results/experiments; test belum dievaluasi. Perbarui keputusan bila EDA train/preprocessing mengungkap kebutuhan perubahan, dan jangan menggunakan test untuk menentukannya.
 
 ---
 
 # Pendalaman untuk Proyek Akhir Jaringan Saraf Tiruan
 
-Bagian berikut melengkapi bagian 1–14. Fokusnya adalah apa yang harus dipahami, dikerjakan, diuji, dan dipertanggungjawabkan saat presentasi. Angka konfigurasi adalah rancangan awal; hasil eksperimen belum tersedia.
+Bagian berikut melengkapi bagian 1–14. Fokusnya adalah apa yang harus dipahami, dikerjakan, diuji, dan dipertanggungjawabkan saat presentasi. Bagian ini memuat rancangan awal; konfigurasi aktual (termasuk batch 256) dan hasil train/validation ada di configs/mlp_study.json serta laporan eksperimen. Jangan menganggap semua angka rekomendasi awal sama dengan implementasi aktual.
 
 ## 15. Posisi proyek terhadap materi kuliah
 
@@ -678,7 +681,7 @@ Jangan mengisi angka contoh seolah-olah hasil. Kesimpulan “lebih banyak layer 
 
 ## 24. Rencana notebook dan fungsi setiap tahap
 
-Nama berikut adalah rencana artefak, bukan file yang sudah dibuat:
+Struktur berikut menjelaskan peran artefak: notebook 00–03 sudah dibuat dan dijalankan; notebook 04 belum dibuat.
 
 ### 00_data_audit
 - Membaca data asli dan memeriksa skema.
@@ -848,4 +851,4 @@ Website, aplikasi deployment, dashboard, model selain MLP, atau klasifikasi tamb
 - [ ] Setiap anggota dapat menjelaskan bagian 28 dengan bahasanya sendiri.
 - [ ] Laporan, slide, dan tabel hasil menyebut angka final yang sama.
 
-Audit, EDA mendalam, dan tiga pipeline preprocessing train-only sudah tersedia. Pekerjaan saat ini belum melatih MLP. Tahap selanjutnya adalah baseline MLP dan perbandingan resep/arsitektur menggunakan validation. Keputusan implementasi dari nol/framework masih mengikuti ketentuan dosen.
+Audit, EDA, preprocessing, dan study MLP dengan validation sudah tersedia. Feature engineering domain dapat diuji sebagai tahap lanjutan; setelah konfigurasi/seed dikunci, notebook 04 akan mengevaluasi test. Keputusan implementasi dari nol/framework masih mengikuti ketentuan dosen.

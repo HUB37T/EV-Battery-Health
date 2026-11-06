@@ -1,5 +1,6 @@
 # Audit/EDA environment verified with Python 3.13.1.
-# No neural-network framework has been selected yet.
+# MLP training verified with CPU PyTorch 2.11.0.
+torch==2.11.0
 numpy==2.2.5
 pandas==2.3.2
 matplotlib==3.10.6
