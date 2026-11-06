@@ -4,7 +4,12 @@ Proyek kelompok untuk menganalisis dataset kesehatan baterai kendaraan listrik d
 
 ## Status proyek
 
-Tahap saat ini: perencanaan dan persiapan repositori. EDA, preprocessing, pelatihan model, dan hasil eksperimen **belum dijalankan**. CSV belum diaudit; nama target, fitur, satuan, dan struktur waktunya masih perlu diverifikasi.
+**Audit dataset dan EDA awal train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing final, pelatihan, dan evaluasi model belum dijalankan.
+
+- [Notebook audit yang sudah dieksekusi](notebooks/00_data_audit.ipynb).
+- [Ringkasan temuan dan grafik](results/audit/AUDIT_REPORT.md).
+- [Kartu dataset dan keputusan metode](docs/DATASET_CARD.md).
+- [Kontrak fitur awal](configs/feature_contract.json) dan [manifest split](data/splits/battery_split.csv).
 
 Panduan lengkap, pembagian kerja, teori, dan rancangan eksperimen tersedia di [CONTEXT.md](CONTEXT.md). Mulai dari bagian 17 untuk audit dataset, bagian 21 untuk eksperimen, dan bagian 26 untuk pembagian kerja.
 
@@ -29,7 +34,7 @@ data/raw/ev_battery_health.csv
 
 Data mentah dan data hasil pemrosesan tidak dikomit secara default. Ikuti lisensi dataset dan dokumentasikan tanggal unduh, versi, asal data, serta definisi kolom. Lihat [petunjuk data](data/README.md).
 
-Rekomendasi masalah awal adalah regresi SOH jika target tersebut tersedia dan definisinya jelas. Ini belum merupakan keputusan final berbasis audit CSV.
+README dalam arsip sumber menyebut data sintetis dan lisensi CC0. Audit membuktikan `capacity_fade_pct = 100 − state_of_health_pct` pada semua nilai terisi; kolom itu dilarang menjadi input. Split menggunakan battery_id: 1.820 baterai train, 390 validation, 390 test. Timesteps ditunda karena tanggal kosong dan counter kumulatif tidak konsisten. Detail ada di kartu dataset.
 
 ## Struktur repositori
 
@@ -42,16 +47,24 @@ EV-Battery-Health/
 ├── data/
 │   ├── README.md       # Cara memperoleh dan mencatat data
 │   ├── raw/            # CSV asli lokal, diabaikan Git
-│   └── processed/      # Hasil preprocessing lokal, diabaikan Git
+│   ├── processed/      # Hasil preprocessing lokal, diabaikan Git
+│   └── splits/         # Manifest split baterai bersama
+├── configs/            # Kontrak target dan fitur
+├── docs/               # Kartu dataset
+├── src/                # Logika audit bersama
+├── scripts/            # Eksekusi notebook
+├── requirements.txt    # Dependensi audit yang diuji
 ├── notebooks/
-│   └── README.md       # Urutan notebook yang direncanakan
+│   ├── 00_data_audit.ipynb
+│   └── README.md       # Status dan urutan notebook
 ├── models/
 │   └── README.md       # Aturan penyimpanan model/pipeline
 └── results/
+    ├── audit/          # Laporan, tabel, grafik, provenance
     └── README.md       # Aturan pencatatan hasil dan artefak
 ```
 
-Folder notebook dan model masih berupa kerangka, bukan implementasi yang sudah tersedia.
+Notebook audit sudah tersedia dan dieksekusi. Model belum dilatih; folder model masih berupa kerangka.
 
 ## Mulai bekerja
 
@@ -62,15 +75,30 @@ cd EV-Battery-Health
 
 Untuk anggota yang sudah memiliki folder kerja terhubung ke Git, gunakan folder tersebut; tidak perlu clone ulang.
 
-Sebelum membuat model:
+## Menjalankan audit
+
+Lingkungan yang diuji: Python 3.13.1. Dari root proyek:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m src.data_audit
+.\.venv\Scripts\python.exe scripts/run_notebook.py
+```
+
+CSV, `README.md`, dan `data_dictionary .csv` dari arsip Kaggle harus tersedia di `data/raw/`. Spasi pada nama kamus memang berasal dari arsip. Perintah audit membuat ulang laporan/tabel/grafik; perintah notebook mengeksekusi semua sel dan menyimpan output. CSV asli tidak diubah. Versi CSV yang berbeda dan manifest split yang berubah ditolak. Notebook dapat dibuka di editor notebook dengan lingkungan Python yang sama.
+
+Dependensi ini khusus audit, belum termasuk framework MLP. Matriks versi dan hash sumber ada di `results/audit/provenance.json`.
+
+## Pekerjaan berikutnya
 
 1. Baca panduan dan sepakati pembagian kerja.
-2. Unduh CSV dan isi lembar keputusan data pada bagian 17 `CONTEXT.md`.
-3. Sepakati target, saat prediksi, split, dan fitur yang boleh digunakan.
+2. Tinjau temuan audit, target, saat prediksi, manifest split, dan kontrak fitur awal bersama kelompok.
+3. Perdalam EDA train, lalu buat pipeline preprocessing yang fit hanya pada train.
 4. Tentukan apakah dosen mengharuskan backpropagation dari nol atau memperbolehkan framework.
-5. Buat lingkungan Python terpisah jika Python dipilih; sepakati versi Python dan dependensi bersama.
+5. Sesudah pipeline diverifikasi, buat baseline MLP dan eksperimen menggunakan validation. Test tetap untuk evaluasi final.
 
-Belum ada file dependensi karena framework dan implementasi belum dipilih. Saat implementasi dimulai, catat paket beserta versi yang benar-benar diuji dan tambahkan instruksi eksekusi. Jangan menganggap repositori ini sudah memiliki program training yang dapat dijalankan.
+Belum ada perintah training. EDA lengkap, preprocessing final, dan implementasi MLP adalah tahap berikutnya.
 
 ## Aturan kerja kelompok
 

@@ -1,6 +1,6 @@
 # Hasil eksperimen
 
-Belum ada hasil eksperimen. Folder ini untuk tabel dan grafik terpilih yang layak dibagikan serta dapat ditelusuri ke run nyata.
+Audit dan EDA awal train tersedia di [audit/AUDIT_REPORT.md](audit/AUDIT_REPORT.md). Belum ada hasil eksperimen model. Folder ini menyimpan tabel dan grafik terpilih yang dapat ditelusuri ke data/run nyata.
 
 Untuk setiap run catat:
 - ID run dan identitas/versi data serta manifest split.

@@ -1,6 +1,6 @@
-# Rencana notebook
+# Notebook proyek
 
-Notebook berikut belum dibuat. Kerjakan berurutan:
+Notebook 00 sudah dibuat dan seluruh selnya berhasil dieksekusi. Notebook 01–04 belum dibuat. Kerjakan berurutan:
 
 1. `00_data_audit.ipynb`: skema, kualitas dasar, target, ID/waktu, kamus data, dan manifest split.
 2. `01_eda_train.ipynb`: analisis train, grafik, interpretasi, dan rekomendasi fitur.
@@ -11,3 +11,11 @@ Notebook berikut belum dibuat. Kerjakan berurutan:
 Setiap notebook harus menjelaskan input, output, dan dependensinya, serta dapat dijalankan dari keadaan bersih. Hindari path absolut milik satu anggota. Jika fungsi yang sama dipakai berulang, pertimbangkan memindahkannya ke modul bersama setelah implementasi tersedia.
 
 Simpan angka hasil ke berkas terstruktur; screenshot bukan satu-satunya catatan eksperimen. Detail ada pada bagian 24 `../CONTEXT.md`.
+
+Untuk menjalankan ulang audit dari root repositori:
+
+```powershell
+python scripts/run_notebook.py
+```
+
+Logika bersama berada di `src/data_audit.py`; hasilnya di `results/audit/`. Gunakan lingkungan dengan dependensi `requirements.txt`. Notebook berisi metode, tabel, grafik, interpretasi, serta pemeriksaan integritas; tidak ada model dilatih.

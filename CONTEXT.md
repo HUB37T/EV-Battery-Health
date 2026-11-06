@@ -4,7 +4,18 @@ Dokumen kerja kelompok untuk EDA, preprocessing, dan eksperimen Multi Layer Perc
 
 > Konteks kuliah: proyek akhir Jaringan Saraf Tiruan. Model eksperimen dibatasi pada Multi Layer Perceptron (MLP) dengan pelatihan backpropagation. Model JST lain yang telah dipelajari hanya menjadi landasan teori.
 >
-> Status dokumen: panduan dan rancangan eksperimen, bukan hasil penelitian. CSV belum diaudit. Persyaratan yang berasal dari tugas, rekomendasi metodologis, dan tambahan bersyarat dibedakan di bagian 29.
+> Status dokumen: panduan kerja dengan audit data awal yang sudah dijalankan pada 6 November 2026. Belum ada hasil training atau evaluasi model. Persyaratan yang berasal dari tugas, rekomendasi metodologis, dan tambahan bersyarat dibedakan di bagian 29.
+
+## Ringkasan keputusan audit — 6 November 2026
+
+- [Notebook audit](notebooks/00_data_audit.ipynb) sudah dieksekusi, dengan tabel dan empat grafik awal train.
+- [Laporan audit](results/audit/AUDIT_REPORT.md) dan [kartu dataset](docs/DATASET_CARD.md) memuat bukti serta batas kesimpulan.
+- Target: estimasi SOH saat ini (`state_of_health_pct`) untuk baterai baru, bukan forecasting/RUL.
+- Split berdasarkan battery_id: **34.929 baris train / 7.499 validation / 7.572 test**, tanpa baterai tumpang tindih. [Manifest](data/splits/battery_split.csv) memakai seed 42.
+- capacity_fade_pct adalah tepat 100 − SOH pada 48.131 nilai terisi; dilarang menjadi input. Tiga target alternatif juga dikeluarkan.
+- Ada 21 kandidat fitur mentah baseline: 15 numerik, 5 kategori, 1 biner. Jumlah neuron input baru dihitung setelah encoding. Empat kandidat sensor ditahan untuk ablation terpisah karena risiko proxy sintetis.
+- Timesteps ditunda: observation_date hilang pada 2.216 baris, dan counter siklus/energi tidak selalu monoton. Missing tanggal servis sebagian bersifat struktural.
+- Belum ada preprocessing fit, training, atau skor model. EDA lengkap setiap fitur adalah tahap berikutnya.
 
 ## Cara memakai panduan ini
 
@@ -25,7 +36,7 @@ Tujuan utama: membangun dan mengevaluasi MLP untuk memprediksi kesehatan baterai
 Sumber: https://www.kaggle.com/datasets/vinay24baghira/ev-battery-health-and-degradation-dataset
 File yang dirujuk: ev_battery_health.csv.
 
-Status: CSV belum diperiksa saat panduan ini dibuat. Nama kolom, jumlah baris, satuan, target, keberadaan ID baterai, dan urutan waktu harus diverifikasi. Contoh fitur dalam dokumen ini bukan klaim bahwa kolom tersebut tersedia.
+Status terkini: CSV telah diaudit. Terdapat 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah state_of_health_pct dalam persen. Dokumentasi menyebut data sintetis berlisensi CC0. Lihat kartu dataset dan laporan audit untuk fakta, batasan, dan daftar fitur aktual; bagian umum berikut tetap menjadi panduan metode.
 
 Batasan wajib:
 - Model prediksi hanya MLP/feedforward neural network dengan backpropagation. Jangan memakai CNN, RNN, LSTM, Transformer, Random Forest, SVM, atau boosting.
@@ -35,9 +46,9 @@ Batasan wajib:
 
 ## 2. Tentukan masalah sebelum eksperimen
 
-Rekomendasi awal: regresi untuk memprediksi State of Health (SOH) jika dataset memiliki target numerik kesehatan baterai yang jelas.
+Keputusan kerja setelah audit: regresi untuk memperkirakan state_of_health_pct pada saat observasi, dengan generalisasi ke baterai yang tidak ada dalam train. Tidak mengklaim forecasting atau prediksi sisa umur.
 
-Isi keputusan berikut setelah membaca CSV:
+Gunakan keputusan aktual pada bagian 17 dan kontrak fitur sebagai acuan. Tabel berikut menjelaskan pertanyaan yang harus tetap dapat dijawab kelompok:
 
 | Keputusan | Yang harus dicatat |
 |---|---|
@@ -234,7 +245,7 @@ Peran boleh dirangkap sesuai jumlah anggota. Semua anggota harus memahami target
 5. Apakah ada ketentuan framework, jumlah eksperimen, format laporan, dan tenggat?
 6. Siapa pemilik tiap hasil dan kapan titik pemeriksaan internalnya?
 
-Dokumen ini adalah rancangan pelaksanaan, bukan laporan hasil penelitian. Perbarui keputusan dan isi fakta dataset setelah CSV diperiksa.
+Dokumen ini berisi rancangan pelaksanaan dan keputusan audit awal; hasil eksperimen model belum tersedia. Perbarui keputusan bila EDA train/preprocessing mengungkap kebutuhan perubahan, dan jangan menggunakan test untuk menentukannya.
 
 ---
 
@@ -304,17 +315,17 @@ Isi bersama sebelum coding model:
 
 | Isian | Nilai aktual |
 |---|---|
-| Tanggal unduh dan versi dataset | BELUM DIVERIFIKASI |
-| Jumlah baris/kolom asli | BELUM DIVERIFIKASI |
-| Sumber nyata/simulasi/sintetis/tidak dijelaskan | BELUM DIVERIFIKASI |
-| Satu baris mewakili | BELUM DIVERIFIKASI |
-| Nama dan satuan target | BELUM DIVERIFIKASI |
-| Arti target: saat ini/masa depan | BELUM DIVERIFIKASI |
-| Kolom ID baterai | BELUM DIVERIFIKASI |
-| Kolom waktu/siklus dan intervalnya | BELUM DIVERIFIKASI |
-| Daftar kolom yang tersedia saat prediksi | BELUM DIVERIFIKASI |
-| Tujuan generalisasi | BELUM DIPUTUSKAN |
-| Aturan split dan seed | BELUM DIPUTUSKAN |
+| Tanggal unduh dan versi dataset | 6 November 2026; SHA-256 di results/audit/provenance.json |
+| Jumlah baris/kolom asli | 50.000 baris / 35 kolom; 2.600 baterai |
+| Sumber nyata/simulasi/sintetis/tidak dijelaskan | Sepenuhnya sintetis menurut README sumber; lisensi CC0 |
+| Satu baris mewakili | Satu observasi baterai; observation_id unik |
+| Nama dan satuan target | state_of_health_pct; persen; kapasitas saat ini relatif nominal menurut kamus |
+| Arti target: saat ini/masa depan | SOH saat observasi, bukan masa depan |
+| Kolom ID baterai | battery_id |
+| Kolom waktu/siklus dan intervalnya | observation_date, battery_age_days, cycle_count; interval tidak seragam; 2.216 tanggal kosong; counter perlu audit lanjutan |
+| Daftar kolom yang tersedia saat prediksi | 21 kandidat di configs/feature_contract.json; availability ringkasan saat observasi adalah asumsi yang dicatat |
+| Tujuan generalisasi | Baterai yang belum terlihat dalam train, pada skenario estimasi SOH saat ini |
+| Aturan split dan seed | Group berdasarkan battery_id; NumPy default_rng(42); 1.820/390/390 baterai train/validation/test; manifest dikunci |
 | Metrik utama dan arah optimasi | Rekomendasi regresi: MAE, lebih kecil lebih baik |
 
 Jika deskripsi sumber tidak menjelaskan asal data, tulis “asal pengumpulan tidak diketahui dari dokumentasi yang tersedia”. Pola data yang rapi saja tidak cukup untuk menyatakan bahwa data sintetis.
@@ -833,4 +844,4 @@ Website, aplikasi deployment, dashboard, model selain MLP, atau klasifikasi tamb
 - [ ] Setiap anggota dapat menjelaskan bagian 28 dengan bahasanya sendiri.
 - [ ] Laporan, slide, dan tabel hasil menyebut angka final yang sama.
 
-Panduan ini cukup untuk memulai pembagian kerja. Tahap berikutnya adalah audit CSV dan pengisian lembar keputusan, bukan langsung mencari arsitektur yang memberikan skor tertinggi.
+Audit CSV dan lembar keputusan awal sudah tersedia. Tahap berikutnya: pendalaman EDA train, lalu pipeline preprocessing sebelum eksperimen MLP. Keputusan implementasi dari nol/framework masih mengikuti ketentuan dosen.
