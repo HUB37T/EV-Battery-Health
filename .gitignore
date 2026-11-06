@@ -1,0 +1,64 @@
+# Python / notebooks
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Local environments
+.venv/
+venv/
+env/
+.conda/
+
+# Secrets / credentials
+.env
+.env.*
+!.env.example
+kaggle.json
+*.pem
+*.key
+
+# Local datasets: keep folder markers and documentation
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+*.zip
+*.7z
+
+# Trained models and serialized preprocessing
+models/*
+!models/README.md
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.hdf5
+*.keras
+*.onnx
+*.pkl
+*.pickle
+*.joblib
+checkpoints/
+
+# Local run caches and logs; keep curated results versioned
+runs/
+wandb/
+mlruns/
+lightning_logs/
+*.log
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+~$*

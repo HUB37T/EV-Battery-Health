@@ -1,0 +1,13 @@
+# Normalize text files in Git; consistent across Windows and other systems.
+* text=auto
+*.md text eol=lf
+*.py text eol=lf
+*.ipynb text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.txt text eol=lf
+*.csv text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
