@@ -15,3 +15,4 @@
 # Generated reading copy and vector exports; source notebook stays reviewable.
 results/eda/*.svg text eol=lf linguist-generated=true
 results/eda/EDA_READING.html text eol=lf linguist-generated=true
+results/preprocessing/PREPROCESSING_READING.html text eol=lf linguist-generated=true

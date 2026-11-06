@@ -17,7 +17,9 @@ Dokumen kerja kelompok untuk EDA, preprocessing, dan eksperimen Multi Layer Perc
 - Timesteps ditunda: observation_date hilang pada 2.216 baris, dan counter siklus/energi tidak selalu monoton. Missing tanggal servis sebagian bersifat struktural.
 - [EDA mendalam train](notebooks/01_eda_train.ipynb) sudah selesai: 18 gambar PNG/SVG, tabel pendukung, [laporan](results/eda/EDA_REPORT.md), dan [HTML baca](results/eda/EDA_READING.html).
 - Temuan EDA: target didominasi SOH tinggi, umur/siklus/energi kuat dan redundan, pola kimia berbeda pada rentang umur sama, missing servis berkaitan dengan usia, dan SOH naik pada 32,86% pasangan bertanggal valid. Semua kesimpulan bersifat deskriptif pada simulator.
-- Belum ada preprocessing fit, feature selection final, training, atau skor model. Data asli, kontrak fitur, dan split dipertahankan.
+- [Preprocessing](notebooks/02_preprocessing.ipynb) sudah di-fit hanya pada train. Resep lengkap baseline/log-cap menghasilkan 67 input; compact 63. [Laporan](results/preprocessing/PREPROCESSING_REPORT.md) dan [HTML](results/preprocessing/PREPROCESSING_READING.html) tersedia.
+- Median/modus, kategori one-hot, batas cap alternatif, serta scaler fitur/target berasal dari train. Tidak menghapus baris, menyeimbangkan kelas regresi, atau mengubah target asli.
+- Pemilihan resep/fitur final, training, dan skor model belum tersedia. Data asli, kontrak fitur awal, dan split dipertahankan. Overfitting/underfitting harus dinilai saat training, bukan disimpulkan dari preprocessing saja.
 
 ## Cara memakai panduan ini
 
@@ -846,4 +848,4 @@ Website, aplikasi deployment, dashboard, model selain MLP, atau klasifikasi tamb
 - [ ] Setiap anggota dapat menjelaskan bagian 28 dengan bahasanya sendiri.
 - [ ] Laporan, slide, dan tabel hasil menyebut angka final yang sama.
 
-Audit CSV, lembar keputusan awal, dan EDA mendalam train sudah tersedia. Pekerjaan saat ini berhenti pada EDA. Tahap selanjutnya adalah pipeline preprocessing sebelum eksperimen MLP. Keputusan implementasi dari nol/framework masih mengikuti ketentuan dosen.
+Audit, EDA mendalam, dan tiga pipeline preprocessing train-only sudah tersedia. Pekerjaan saat ini belum melatih MLP. Tahap selanjutnya adalah baseline MLP dan perbandingan resep/arsitektur menggunakan validation. Keputusan implementasi dari nol/framework masih mengikuti ketentuan dosen.

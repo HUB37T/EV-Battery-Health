@@ -1,6 +1,6 @@
 # Notebook proyek
 
-Notebook 00 dan 01 sudah dibuat dan seluruh selnya berhasil dieksekusi. Notebook 02–04 belum dibuat. Kerjakan berurutan:
+Notebook 00–02 sudah dibuat dan seluruh selnya berhasil dieksekusi. Notebook 03–04 belum dibuat. Kerjakan berurutan:
 
 1. `00_data_audit.ipynb`: skema, kualitas dasar, target, ID/waktu, kamus data, dan manifest split.
 2. `01_eda_train.ipynb`: analisis train, grafik, interpretasi, dan rekomendasi fitur.
@@ -28,3 +28,13 @@ python scripts/export_eda.py
 ```
 
 `01_eda_train.ipynb` berisi 59 sel dengan pertanyaan, metode, tabel, gambar, interpretasi, dan verifikasi. Logika EDA ada di `src/eda.py`, hasil di `results/eda/`. Salinan `EDA_READING.html` dapat dibuka tanpa menjalankan notebook. Tidak ada preprocessing fit atau model pada EDA ini.
+
+Untuk preprocessing:
+
+```powershell
+python scripts/run_notebook.py notebooks/02_preprocessing.ipynb
+python scripts/export_eda.py --stage preprocessing
+python -m unittest discover -s tests -v
+```
+
+Notebook 02 memuat tiga resep, parameter fit train-only, imputasi/encoding/scaling, outlier/log dan feature ablation, kesiapan X/y, uji kasus baru, serta pemakaian bundle. Hasil lokal di data/processed dan models/preprocessing; laporan di results/preprocessing. Belum ada model prediksi yang dilatih atau pemilihan resep menggunakan skor.

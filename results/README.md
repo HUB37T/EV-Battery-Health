@@ -1,6 +1,6 @@
 # Hasil eksperimen
 
-Audit dasar tersedia di [audit/AUDIT_REPORT.md](audit/AUDIT_REPORT.md). EDA mendalam tersedia di [eda/EDA_REPORT.md](eda/EDA_REPORT.md), [notebook](../notebooks/01_eda_train.ipynb), dan [HTML baca](eda/EDA_READING.html). Belum ada hasil eksperimen model. Folder ini menyimpan tabel dan grafik terpilih yang dapat ditelusuri ke data/run nyata.
+Audit dasar tersedia di [audit/AUDIT_REPORT.md](audit/AUDIT_REPORT.md). EDA mendalam tersedia di [eda/EDA_REPORT.md](eda/EDA_REPORT.md), [notebook](../notebooks/01_eda_train.ipynb), dan [HTML baca](eda/EDA_READING.html). Preprocessing tersedia di [preprocessing/PREPROCESSING_REPORT.md](preprocessing/PREPROCESSING_REPORT.md) dan [HTML baca](preprocessing/PREPROCESSING_READING.html). Belum ada hasil eksperimen model. Folder ini menyimpan tabel dan grafik terpilih yang dapat ditelusuri ke data/run nyata.
 
 Untuk setiap run catat:
 - ID run dan identitas/versi data serta manifest split.

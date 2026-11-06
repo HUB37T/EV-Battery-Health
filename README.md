@@ -4,8 +4,12 @@ Proyek kelompok untuk menganalisis dataset kesehatan baterai kendaraan listrik d
 
 ## Status proyek
 
-**Audit dataset dan EDA mendalam train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing final, pelatihan, dan evaluasi model belum dijalankan.
+**Audit dataset dan EDA mendalam train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing train-only sudah dijalankan untuk tiga resep kandidat. Resep terbaik belum dipilih; pelatihan dan evaluasi model belum dijalankan.
 
+- [Notebook preprocessing yang sudah dieksekusi](notebooks/02_preprocessing.ipynb).
+- [Laporan preprocessing dan hasil pemeriksaan](results/preprocessing/PREPROCESSING_REPORT.md).
+- [Salinan baca preprocessing tanpa kode](results/preprocessing/PREPROCESSING_READING.html).
+- [Resep preprocessing](configs/preprocessing.json): baseline 67 input; alternatif lengkap 67; compact 63.
 - [EDA mendalam: notebook yang sudah dieksekusi](notebooks/01_eda_train.ipynb).
 - [Laporan EDA dengan 18 gambar dan interpretasi](results/eda/EDA_REPORT.md).
 - [Salinan baca HTML tanpa kode](results/eda/EDA_READING.html) — unduh lalu buka di browser.
@@ -54,22 +58,25 @@ EV-Battery-Health/
 │   └── splits/         # Manifest split baterai bersama
 ├── configs/            # Kontrak target dan fitur
 ├── docs/               # Kartu dataset
-├── src/                # Logika audit dan EDA bersama
+├── src/                # Logika audit, EDA, dan preprocessing
 ├── scripts/            # Eksekusi notebook
-├── requirements.txt    # Dependensi audit/EDA yang diuji
+├── requirements.txt    # Dependensi data/preprocessing yang diuji
+├── tests/              # Uji perilaku dan keamanan artefak preprocessing
 ├── notebooks/
 │   ├── 00_data_audit.ipynb
 │   ├── 01_eda_train.ipynb
+│   ├── 02_preprocessing.ipynb
 │   └── README.md       # Status dan urutan notebook
 ├── models/
 │   └── README.md       # Aturan penyimpanan model/pipeline
 └── results/
     ├── audit/          # Audit kualitas dasar dan split
     ├── eda/            # EDA mendalam, PNG/SVG, tabel, HTML
+    ├── preprocessing/  # Resep, parameter train, pemeriksaan, HTML
     └── README.md       # Aturan pencatatan hasil dan artefak
 ```
 
-Notebook audit dan EDA sudah tersedia dan dieksekusi. Model belum dilatih; folder model masih berupa kerangka.
+Notebook audit, EDA, dan preprocessing sudah tersedia dan dieksekusi. Model belum dilatih; folder model masih berupa kerangka.
 
 ## Mulai bekerja
 
@@ -93,7 +100,7 @@ python -m venv .venv
 
 CSV, `README.md`, dan `data_dictionary .csv` dari arsip Kaggle harus tersedia di `data/raw/`. Spasi pada nama kamus memang berasal dari arsip. Perintah audit membuat ulang laporan/tabel/grafik; perintah notebook mengeksekusi semua sel dan menyimpan output. CSV asli tidak diubah. Versi CSV yang berbeda dan manifest split yang berubah ditolak. Notebook dapat dibuka di editor notebook dengan lingkungan Python yang sama.
 
-Dependensi ini khusus audit/EDA, belum termasuk framework MLP. Matriks versi dan hash sumber ada di `results/audit/provenance.json`.
+Dependensi ini untuk audit, EDA, dan preprocessing, belum termasuk framework MLP. Matriks versi dan hash sumber ada di `results/audit/provenance.json`.
 
 ## Menjalankan EDA mendalam
 
@@ -109,15 +116,36 @@ Perintah pertama membuat ulang tabel/grafik/laporan; eksekusi notebook juga memb
 
 EDA mencakup semua 35 kolom, 18 gambar, korelasi dengan jumlah pasangan, hubungan kimia–umur berbobot per baterai, bootstrap per baterai, pola bersyarat, missingness, outlier, serta kualitas temporal. EDA hanya menggunakan 34.929 baris / 1.820 baterai train. Data mentah, manifest split, dan kontrak fitur tidak berubah. Detail antarobservasi/per-baterai-bin dihasilkan ulang secara lokal; ringkasan dipublikasikan.
 
+## Menjalankan preprocessing
+
+```powershell
+.\.venv\Scripts\python.exe scripts/run_notebook.py notebooks/02_preprocessing.ipynb
+.\.venv\Scripts\python.exe scripts/export_eda.py --stage preprocessing
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+Alternatif tanpa notebook: `python -m src.preprocessing`. Semua parameter dipelajari dari train. Array hasil disimpan lokal di `data/processed/<recipe>/` dan fitted bundle di `models/preprocessing/`, diabaikan Git. Laporan/parameter/nama output tersedia di `results/preprocessing/`.
+
+```python
+from src.preprocessing import load_prepared_split
+train_data, bundle = load_prepared_split('baseline_standard', 'train')
+X_train, y_train_scaled = train_data['X'], train_data['y_scaled']
+# Setelah prediksi MLP: inverse_transform prediksi memakai bundle['target_scaler'].
+```
+
+Pipeline menangani median numerik + indikator missing, kategori missing eksplisit + one-hot, recall biner, standardisasi fitur/target, dan alternatif log/cap/fitur compact. Tidak ada resampling target atau penghapusan SOH rendah. Loader memeriksa kecocokan pipeline/array. Gunakan artefak joblib tepercaya.
+
+Default `baseline_standard` menghasilkan **67 input**; `log_sensor_caps` juga 67; `compact_log_sensor_caps` 63. Ketiganya belum diperingkat berdasarkan skor model. Preprocessing membantu optimasi dan kualitas input, tetapi overfitting/underfitting perlu dibuktikan melalui train–validation curves dan eksperimen MLP. Untuk CV, fit ulang pipeline/target scaler pada setiap fold-train; array precomputed hanya untuk split tetap ini.
+
 ## Pekerjaan berikutnya
 
 1. Baca panduan dan sepakati pembagian kerja.
 2. Tinjau temuan audit, target, saat prediksi, manifest split, dan kontrak fitur awal bersama kelompok.
-3. Bahas temuan dan keterbatasan EDA; tahap selanjutnya adalah pipeline preprocessing yang fit hanya pada train.
+3. Tinjau hasil preprocessing dan mulai baseline MLP dengan resep baseline_standard; bandingkan alternatif secara terkontrol menggunakan validation.
 4. Tentukan apakah dosen mengharuskan backpropagation dari nol atau memperbolehkan framework.
 5. Sesudah pipeline diverifikasi, buat baseline MLP dan eksperimen menggunakan validation. Test tetap untuk evaluasi final.
 
-Belum ada perintah training. Pekerjaan saat ini berhenti pada EDA; preprocessing final dan implementasi MLP belum dilakukan.
+Belum ada perintah training. Tiga pipeline preprocessing sudah siap; pemilihan resep final, implementasi MLP, dan evaluasi generalisasi masih tahap berikutnya.
 
 ## Aturan kerja kelompok
 

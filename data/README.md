@@ -3,7 +3,7 @@
 1. Unduh `ev_battery_health.csv` dari [dataset Kaggle](https://www.kaggle.com/datasets/vinay24baghira/ev-battery-health-and-degradation-dataset).
 2. Simpan file asli di `raw/ev_battery_health.csv`; jangan menimpa dengan hasil pembersihan.
 3. Ekstrak juga `README.md` dan `data_dictionary .csv` ke `raw/`. Nama kamus memiliki spasi sebelum `.csv`.
-4. Simpan hasil transformasi lokal di `processed/`. Manifest baterai bersama tersedia di `splits/`.
+4. Hasil preprocessing tersedia lokal di `processed/<recipe>/` setelah notebook 02 dijalankan: train/validation/test.npz. Manifest baterai bersama tersedia di `splits/`. Array memuat X, y_scaled/y_original, ID, nama fitur, serta identitas pipeline; jangan diunggah ke Git.
 
 Kedua folder data diabaikan Git, kecuali `.gitkeep`. Jangan mengunggah file kredensial Kaggle.
 
