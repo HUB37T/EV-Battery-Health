@@ -4,8 +4,10 @@ Proyek kelompok untuk menganalisis dataset kesehatan baterai kendaraan listrik d
 
 ## Status proyek
 
-**Audit dataset dan EDA mendalam train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing train-only sudah dijalankan untuk tiga resep kandidat. Eksperimen MLP/backpropagation sudah menjalankan 17 run unik dan konfirmasi tiga seed. Kandidat sementara dipilih dari validation. Ablation feature engineering menambah 6 run baru; test belum dievaluasi.
+**Audit dataset dan EDA mendalam train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing train-only sudah dijalankan untuk tiga resep kandidat. Eksperimen MLP/backpropagation sudah menjalankan 17 run unik dan konfirmasi tiga seed. Kandidat dipilih dari validation. Ablation feature engineering menambah 6 run baru. **Evaluasi akhir selesai:** enam checkpoint yang dikunci sebelum test dinilai pada 7.572 observasi / 390 baterai baru, tanpa retraining atau tuning dari test.
 
+- [Evaluasi akhir: notebook 04](notebooks/04_final_evaluation.ipynb), [laporan](results/final_evaluation/FINAL_REPORT.md), dan [HTML baca](results/final_evaluation/FINAL_READING.html).
+- [Metrik test seluruh seed](results/final_evaluation/metrics_by_seed.csv), [ringkasan](results/final_evaluation/metrics_summary.csv), dan [lock artefak](results/final_evaluation/evaluation_lock.json).
 - [Ablation feature engineering](notebooks/03b_feature_engineering_ablation.ipynb), [laporan](results/feature_engineering/FEATURE_ENGINEERING_REPORT.md), dan [HTML baca](results/feature_engineering/FEATURE_ENGINEERING_READING.html).
 - [Notebook eksperimen MLP/backpropagation](notebooks/03_mlp_experiments.ipynb).
 - [Laporan eksperimen](results/experiments/EXPERIMENT_REPORT.md) dan [HTML baca](results/experiments/EXPERIMENT_READING.html).
@@ -72,6 +74,7 @@ EV-Battery-Health/
 │   ├── 02_preprocessing.ipynb
 │   ├── 03_mlp_experiments.ipynb
 │   ├── 03b_feature_engineering_ablation.ipynb
+│   ├── 04_final_evaluation.ipynb
 │   └── README.md       # Status dan urutan notebook
 ├── models/
 │   └── README.md       # Aturan penyimpanan model/pipeline
@@ -81,10 +84,11 @@ EV-Battery-Health/
     ├── preprocessing/  # Resep, parameter train, pemeriksaan, HTML
     ├── experiments/    # Run log, kurva, checkpoint metadata, validation
     ├── feature_engineering/ # Ablation fitur dan konfirmasi seed
+    ├── final_evaluation/ # Test terkunci, analisis error, dan laporan
     └── README.md       # Aturan pencatatan hasil dan artefak
 ```
 
-Notebook 00–03 sudah tersedia dan dieksekusi. Fitted preprocessing dan checkpoint MLP tersedia lokal, diabaikan Git. Training pada clone baru membuatnya ulang dari konfigurasi/data.
+Notebook 00–04 termasuk 03b sudah tersedia dan dieksekusi. Fitted preprocessing dan checkpoint MLP tersedia lokal, diabaikan Git. Training pada clone baru membuatnya ulang dari konfigurasi/data.
 
 ## Mulai bekerja
 
@@ -156,7 +160,7 @@ Default `baseline_standard` menghasilkan **67 input**; `log_sensor_caps` juga 67
 
 Notebook juga dapat menjalankan study/report secara langsung. Run identik yang lengkap dengan fingerprint cocok dipakai ulang. Checkpoint disimpan lokal di `models/mlp/<run_id>/`; bila belum ada pada clone baru, model dilatih ulang. Array preprocessing harus dibuat lebih dahulu. Baseline saja: `python -m src.mlp_experiments --baseline`.
 
-**Hasil validation (bukan test):** baseline mean MAE tiga seed **1,0468 ± 0,0024** poin SOH; kandidat **0,9752 ± 0,0024**. Kandidat sementara: log_sensor_caps, input 67, hidden [32], sigmoid, output linear, MAE, Adam lr=0,001, weight_decay=1e-4. Pencarian bertahap bukan full factorial dan tidak membuktikan optimum global.
+**Hasil validation (bukan test):** baseline mean MAE tiga seed **1,0468 ± 0,0024** poin SOH; kandidat **0,9752 ± 0,0024**. Kandidat yang dipilih dari validation: log_sensor_caps, input 67, hidden [32], sigmoid, output linear, MAE, Adam lr=0,001, weight_decay=1e-4. Pencarian bertahap bukan full factorial dan tidak membuktikan optimum global.
 
 Loss dilatih pada y_scaled, metrik dikembalikan ke SOH asli. Best checkpoint dipilih dengan validation MAE; last/endpoint tidak disamakan dengan best. Seluruh seed dan hasil kurang baik tetap tercatat. Test tetap tidak dimuat oleh runner. Feature engineering domain sudah diuji terpisah pada notebook 03b, dengan training loop dan kontrol yang sama; hasilnya tidak menimpa study awal.
 
@@ -171,19 +175,39 @@ Loss dilatih pada y_scaled, metrik dikembalikan ke SOH asli. Best checkpoint dip
 
 Notebook juga dapat menjalankan study/report langsung. Empat varian menguji rasio penggunaan, konteks suhu/fast charge–DOD, interaksi kimia–paparan, dan gabungannya. Prefix 67 fitur lama tidak berubah. Ekstra fit hanya train; target scaler dipakai ulang; model [32]/sigmoid/MAE/Adam dan prosedur tetap.
 
-Mean MAE validation tiga seed: kontrol kandidat 03 **0,97525 ± 0,00236**, FE gabungan **0,96938 ± 0,00532** poin. Gain **0,00587 poin** dengan parameter 2.209 → 2.977. FE menang tiga seed tetapi tidak memenuhi ambang gain rerata 0,01 poin yang ditetapkan sebelum training; rekomendasi sementara tetap kontrol. Ini heuristik praktis, bukan uji signifikansi. Pada SOH <70%, error turun sekitar 3,46 → 3,25 poin; lihat dukungan/variasi seed di laporan.
+Mean MAE validation tiga seed: kontrol kandidat 03 **0,97525 ± 0,00236**, FE gabungan **0,96938 ± 0,00532** poin. Gain **0,00587 poin** dengan parameter 2.209 → 2.977. FE menang tiga seed tetapi tidak memenuhi ambang gain rerata 0,01 poin yang ditetapkan sebelum training; rekomendasi pra-test tetap kontrol. Ini heuristik praktis, bukan uji signifikansi. Pada SOH <70%, error turun sekitar 3,46 → 3,25 poin; lihat dukungan/variasi seed di laporan.
 
 Config/provenance berada di configs/feature_engineering.json dan results/feature_engineering/study.json. Array hanya train/validation, lokal di data/processed/<variant>; bundle inference di models/feature_engineering. Tidak membuat atau mengevaluasi test FE pada tahap ini. Kontrol dan studi 03 dipertahankan, sehingga efek fitur dapat ditelusuri.
 
+## Evaluasi akhir pada test
+
+```powershell
+python -m src.final_evaluation
+python -m src.final_reporting
+python scripts/run_notebook.py notebooks/04_final_evaluation.ipynb --timeout 3600
+python scripts/export_eda.py --stage final
+```
+
+Diperlukan array preprocessing dan enam checkpoint asli lokal. Evaluator memeriksa identitas berkas, mengunci model/seed sebelum inference, dan memakai cache jika hasil lengkap cocok. Tidak ada training, fit ulang, clipping, pemilihan seed terbaik dari test, atau ensemble. Model utama tetap kandidat tanpa FE domain yang dipilih sebelum test.
+
+| Model | Test MAE (poin SOH), mean ± SD | Test RMSE (poin SOH), mean ± SD | Test R², mean ± SD |
+|---|---:|---:|---:|
+| Baseline MLP | 1,02684 ± 0,00311 | 1,49732 ± 0,00794 | 0,95221 ± 0,00051 |
+| Kandidat utama | 0,95005 ± 0,00619 | 1,42114 ± 0,01228 | 0,95694 ± 0,00074 |
+
+Sample SD tiga seed training pada test yang sama bukan confidence interval populasi. Pada **SOH <70%**, kandidat lebih buruk: MAE **3,09049** dibanding baseline **2,80057**, dari 88 observasi / 23 baterai. Bias kandidat +2,45854 poin pada kelompok ini. Data sintetis membatasi klaim ke simulator yang sama, bukan forecasting atau penggunaan nyata. Lihat laporan final untuk seluruh seed, dukungan rentang, error per baterai, dan prediksi di luar 0–100 yang tetap tidak di-clip.
+
+Pada clone baru, laporan dan HTML langsung dapat dibaca. Jika checkpoint/pipeline dibuat ulang sehingga hash binernya berbeda, evaluator rilis sengaja menolak penggantian. Gunakan `python -m src.final_evaluation --reproduce` untuk keluaran lokal terpisah di `data/processed/final_evaluation_reproduction`. Jangan menghapus lock rilis atau melakukan tuning menggunakan test yang sudah dibuka. Notebook 04 memverifikasi artefak asli; reproduksi baru memakai evaluator dengan output terpisah.
+
 ## Pekerjaan berikutnya
 
-1. Baca panduan dan sepakati pembagian kerja.
-2. Tinjau temuan audit, target, saat prediksi, manifest split, dan kontrak fitur awal bersama kelompok.
-3. Tinjau ablation FE dan trade-off error/kompleksitas; rekomendasi sementara tetap kontrol kandidat 03.
-4. Tentukan apakah dosen mengharuskan backpropagation dari nol atau memperbolehkan framework.
-5. Setelah seluruh eksperimen disepakati, kunci konfigurasi serta seed sebelum menjalankan evaluasi test pada notebook 04.
+1. Susun laporan akhir: EDA, alasan preprocessing, arsitektur/backpropagation, eksperimen, pemilihan validation, dan hasil test final.
+2. Buat slide dengan enam grafik final dan pilih temuan EDA yang menjelaskan rancangan model.
+3. Jelaskan kelemahan SOH rendah, sifat sintetis, dan batas generalisasi secara konsisten.
+4. Pastikan ketentuan dosen tentang framework/backpropagation dari nol serta format pengumpulan terpenuhi.
+5. Latihan presentasi; setiap anggota perlu menjelaskan metode dan satuan metriknya.
 
-Study MLP dan ablation feature engineering selesai pada validation. Berikutnya adalah penguncian konfigurasi/seed, lalu evaluasi test terpisah pada notebook 04; jangan menggunakan test untuk memilih fitur atau ambang keputusan.
+Tahap analisis dan evaluasi final selesai. Pekerjaan berikutnya berfokus pada penulisan/presentasi; test tidak digunakan kembali untuk memilih fitur atau konfigurasi.
 
 ## Aturan kerja kelompok
 

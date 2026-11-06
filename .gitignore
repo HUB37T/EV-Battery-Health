@@ -63,6 +63,9 @@ results/eda/battery_age_means.csv
 !/results/experiments/runs/
 results/experiments/runs/*/validation_predictions.csv
 
+# Frozen-model test predictions are recreated locally; aggregate results stay tracked.
+results/final_evaluation/predictions/
+
 # Editor / OS files
 .vscode/
 .idea/

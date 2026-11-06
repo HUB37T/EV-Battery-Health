@@ -1,12 +1,13 @@
 # Notebook proyek
 
-Notebook 00–03 serta 03b sudah dibuat dan seluruh selnya berhasil dieksekusi. Notebook 04 belum dibuat. Kerjakan berurutan:
+Notebook 00–04 termasuk 03b sudah dibuat dan seluruh selnya berhasil dieksekusi. Evaluasi test final selesai dengan enam checkpoint yang dikunci sebelum scoring. Kerjakan berurutan:
 
 1. `00_data_audit.ipynb`: skema, kualitas dasar, target, ID/waktu, kamus data, dan manifest split.
 2. `01_eda_train.ipynb`: analisis train, grafik, interpretasi, dan rekomendasi fitur.
 3. `02_preprocessing.ipynb`: pipeline train/validation/test dan pemeriksaan input model.
 4. `03_mlp_experiments.ipynb`: MLP, training backpropagation, konfigurasi eksperimen, checkpoint, dan metrik validation.
-5. `04_final_evaluation.ipynb`: evaluasi konfigurasi terkunci, analisis error, dan grafik final.
+5. `03b_feature_engineering_ablation.ipynb`: ablation fitur domain, kontrol tetap, dan konfirmasi tiga seed pada validation.
+6. `04_final_evaluation.ipynb`: evaluasi konfigurasi terkunci, analisis error, dan grafik final.
 
 Setiap notebook harus menjelaskan input, output, dan dependensinya, serta dapat dijalankan dari keadaan bersih. Hindari path absolut milik satu anggota. Jika fungsi yang sama dipakai berulang, pertimbangkan memindahkannya ke modul bersama setelah implementasi tersedia.
 
@@ -56,3 +57,14 @@ python scripts/export_eda.py --stage features
 ```
 
 Notebook 03b menguji empat varian fitur pada kontrol kandidat 03 yang dibekukan, kemudian mengonfirmasi FE terbaik pada tiga seed. Terdapat 6 run training baru dalam versi final. Hasil/laporan di results/feature_engineering. Tidak mengubah study 03 atau memakai test. Rekomendasi praktis tetap kontrol karena gain agregat FE belum melewati ambang yang ditetapkan.
+
+## Evaluasi final
+
+```powershell
+python scripts/run_notebook.py notebooks/04_final_evaluation.ipynb --timeout 3600
+python scripts/export_eda.py --stage final
+```
+
+Notebook 04 berisi 32 sel (14 sel kode), hasil test tiga seed baseline/kandidat, enam visual, error per rentang SOH dan baterai, verifikasi angka independen, serta suite 32 test. Tidak melatih ulang atau memilih model dari test. MAE kandidat 0,95005 ± 0,00619 poin, baseline 1,02684 ± 0,00311; kandidat lebih buruk pada SOH <70%. Hasil di results/final_evaluation.
+
+Eksekusi memerlukan artefak asli lokal sesuai evaluation_lock.json dan akan menolak hash berbeda. Clone baru dapat langsung membaca laporan/HTML. Jika mereproduksi checkpoint, jalankan evaluator dengan `python -m src.final_evaluation --reproduce` untuk output terpisah, tanpa mengganti lock rilis. Lihat README utama untuk alur lengkap.

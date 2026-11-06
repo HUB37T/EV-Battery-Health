@@ -4,7 +4,7 @@ Dokumen kerja kelompok untuk EDA, preprocessing, dan eksperimen Multi Layer Perc
 
 > Konteks kuliah: proyek akhir Jaringan Saraf Tiruan. Model eksperimen dibatasi pada Multi Layer Perceptron (MLP) dengan pelatihan backpropagation. Model JST lain yang telah dipelajari hanya menjadi landasan teori.
 >
-> Status dokumen: panduan kerja dengan audit dan EDA mendalam train yang sudah dijalankan pada 6 November 2026. Training MLP serta metrik train/validation sudah tersedia; test belum dimuat/dievaluasi. Persyaratan yang berasal dari tugas, rekomendasi metodologis, dan tambahan bersyarat dibedakan di bagian 29.
+> Status dokumen: panduan kerja dengan audit dan EDA mendalam train yang sudah dijalankan pada 6 November 2026. Audit, EDA, preprocessing, eksperimen MLP/FE, serta evaluasi test terkunci sudah selesai. Hasil akhir memakai seluruh tiga seed tanpa tuning dari test. Persyaratan yang berasal dari tugas, rekomendasi metodologis, dan tambahan bersyarat dibedakan di bagian 29.
 
 ## Ringkasan keputusan audit — 6 November 2026
 
@@ -20,9 +20,10 @@ Dokumen kerja kelompok untuk EDA, preprocessing, dan eksperimen Multi Layer Perc
 - [Preprocessing](notebooks/02_preprocessing.ipynb) sudah di-fit hanya pada train. Resep lengkap baseline/log-cap menghasilkan 67 input; compact 63. [Laporan](results/preprocessing/PREPROCESSING_REPORT.md) dan [HTML](results/preprocessing/PREPROCESSING_READING.html) tersedia.
 - Median/modus, kategori one-hot, batas cap alternatif, serta scaler fitur/target berasal dari train. Tidak menghapus baris, menyeimbangkan kelas regresi, atau mengubah target asli.
 - [Notebook MLP](notebooks/03_mlp_experiments.ipynb) sudah menjalankan 17 run unik; [laporan](results/experiments/EXPERIMENT_REPORT.md) memuat checkpoint, kurva, perbandingan faktor, dan tiga seed. Mean validation MAE baseline 1,0468 ± 0,0024; kandidat 0,9752 ± 0,0024 poin SOH.
-- Kandidat sementara: log_sensor_caps, input 67, hidden [32], sigmoid, output linear, loss MAE, Adam lr 0,001, weight_decay 1e-4. Batch aktual 256 pada semua run menggantikan rekomendasi awal 32 demi CPU training; early stopping memakai patience 15/min_delta 0,001 poin.
+- Kandidat utama yang dipilih sebelum test: log_sensor_caps, input 67, hidden [32], sigmoid, output linear, loss MAE, Adam lr 0,001, weight_decay 1e-4. Batch aktual 256 pada semua run menggantikan rekomendasi awal 32 demi CPU training; early stopping memakai patience 15/min_delta 0,001 poin.
 - Epoch 50/100/200 dibandingkan melalui endpoint satu trajectory tanpa early stopping. Trajectory diagnostik tidak dipromosikan diam-diam ke kandidat. Domain feature engineering sudah diuji terpisah pada notebook 03b: empat varian, enam run baru, konfirmasi tiga seed. Mean MAE kontrol 0,97525 dan FE terbaik 0,96938; gain 0,00587 poin belum melewati ambang praktis 0,01 poin, sehingga rekomendasi utama tetap kontrol. Lihat results/feature_engineering/FEATURE_ENGINEERING_REPORT.md.
-- Test belum dimuat/dievaluasi. Data asli, kontrak fitur awal, dan split dipertahankan. Pemilihan final masih perlu mempertimbangkan keterbatasan validation berulang dan error SOH rendah.
+- [Evaluasi final notebook 04](notebooks/04_final_evaluation.ipynb) selesai pada 7.572 observasi / 390 baterai test. MAE test baseline **1,02684 ± 0,00311**, kandidat **0,95005 ± 0,00619** poin SOH (mean ± sample SD tiga seed). Enam best checkpoint validation dan preprocessing dikunci sebelum test; tanpa retraining/fit, ensemble, clipping, pemilihan seed, atau tuning dari test.
+- Pada SOH <70%, kandidat lebih buruk: MAE **3,09049** versus **2,80057** baseline; 88 observasi / 23 baterai, bias kandidat **+2,45854 poin**. [Laporan final](results/final_evaluation/FINAL_REPORT.md) memuat metrik, dukungan subkelompok, dan batas klaim. Data asli/kontrak/split tetap; FE domain tetap ablation validation. Tahap berikutnya penulisan laporan dan presentasi.
 
 ## Cara memakai panduan ini
 
@@ -231,15 +232,15 @@ Peran boleh dirangkap sesuai jumlah anggota. Semua anggota harus memahami target
 
 ## 13. Kriteria tugas selesai
 
-- [ ] Target dan pertanyaan penelitian jelas, sesuai kolom nyata.
-- [ ] Data dan satuan terdokumentasi; semua grafik utama memiliki interpretasi.
-- [ ] Missing value, outlier, duplikasi, normalisasi, feature selection, dan balancing dibahas, termasuk alasan jika tidak dilakukan.
-- [ ] Split sesuai struktur data dan semua transformasi belajar hanya dari train.
-- [ ] Model hanya MLP dengan backpropagation; dimensi input/output dapat dijelaskan.
-- [ ] Eksperimen mencakup input, hidden layer, aktivasi, loss yang sesuai, dan epoch.
-- [ ] Semua konfigurasi dibandingkan pada split serta metrik yang konsisten.
-- [ ] Model dipilih menggunakan validation dan test digunakan pada evaluasi akhir.
-- [ ] Hasil final mencakup variasi seed, analisis error, dan keterbatasan.
+- [x] Target dan pertanyaan penelitian jelas, sesuai kolom nyata.
+- [x] Data dan satuan terdokumentasi; semua grafik utama memiliki interpretasi.
+- [x] Missing value, outlier, duplikasi, normalisasi, feature selection, dan balancing dibahas, termasuk alasan jika tidak dilakukan.
+- [x] Split sesuai struktur data dan semua transformasi belajar hanya dari train.
+- [x] Model hanya MLP dengan backpropagation; dimensi input/output dapat dijelaskan.
+- [x] Eksperimen mencakup input, hidden layer, aktivasi, loss yang sesuai, dan epoch.
+- [x] Semua konfigurasi dibandingkan pada split serta metrik yang konsisten.
+- [x] Model dipilih menggunakan validation dan test digunakan pada evaluasi akhir.
+- [x] Hasil final mencakup variasi seed, analisis error, dan keterbatasan.
 - [ ] Model, pipeline, konfigurasi, tabel hasil, laporan, dan petunjuk reproduksi tersedia.
 - [ ] Semua angka laporan sesuai hasil yang tersimpan.
 
@@ -252,7 +253,7 @@ Peran boleh dirangkap sesuai jumlah anggota. Semua anggota harus memahami target
 5. Apakah ada ketentuan framework, jumlah eksperimen, format laporan, dan tenggat?
 6. Siapa pemilik tiap hasil dan kapan titik pemeriksaan internalnya?
 
-Dokumen ini berisi panduan dan keputusan aktual hingga eksperimen MLP train/validation. Detail angka dan konfigurasi yang benar-benar dijalankan ada di results/experiments; test belum dievaluasi. Perbarui keputusan bila EDA train/preprocessing mengungkap kebutuhan perubahan, dan jangan menggunakan test untuk menentukannya.
+Dokumen ini berisi panduan dan keputusan aktual sampai evaluasi final. Hasil pencarian tersedia di results/experiments dan results/feature_engineering; hasil test di results/final_evaluation. Model utama ditetapkan sebelum test; jangan melakukan tuning berdasarkan test yang sudah dibuka.
 
 ---
 
@@ -681,7 +682,7 @@ Jangan mengisi angka contoh seolah-olah hasil. Kesimpulan “lebih banyak layer 
 
 ## 24. Rencana notebook dan fungsi setiap tahap
 
-Struktur berikut menjelaskan peran artefak: notebook 00–03 dan 03b sudah dibuat dan dijalankan; notebook 04 belum dibuat.
+Struktur berikut menjelaskan peran artefak: notebook 00–04 termasuk 03b sudah dibuat dan dijalankan. Notebook 04 mengevaluasi konfigurasi yang dikunci sebelum test; notebook tahap sebelumnya tetap merekam keputusan dan hasil pada masanya.
 
 ### 00_data_audit
 - Membaca data asli dan memeriksa skema.
@@ -851,4 +852,4 @@ Website, aplikasi deployment, dashboard, model selain MLP, atau klasifikasi tamb
 - [ ] Setiap anggota dapat menjelaskan bagian 28 dengan bahasanya sendiri.
 - [ ] Laporan, slide, dan tabel hasil menyebut angka final yang sama.
 
-Audit, EDA, preprocessing, dan study MLP dengan validation sudah tersedia. Ablation feature engineering selesai pada validation; rekomendasi sementara tetap kontrol kandidat 03 menurut aturan praktis yang ditetapkan. Setelah konfigurasi/seed dikunci, notebook 04 akan mengevaluasi test. Keputusan implementasi dari nol/framework masih mengikuti ketentuan dosen.
+Audit, EDA, preprocessing, studi MLP/FE, dan evaluasi test final sudah selesai. Kandidat 03 tanpa fitur domain tetap keluarga utama sesuai keputusan pra-test. Rerata MAE test 0,95005 poin dengan kelemahan SOH <70% tetap dilaporkan. Laporan/presentasi pengumpulan dan pemeriksaan pemahaman anggota masih perlu diselesaikan. Keputusan implementasi dari nol/framework mengikuti ketentuan dosen. Rincian reproduksi ada di README; lock hasil rilis tidak boleh dihapus untuk mengganti angka.
