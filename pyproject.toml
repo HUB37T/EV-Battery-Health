@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ev-battery"
+version = "1.0.0"
+description = "State-of-health estimation for EV batteries with a from-scratch NumPy MLP trained by backpropagation (JST final project)."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12,<3.14"
+# Exact pins: run IDs and the evaluation lock depend on bit-identical training.
+dependencies = [
+    "numpy==2.2.5",
+    "pandas==2.3.2",
+    "matplotlib==3.10.6",
+    "scipy==1.16.1",
+    "scikit-learn==1.7.2",
+    "joblib==1.5.2",
+    "nbformat==5.10.4",
+    "nbclient==0.10.2",
+    "nbconvert==7.16.6",
+    "ipykernel==6.29.5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.8"]
+
+[project.scripts]
+ev-battery = "ev_battery.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-include = ["*.ipynb"]
+extend-exclude = ["notebooks", "results", "docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = [
+    "E501",   # long f-string report templates are intentional
+    "E402",   # matplotlib.use("Agg") must run before pyplot is imported
+    "E741",
+    "B905",   # zip(strict=...) would change behaviour of existing analyses
+    "SIM108",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ev_battery"]
