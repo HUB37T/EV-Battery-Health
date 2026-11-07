@@ -1,140 +1,138 @@
-# Evaluasi Akhir MLP Backpropagation
+# Final Test Evaluation of the Backpropagation MLP
 
-## Hasil utama
+## Key results
 
-Evaluasi final selesai pada **7.572 observasi dari 390 baterai test** yang tidak muncul dalam train/validation. Enam checkpoint dan preprocessing dikunci sebelum prediksi test dihitung. Tidak ada fit, retraining, pemilihan seed, penambahan FE, clipping prediksi, atau tuning setelah melihat test.
+The final evaluation covers **7,572 observations from 390 test batteries** that never appear in train or validation. Six checkpoints and the preprocessing were locked before any test prediction was computed. There was no fitting, retraining, seed selection, feature engineering, prediction clipping or tuning after seeing the test split.
 
-- Kandidat utama yang ditetapkan sebelum test: mean MAE **0.95005 ± 0.00619 poin SOH**, RMSE **1.42114 ± 0.01228**, R² **0.95694 ± 0.00074**.
-- Baseline MLP: mean MAE **1.02684 ± 0.00311 poin**. Selisih **0.07679 poin**, sekitar **7.48%** relatif terhadap MAE baseline pada test ini.
-- Parameter baseline 6,465, kandidat 2,209. Semua hasil memakai seed 42/123/2026, tidak memilih seed test terbaik dan tidak melakukan ensemble.
-- Keterbatasan penting: pada **SOH <70%**, MAE kandidat **3.0905** lebih besar daripada baseline **2.8006**, dengan 88 observasi / 23 baterai. Keunggulan agregat tidak berarti kandidat unggul di semua kondisi.
+- Main candidate, fixed before test: mean MAE **0.97268 ± 0.00325 SOH points**, RMSE **1.43615 ± 0.00465**, R² **0.95603 ± 0.00028**.
+- Baseline MLP: mean MAE **0.96018 ± 0.00641 points**. The candidate is **0.01250 points higher** (about 1.30% of the baseline MAE).
+- Parameters: baseline 2,209, candidate 553. All results use seeds 42, 123 and 2026, with no best-seed selection and no ensembling.
+- Key limitation: for **SOH < 70%** the candidate MAE is **3.0534** versus **2.7753** for the baseline (higher), on 88 observations from 23 batteries. Errors on the rare, most degraded batteries are about three times the average error for both models.
 
-## 1. Apa yang dikunci sebelum test?
+## 1. What was locked before testing
 
-Rencana `configs/final_evaluation.json` menetapkan baseline/kandidat dan tiga seed, best checkpoint berdasarkan validation, rentang SOH, serta kandidat sebagai keluarga model utama. Kandidat memakai log_sensor_caps, input 67 → hidden [32] sigmoid → output linear, loss MAE, Adam lr=0.001, weight_decay=1e-4. Baseline memakai input 67 → [64,32] ReLU → output linear, MSE, Adam dengan kebijakan batch/stopping yang sama. Epoch terbaik berasal dari validation, bukan test.
+`configs/final_evaluation.json` fixes the baseline and candidate, the three seeds, best-validation checkpoints, the SOH bands, and the candidate as the main model family. The candidate uses `baseline_standard`, 67 inputs, hidden [8] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0. The baseline uses `baseline_standard`, 67 inputs, hidden [32] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0. Both share the same early-stopping policy. Best epochs come from validation, never from test.
 
-Feature engineering tetap hasil ablation validation. Rekomendasinya sebelum test mempertahankan kandidat 03 tanpa fitur domain tambahan. FE tidak diam-diam dimasukkan kembali ke pembandingan test.
+Feature engineering remains a validation ablation. Its recommendation before testing was to keep the notebook 03 candidate without extra domain features, and engineered features are not added back into the test comparison.
 
-`evaluation_lock.json` dibuat pada `2026-11-06T04:46:57.766275+00:00` sebelum inference test, fingerprint `bd989baf6c7a34b7c7a8cec0c73209b2d95f32deda3d8d4e193089592d74a430`. Lock mencatat SHA-256 enam checkpoint, dua fitted pipeline, array test, konfigurasi, manifest, bukti pemilihan validation/FE, dan source evaluator. Semua berkas yang dikunci diperiksa tetap sama sesudah inference.
+`evaluation_lock.json` was created at `2026-11-07T22:22:25.861474+00:00` before test inference, with fingerprint `75b44e65e2f88f74f3c276f1e7e4fbff79bbcdc2e67ff5a6a473b979da5e90e4`. The lock records SHA-256 hashes of the six checkpoints, the two fitted pipelines, the test arrays, the configurations, the manifest, the validation and feature-engineering selection evidence, and the evaluator source. Every locked file is verified to be unchanged after inference.
 
-## 2. Metrik akhir dan arti satuannya
+## 2. Final metrics and their units
 
 | group | test_mae_mean_pp | test_mae_sd_pp | test_rmse_mean_pp | test_rmse_sd_pp | test_r2_mean | test_r2_sd | test_battery_mae_mean_pp | parameters |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| baseline | 1.02684 | 0.00311 | 1.49732 | 0.00794 | 0.95221 | 0.00051 | 1.02975 | 6465 |
-| candidate | 0.95005 | 0.00619 | 1.42114 | 0.01228 | 0.95694 | 0.00074 | 0.9525 | 2209 |
+| baseline | 0.96018 | 0.00641 | 1.40619 | 0.00799 | 0.95785 | 0.00048 | 0.96278 | 2209 |
+| candidate | 0.97268 | 0.00325 | 1.43615 | 0.00465 | 0.95603 | 0.00028 | 0.97442 | 553 |
 
-![Metrik test](01_test_metrics.png)
+![Test metrics](01_test_metrics.png)
 
-MAE/RMSE dihitung setelah inverse target scaling. MAE 0.95 berarti rata-rata selisih absolut sekitar 0.95 **poin persentase SOH**, bukan accuracy 99.05% dan bukan jaminan semua prediksi memiliki error sebesar itu. R² juga bukan accuracy klasifikasi.
+MAE and RMSE are computed after inverting the target scaling. An MAE of 0.95 means an average absolute error of about 0.95 **SOH percentage points**. It is not a 99.05% accuracy and does not mean every prediction has that error. R² is not classification accuracy either.
 
-SD adalah sample SD (ddof=1) tiga seed training pada baterai test yang sama; bukan confidence interval populasi, bukan ketidakpastian semua split, dan bukan tiga dataset test independen. Rerata R²/RMSE adalah rerata metrik per seed, bukan metrik ensemble prediksi.
+SD is the sample SD (ddof = 1) over three training seeds on the same test batteries. It is not a population confidence interval, does not cover the uncertainty over all possible splits, and does not represent three independent test sets. Mean R² and RMSE are averages of per-seed metrics, not metrics of an ensemble.
 
-## 3. Hasil setiap seed
+## 3. Results per seed
 
 | group | seed | run_id | best_epoch_from_validation | test_mae_pp | test_rmse_pp | test_r2 | test_battery_mean_mae_pp |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| baseline | 42 | run_83aa5197bac6 | 22 | 1.02867 | 1.50053 | 0.952 | 1.03153 |
-| baseline | 123 | run_567cd20b04c3 | 23 | 1.02325 | 1.48827 | 0.95278 | 1.02677 |
-| baseline | 2026 | run_e8aecfd9751c | 22 | 1.02859 | 1.50315 | 0.95183 | 1.03096 |
-| candidate | 42 | run_417429878fc7 | 123 | 0.94299 | 1.40703 | 0.9578 | 0.94534 |
-| candidate | 123 | run_312fdc17ada1 | 116 | 0.95455 | 1.42942 | 0.95644 | 0.95643 |
-| candidate | 2026 | run_73d0ae8e6140 | 100 | 0.9526 | 1.42696 | 0.95659 | 0.95571 |
+| baseline | 42 | run_cd4e6f80a183 | 62 | 0.95973 | 1.40074 | 0.95817 | 0.96168 |
+| baseline | 123 | run_96e0465b8c5f | 41 | 0.954 | 1.40248 | 0.95807 | 0.9569 |
+| baseline | 2026 | run_27c8116694bb | 49 | 0.9668 | 1.41536 | 0.9573 | 0.96977 |
+| candidate | 42 | run_0015e8ebf51d | 96 | 0.97244 | 1.4402 | 0.95578 | 0.97377 |
+| candidate | 123 | run_17e82e31806b | 56 | 0.96956 | 1.43107 | 0.95634 | 0.9705 |
+| candidate | 2026 | run_125d105f67b2 | 58 | 0.97604 | 1.43717 | 0.95597 | 0.979 |
 
-Semua seed tetap ditampilkan, termasuk yang error-nya lebih tinggi. Gambar scatter menggunakan seed 42, yaitu seed pertama dalam rencana yang sudah ada, bukan seed yang dipilih setelah melihat ranking test. Perbandingan utama tetap mean/SD ketiga seed.
+Every seed is shown, including those with higher errors. Scatter plots use seed 42, the first seed in the existing plan, not a seed chosen after seeing the test ranking. The main comparison remains the mean and SD over all three seeds.
 
-## 4. Apakah pola validation bertahan?
+## 4. Does the validation pattern hold?
 
 | group | train_mae_mean_pp | validation_mae_mean_pp | test_mae_mean_pp | test_minus_validation_pp |
 | --- | --- | --- | --- | --- |
-| baseline | 0.87863 | 1.0468 | 1.02684 | -0.01996 |
-| candidate | 0.92785 | 0.97525 | 0.95005 | -0.0252 |
+| baseline | 0.95088 | 0.99997 | 0.96018 | -0.03979 |
+| candidate | 0.96941 | 0.99988 | 0.97268 | -0.0272 |
 
-![Train validation test](02_train_validation_test.png)
+![Train, validation and test](02_train_validation_test.png)
 
-Test MAE kandidat berada sekitar -0.02520 poin dari validation. Baseline juga memiliki skor test sedikit berbeda. Perbedaan tersebut dapat berasal dari komposisi baterai/sampel pada split; bukan alasan mengubah scaler atau bobot agar hasil cocok. Skor test lebih rendah daripada validation tidak membuktikan kebocoran maupun menjamin generalisasi pada distribusi lain.
+The candidate's test MAE differs from validation by -0.02720 points, and the baseline test score differs slightly as well. Such differences can come from the battery and sample composition of each split and are not a reason to adjust scalers or weights. A test score lower than validation neither proves leakage nor guarantees generalisation to other distributions.
 
-Kandidat dipilih sebelum test. Hasil ini mendukung kegunaan kandidat pada test sintetis yang ditahan, tetapi tidak membuktikan bebas overfitting untuk semua data. Kurva train–validation dan proses seleksi tetap dibahas pada notebook 03; test tidak menjadi dataset tuning baru.
+The candidate was chosen before testing. The result supports its usefulness on the held-out synthetic test split, but does not prove freedom from overfitting on every dataset. Train and validation curves and the selection process are discussed in notebook 03, and the test split does not become a new tuning set.
 
-## 5. Aktual vs prediksi dan residual
+## 5. Actual vs predicted and residuals
 
-![Prediksi](03_actual_predictions.png)
+![Predictions](03_actual_predictions.png)
 
-![Residual dan baterai sulit](06_residuals_and_largest_errors.png)
+![Residuals and hardest batteries](06_residuals_and_largest_errors.png)
 
-Prediksi tidak dipotong ke 0..100. Rerata proporsi prediksi kandidat di luar rentang itu adalah **0.6207%**; nilai tersebut dilaporkan sebagai keterbatasan output linear. Residual positif berarti model memprediksi SOH lebih tinggi daripada aktual. Rerata bias kandidat pada seluruh test adalah +0.0483 poin, yang tidak boleh menutupi bias lebih besar pada subkelompok.
+Predictions are not clipped to 0 to 100. On average **0.7440%** of candidate predictions fall outside that range, reported as a limitation of the linear output. A positive residual means the model predicts a higher SOH than the actual value. The candidate's mean bias over the whole test split is +0.0962 points, which must not hide larger biases in subgroups.
 
-## 6. Rentang SOH rendah masih menjadi kelemahan
+## 6. Low SOH remains a weakness
 
 | group | soh_band | rows | batteries | mae_mean_pp | mae_sd_pp | rmse_mean_pp | bias_mean_pp |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| baseline | <70 | 88 | 23 | 2.80057 | 0.27262 | 3.72309 | 1.7247 |
-| baseline | 70–<80 | 362 | 83 | 2.22403 | 0.01856 | 2.805 | 0.75378 |
-| baseline | 80–<90 | 1442 | 226 | 1.40137 | 0.0426 | 1.93865 | 0.1938 |
-| baseline | 90–<95 | 1888 | 324 | 1.03822 | 0.00472 | 1.47755 | 0.04718 |
-| baseline | >=95 | 3792 | 385 | 0.72329 | 0.00682 | 0.94084 | -0.17853 |
-| candidate | <70 | 88 | 23 | 3.09049 | 0.09566 | 4.06597 | 2.45854 |
-| candidate | 70–<80 | 362 | 83 | 1.9813 | 0.03608 | 2.54887 | 1.00457 |
-| candidate | 80–<90 | 1442 | 226 | 1.28293 | 0.02539 | 1.77545 | 0.21001 |
-| candidate | 90–<95 | 1888 | 324 | 0.94414 | 0.0054 | 1.3917 | -0.00711 |
-| candidate | >=95 | 3792 | 385 | 0.67828 | 0.00451 | 0.9303 | -0.1328 |
+| baseline | <70 | 88 | 23 | 2.77533 | 0.05902 | 3.6492 | 1.91158 |
+| baseline | 70–<80 | 362 | 83 | 1.96402 | 0.05101 | 2.59212 | 0.9439 |
+| baseline | 80–<90 | 1442 | 226 | 1.30142 | 0.0261 | 1.80092 | 0.16923 |
+| baseline | 90–<95 | 1888 | 324 | 0.96419 | 0.00521 | 1.3746 | 0.05032 |
+| baseline | >=95 | 3792 | 385 | 0.69046 | 0.00686 | 0.9073 | -0.16422 |
+| candidate | <70 | 88 | 23 | 3.05337 | 0.33421 | 4.10635 | 2.3892 |
+| candidate | 70–<80 | 362 | 83 | 2.06491 | 0.0288 | 2.70881 | 1.20826 |
+| candidate | 80–<90 | 1442 | 226 | 1.31848 | 0.01148 | 1.8181 | 0.28224 |
+| candidate | 90–<95 | 1888 | 324 | 0.98387 | 0.01453 | 1.38786 | 0.09385 |
+| candidate | >=95 | 3792 | 385 | 0.68305 | 0.01067 | 0.89912 | -0.13281 |
 
-![Rentang SOH](04_test_soh_bands.png)
+![Errors by SOH band](04_test_soh_bands.png)
 
-Pada SOH <70%, kandidat mempunyai MAE **3.0905 ± 0.0957**, baseline **2.8006 ± 0.2726**. Bias kandidat di rentang ini adalah **+2.4585 poin**: kesehatan baterai sintetis yang lebih buruk cenderung diperkirakan terlalu tinggi.
+For SOH < 70% the candidate has MAE **3.0534 ± 0.3342** and the baseline **2.7753 ± 0.0590**. The candidate's bias in this band is **+2.3892 points**, so the health of the most degraded synthetic batteries tends to be overestimated.
 
-Subkelompok ini hanya 88 observasi dari 23 baterai; tidak menyimpulkan superioritas statistik dari mean/SD tiga seed. Namun temuan tersebut wajib dilaporkan, karena target train didominasi SOH tinggi menurut EDA. Tidak mengubah loss, fitur, weighting, atau threshold dari temuan test ini. Jika dikembangkan lagi, diperlukan validasi/evaluasi independen baru.
+This subgroup has only 88 observations from 23 batteries, so no statistical superiority is inferred from a three-seed mean and SD. The finding must still be reported, because the EDA showed that train is dominated by high SOH. Loss, features, weighting and thresholds are not changed in response to this test finding. Any follow-up work needs a new independent validation and evaluation.
 
-## 7. Evaluasi per baterai
+## 7. Per-battery evaluation
 
-![Per baterai](05_battery_errors.png)
+![Per-battery errors](05_battery_errors.png)
 
-MAE utama memberi bobot sama per observasi. `test_battery_mean_mae_pp` merata-ratakan MAE setiap baterai agar baterai dengan banyak observasi tidak mendominasi. Kandidat: **0.95250 ± 0.00621 poin**, baseline **1.02975 ± 0.00260**.
+The main MAE weights every observation equally. `test_battery_mean_mae_pp` averages the MAE of each battery so that batteries with many observations do not dominate. Candidate: **0.97442 ± 0.00429 points**, baseline **0.96278 ± 0.00650**.
 
-Setelah MAE setiap baterai dirata-rata tiga seed, kandidat memiliki error lebih rendah pada 292 dari 390 baterai. Ini analisis deskriptif, bukan 390 eksperimen training independen. Sepuluh baterai dengan error kandidat terbesar disajikan berikut; daftar ini dipilih eksplisit untuk diagnosis akhir, bukan untuk menyetel model terhadap test.
+After averaging each battery's MAE over three seeds, the candidate has the lower error on 182 of 390 batteries. This is descriptive, not 390 independent training experiments. The ten batteries with the largest candidate errors are listed below for final diagnosis, not for tuning the model on test.
 
 | group | battery_id | rows | mean_actual_soh | mae_mean_pp | mae_sd_pp | rmse_mean_pp | bias_mean_pp |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| candidate | BATT_00668 | 21 | 82.61143 | 3.43008 | 0.09172 | 4.52653 | 3.18535 |
-| candidate | BATT_00438 | 20 | 79.008 | 3.10901 | 0.08717 | 3.84391 | 2.99187 |
-| candidate | BATT_02542 | 18 | 82.20667 | 2.74536 | 0.00989 | 3.09099 | -1.70181 |
-| candidate | BATT_01952 | 17 | 78.47765 | 2.48918 | 0.08065 | 2.75376 | 2.48918 |
-| candidate | BATT_01239 | 26 | 76.49 | 2.4837 | 0.2129 | 2.83152 | 2.45816 |
-| candidate | BATT_02298 | 22 | 73.88773 | 2.44405 | 0.16116 | 3.64356 | 1.69563 |
-| candidate | BATT_00526 | 18 | 94.165 | 2.42714 | 0.03602 | 4.01537 | -1.81633 |
-| candidate | BATT_02362 | 20 | 83.3135 | 2.36043 | 0.0996 | 2.82727 | 2.28602 |
-| candidate | BATT_00491 | 16 | 92.03812 | 2.31602 | 0.10098 | 3.78906 | -1.99974 |
-| candidate | BATT_01357 | 20 | 87.055 | 2.29901 | 0.06909 | 2.83352 | 2.18126 |
+| candidate | BATT_00668 | 21 | 82.61143 | 4.25742 | 0.16137 | 5.46338 | 4.08086 |
+| candidate | BATT_00438 | 20 | 79.008 | 3.40969 | 0.09089 | 4.3258 | 3.14142 |
+| candidate | BATT_02542 | 18 | 82.20667 | 3.2858 | 0.08603 | 3.69991 | -2.01104 |
+| candidate | BATT_02298 | 22 | 73.88773 | 2.73278 | 0.80431 | 3.52739 | 2.32897 |
+| candidate | BATT_01952 | 17 | 78.47765 | 2.54612 | 0.04755 | 2.7529 | 2.54612 |
+| candidate | BATT_02345 | 21 | 87.20238 | 2.35342 | 0.20302 | 2.63732 | -1.9748 |
+| candidate | BATT_01357 | 20 | 87.055 | 2.30826 | 0.16076 | 2.96279 | 2.20617 |
+| candidate | BATT_00526 | 18 | 94.165 | 2.28581 | 0.10527 | 3.64134 | -1.69016 |
+| candidate | BATT_00988 | 18 | 87.065 | 2.21796 | 0.20264 | 2.83937 | 2.11245 |
+| candidate | BATT_00643 | 7 | 87.17429 | 2.19533 | 0.11091 | 2.60781 | 2.17546 |
 
-## 8. Kontrol konstanta dari train
+## 8. Constant references from train
 
 | reference | constant_from_train | mae | rmse | r2 | bias_pp | outside_0_100_pct | battery_mean_mae |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | train_median | 95.23 | 4.93024 | 7.22279 | -0.11211 | 2.29327 | 0.0 | 4.93412 |
 | train_mean | 92.91875 | 5.1975 | 6.84908 | -1e-05 | -0.01799 | 0.0 | 5.21201 |
 
-Median/rerata dipelajari hanya dari y_train sebelum test dan dipakai sebagai pemeriksaan kewajaran. Ini bukan algoritma ML tambahan; model yang dilatih tetap MLP/backpropagation. Hasil akhir menunjukkan manfaat di atas menebak pusat distribusi target saja, tanpa menyamakan perbaikan tersebut dengan validasi fisik baterai.
+The median and mean are learned from `y_train` only and serve as a sanity check. They are not additional models, the only trained model is the MLP. The final result shows a clear benefit over predicting the centre of the target distribution, without equating that improvement with physical validation.
 
-## 9. Kesimpulan yang dapat dipertanggungjawabkan
+## 9. Defensible conclusions
 
-Pada protokol group split dataset sintetis ini, kandidat MLP kecil yang dipilih dari validation menghasilkan MAE test agregat lebih rendah daripada baseline pada tiga seed yang sudah dikunci. Model memiliki lebih sedikit parameter, dan arah perbandingan validation bertahan pada test.
+Under the group-split protocol on this synthetic dataset, the candidate chosen on validation does **not** beat the baseline on test: it is lower on 0 of 3 seeds and the mean difference is -0.01250 points. The three-seed validation confirmation already showed the two models within seed noise of each other, so the seed-42 advantage that selected the candidate did not generalise. The candidate reaches almost the same accuracy with 4.0 times fewer parameters, which is the practical argument for the smaller network. Both MLPs clearly beat the constant references.
 
-Klaim ini dibatasi pada estimasi SOH saat observasi untuk baterai baru dalam simulator yang sama. Tidak menguji forecasting, sisa umur, data kendaraan nyata, atau distribution shift. Kelemahan pada SOH rendah dan prediksi di luar rentang fisik tetap terbuka. Tidak menyatakan “akurasi 95%”, bebas overfitting secara universal, atau siap digunakan pada baterai nyata.
+The claim is limited to estimating SOH at observation time for new batteries from the same simulator. Forecasting, remaining useful life, real vehicle data and distribution shift are not tested. The low-SOH weakness and predictions outside the physical range remain open. There is no claim of "95% accuracy", universal freedom from overfitting, or readiness for real batteries.
 
-Keluarga kandidat tetap model utama karena sudah dipilih **sebelum** test; test hanya evaluasi akhir. Feature engineering tetap dilaporkan sebagai ablation validation yang memberi gain kecil dengan kompleksitas lebih besar.
+The candidate family remains the main model because it was chosen **before** testing, and the test split serves only as the final evaluation. Feature engineering is reported as a validation ablation that did not pass its promotion rule.
 
-## 10. Artefak dan reproduksi
+## 10. Artifacts and reproduction
 
-- `notebooks/04_final_evaluation.ipynb`: protokol, metrik, visual, analisis error, dan pemeriksaan.
-- `configs/final_evaluation.json`: model/seed yang dikunci.
-- `evaluation_lock.json`: identitas berkas dan waktu lock sebelum test inference.
-- `metrics_by_seed.csv`, `metrics_summary.csv`: seluruh hasil seed dan ringkasan.
-- `test_band_summary.csv`, `test_battery_summary.csv`: hasil per rentang dan baterai; tabel seed rinci juga tersedia.
-- `predictions/`: prediksi per observasi test tersimpan lokal, diabaikan Git.
-- Bobot dan fitted preprocessing tetap di folder models lokal.
+- `notebooks/05_final_evaluation.ipynb`: protocol, metrics, figures, error analysis and checks.
+- `configs/final_evaluation.json`: locked models and seeds.
+- `evaluation_lock.json`: file identities and lock time before test inference.
+- `metrics_by_seed.csv`, `metrics_summary.csv`: all seed results and the summary.
+- `test_band_summary.csv`, `test_battery_summary.csv`: results per SOH band and per battery, with detailed per-seed tables alongside.
+- `predictions/`: per-observation test predictions, local and ignored by Git.
+- Weights and fitted preprocessing stay in the local `models/` folder.
 
-Perintah: `python -m src.final_evaluation`, `python -m src.final_reporting`, kemudian jalankan notebook 04. Evaluator memakai ulang hasil yang lengkap dengan lock yang sama; tidak melatih ulang atau mengganti checkpoint. Pemeriksaan deterministik ulang terhadap hasil yang sama bukan evaluasi independen baru.
+Command: `python -m ev_battery evaluate`, then run notebook 05. The evaluator reuses complete results that match the lock and never retrains or replaces checkpoints. Re-running the deterministic checks on the same results is not a new independent evaluation.
 
-Untuk clone/lingkungan baru, laporan dapat dibaca tanpa bobot. Jika perlu mereproduksi setelah checkpoint/preprocessing dibuat ulang dan hash biner berbeda, gunakan `python -m src.final_evaluation --reproduce`; output berada di `data/processed/final_evaluation_reproduction`, terpisah dari hasil rilis. Perbandingan protokol tetap sama, bukan izin tuning dari test. Jangan menghapus lock rilis untuk mengganti hasil akhir.
-
-Langkah proyek berikutnya adalah menyusun laporan/presentasi dari hasil yang sudah ada, dengan angka, satuan, prosedur seleksi, dan keterbatasan yang konsisten.
+On a fresh clone the reports can be read without any weights. To reproduce after checkpoints or preprocessing were rebuilt with different binary hashes, use `python -m ev_battery.evaluation --reproduce`, which writes to `data/processed/final_evaluation_reproduction`, separate from the released results. The protocol stays the same and this is not permission to tune on test. Never delete the released lock to replace final results.

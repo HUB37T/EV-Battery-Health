@@ -15,6 +15,6 @@
     "nbclient": "0.10.2",
     "ipykernel": "6.29.5"
   },
-  "algorithm": "numpy.random.default_rng(42).permutation(sorted(unique battery_id)); first 70%, next 15%, remainder test",
-  "scope": "Global integrity checks; train-only exploratory profiles/plots. No preprocessing fit or modeling."
+  "algorithm": "numpy.random.default_rng(42).permutation(sorted(unique battery_id)), first 70%, next 15%, remainder test",
+  "scope": "Global integrity checks, train-only exploratory profiles/plots. No preprocessing fit or modeling."
 }

@@ -5,8 +5,8 @@
   "fit_rows": 34929,
   "fit_batteries": 1820,
   "fit_observation_ids_sha256": "89a5d68eda871cff7496562c252363a11b4c48f93ff10bb405921f853e2b2f04",
-  "source_sha256": "21165da600d781a705052358d874d389082dce9c72045a5a8e4f4fa2b6fd0bec",
-  "settings_sha256": "1be8c02046b7f58ef0be9e875d75a1f09ae9984fe66b1620635cdddbd23283b9",
+  "source_sha256": "4946c24fd21708c20c069bd124284dc1d0a07fcfc807b18331966a5c6b3f3c53",
+  "settings_sha256": "d2d8ec51a4242f10fe58d9cb24f80b4352bf8c3282ae8859a9e351ed6dcffbdb",
   "packages": {
     "numpy": "2.2.5",
     "pandas": "2.3.2",
@@ -21,9 +21,46 @@
     "unit": "percentage points for inverse-transformed MAE/RMSE"
   },
   "default_recipe": "baseline_standard",
-  "selection": "not ranked by model scores; no predictive model fitted",
+  "selection": "not ranked by model scores, no predictive model fitted",
   "recipes": {
     "baseline_standard": {
+      "raw_features": 21,
+      "input_neurons": 67,
+      "train_diagnostic": {
+        "invalid_to_missing": {
+          "pack_capacity_kwh": 0,
+          "battery_age_days": 0,
+          "cycle_count": 0,
+          "avg_daily_distance_km": 0,
+          "avg_charging_power_kw": 0,
+          "fast_charge_ratio": 0,
+          "avg_depth_of_discharge_pct": 0,
+          "avg_state_of_charge_pct": 0,
+          "charge_cycles_per_month": 0,
+          "total_energy_throughput_kwh": 0,
+          "avg_ambient_temp_c": 0,
+          "humidity_pct": 0,
+          "altitude_m": 0,
+          "peak_temp_during_fast_charge_c": 0,
+          "service_count": 0,
+          "recall_flag": 0,
+          "chemistry": 0,
+          "manufacturer": 0,
+          "vehicle_model": 0,
+          "climate_zone": 0,
+          "bms_firmware_version": 0
+        },
+        "unknown_categories": {
+          "chemistry": 0,
+          "manufacturer": 0,
+          "vehicle_model": 0,
+          "climate_zone": 0,
+          "bms_firmware_version": 0
+        },
+        "clipped_rows_by_feature": {}
+      }
+    },
+    "baseline_minmax": {
       "raw_features": 21,
       "input_neurons": 67,
       "train_diagnostic": {
