@@ -1,5 +1,7 @@
 # Hasil eksperimen
 
+> Subfolder audit, EDA, preprocessing, eksperimen, ablation, dan evaluasi final pada tingkat ini memuat rilis PyTorch awal. [Arsip NumPy](numpy/README.md) memuat eksperimen lanjutan pada split yang sama.
+
 Audit dasar tersedia di [audit/AUDIT_REPORT.md](audit/AUDIT_REPORT.md). EDA mendalam tersedia di [eda/EDA_REPORT.md](eda/EDA_REPORT.md), [notebook](../notebooks/01_eda_train.ipynb), dan [HTML baca](eda/EDA_READING.html). Preprocessing tersedia di [preprocessing/PREPROCESSING_REPORT.md](preprocessing/PREPROCESSING_REPORT.md) dan [HTML baca](preprocessing/PREPROCESSING_READING.html). Eksperimen MLP selesai pada validation: [laporan](experiments/EXPERIMENT_REPORT.md), [HTML baca](experiments/EXPERIMENT_READING.html), [rekap run](experiments/run_summary.csv), dan [seed](experiments/seed_summary.csv). [Ablation feature engineering](feature_engineering/FEATURE_ENGINEERING_REPORT.md) membandingkan empat varian dan konfirmasi tiga seed tanpa menimpa studi 03. **Evaluasi test final selesai**: [laporan](final_evaluation/FINAL_REPORT.md), [HTML baca](final_evaluation/FINAL_READING.html), [metrik seluruh seed](final_evaluation/metrics_by_seed.csv), [ringkasan](final_evaluation/metrics_summary.csv), dan [lock sebelum scoring](final_evaluation/evaluation_lock.json). Kandidat MAE 0,95005 ± 0,00619 poin, baseline 1,02684 ± 0,00311; kelemahan kandidat pada SOH <70% tetap dilaporkan. Folder ini menyimpan tabel dan grafik terpilih yang dapat ditelusuri ke data/run nyata.
 
 Untuk setiap run catat:

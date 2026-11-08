@@ -1,5 +1,7 @@
 # Notebook proyek
 
+> Notebook pada direktori ini adalah arsip PyTorch. Untuk menjalankannya, gunakan kode dan dependensi dari [commit rilis awal](https://github.com/HUB37T/EV-Battery-Health/tree/479ed842d141017591a3fe755647040c237dfd6c). Implementasi baru berada di [notebook NumPy](numpy/README.md).
+
 Notebook 00–04 termasuk 03b sudah dibuat dan seluruh selnya berhasil dieksekusi. Evaluasi test final selesai dengan enam checkpoint yang dikunci sebelum scoring. Kerjakan berurutan:
 
 1. `00_data_audit.ipynb`: skema, kualitas dasar, target, ID/waktu, kamus data, dan manifest split.

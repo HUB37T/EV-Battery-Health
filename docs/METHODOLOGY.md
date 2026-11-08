@@ -23,7 +23,7 @@ classification, real fleet deployment, and any model family other than the MLP.
 
 - **SOH** (state of health) describes battery health relative to its reference capacity. **SOC** (state of charge) is the current charge level. They are different quantities.
 - **MLP** is the network architecture. **Backpropagation** computes the gradient of the loss with respect to every weight. **The optimizer** (Adam here) uses those gradients to update the weights. These three terms are not synonyms.
-- **Train** fits parameters, **validation** chooses configurations, and **test** is evaluated once at the end with everything locked.
+- **Train** fits parameters, **validation** chooses configurations, and the original PyTorch **test** evaluation used locked models. The NumPy follow-up reuses that same split for descriptive comparison.
 - **Leakage** is any path through which target, future or evaluation information influences training.
 
 ### Relation to the course material
@@ -273,7 +273,7 @@ the mean by only 0.00286 points, so the control stayed the main candidate.
 
 1. Fix every feature, preprocessing, architecture, checkpoint and seed decision on train and validation.
 2. Write the plan to `configs/final_evaluation.json`.
-3. Hash the six checkpoints, both pipelines, the test arrays and the configuration into `results/final_evaluation/evaluation_lock.json` before any test prediction exists.
+3. Hash the six local checkpoints, fitted preprocessing, test arrays and recorded NumPy configurations into the follow-up workspace lock before computing this run’s predictions.
 4. Score the baseline and candidate on test for all three seeds in one step.
 5. Report every seed, the mean and the sample SD. Never select a seed, ensemble, clip or retune after seeing test.
 6. Report errors per SOH band and per battery, plus constant train mean and median references as a sanity check.
@@ -286,6 +286,6 @@ not a confidence interval over batteries.
 - The data is synthetic. Results describe the simulator, not real vehicles.
 - Error is highest for SOH below 70%, which is rare in train. Both models overestimate SOH in that band, and SOH-band weighting trades better low-SOH error for worse overall error.
 - The linear output can predict values outside 0 to 100. They are reported, not clipped.
-- Validation informed many decisions, so validation scores are optimistic. The single locked test evaluation is the unbiased estimate.
+- Validation informed many decisions, so validation scores can be optimistic. The PyTorch release contains the original holdout evaluation. NumPy scores describe the same previously evaluated split.
 - The candidate selected on seed 42 did not beat the baseline on test (MAE 0.973 vs 0.960), consistent with the seed confirmation. Selection gains of about 0.01 points are within seed noise.
-- The test split was also scored by an earlier PyTorch version of this project. The switch to the from-scratch NumPy implementation was made to follow the course modules, not in response to test results, and no setting was tuned on test.
+- The NumPy implementation follows the course modules. Local reproduction freezes the configurations recorded in PR #1. The historical results, configuration reference and original holdout report are listed in the [NumPy archive](../results/numpy/README.md).

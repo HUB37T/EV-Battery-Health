@@ -15,6 +15,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.validation import check_is_fitted
 
+from ev_battery.followup import load_plan
 from ev_battery.paths import ROOT
 from ev_battery.preprocessing import MISSING
 from ev_battery.training import RunConfig, load_training_data, train_run, write_json
@@ -157,14 +158,7 @@ class EngineeredPreprocessor:
 
 
 def read_settings(root=ROOT):
-    settings = json.loads((root / "configs/feature_engineering.json").read_text(encoding="utf-8"))
-    reference = json.loads((root / "results/experiments/study.json").read_text(encoding="utf-8"))
-    if (
-        reference["candidate_run_id"] != settings["reference_candidate_run_id"]
-        or reference["candidate_config"]["recipe"] != settings["base_recipe"]
-    ):
-        raise ValueError("Control candidate changed, review the feature-engineering protocol first.")
-    return settings, reference
+    return json.loads((root / "configs/feature_engineering.json").read_text(encoding="utf-8"))
 
 
 def load_raw_observations(base_data, root=ROOT):
@@ -290,7 +284,7 @@ def prepare_variant(name, blocks, raw, base_data, settings, root=ROOT):
 
 
 def load_engineered_data(recipe, root=ROOT):
-    settings, _ = read_settings(root)
+    settings = read_settings(root)
     if recipe not in settings["variants"]:
         raise ValueError("Unknown feature-engineering variant.")
     bundle = joblib.load(root / "models/feature_engineering" / f"{recipe}.joblib")
@@ -317,13 +311,17 @@ def load_engineered_data(recipe, root=ROOT):
 
 
 def run_feature_study(root=ROOT):
-    settings, reference = read_settings(root)
-    control_cfg = RunConfig(**reference["candidate_config"])
-    if settings["base_recipe"] != control_cfg.recipe:
-        raise ValueError("base_recipe in configs/feature_engineering.json must be the candidate recipe.")
-    control_data = load_training_data(settings["base_recipe"], root)
-    if control_data["fingerprint"] != reference["data_fingerprints"][settings["base_recipe"]]:
-        raise ValueError("Control inputs changed.")
+    settings = read_settings(root)
+    candidate = load_plan(root)["groups"]["candidate"]
+    control_cfg = RunConfig(**candidate["config"])
+    screening_seed = settings["screening_seed"]
+    if (
+        settings["base_recipe"] != control_cfg.recipe
+        or settings["reference_candidate_run_id"]
+        != candidate["reference_run_ids_by_seed"][str(screening_seed)]
+    ):
+        raise ValueError("Feature-engineering settings differ from the recorded NumPy control configuration.")
+    control_data = load_training_data(control_cfg.recipe, root)
     raw = load_raw_observations(control_data, root)
     output = root / "results/feature_engineering"
     output.mkdir(parents=True, exist_ok=True)
@@ -347,12 +345,12 @@ def run_feature_study(root=ROOT):
             "epochs_actual": run["epochs_actual"],
         }
 
-    control = train_run(replace(control_cfg, seed=settings["screening_seed"]), control_data, root)
+    control = train_run(replace(control_cfg, seed=screening_seed), control_data, root)
     screen.append(record(control, "control_no_domain_features"))
     for name, blocks in settings["variants"].items():
         data = prepare_variant(name, blocks, raw, control_data, settings, root)
         prepared[name] = data
-        run = train_run(replace(control_cfg, recipe=name, seed=settings["screening_seed"]), data, root)
+        run = train_run(replace(control_cfg, recipe=name, seed=screening_seed), data, root)
         screen.append(record(run, name))
         pd.DataFrame(screen).to_csv(output / "screening.csv", index=False, lineterminator="\n")
     screening = pd.DataFrame(screen)
@@ -419,8 +417,9 @@ def run_feature_study(root=ROOT):
     pd.DataFrame(records).to_csv(output / "run_records.csv", index=False, lineterminator="\n")
     study = {
         "status": "complete",
-        "reference_candidate_run_id": reference["candidate_run_id"],
-        "reference_config": reference["candidate_config"],
+        "reference_candidate_run_id": control["run_id"],
+        "archived_candidate_run_id": settings["reference_candidate_run_id"],
+        "reference_config": control["config"],
         "selected_engineered_variant": best,
         "recommendation": best if promote else "control_no_domain_features",
         "promoted_by_prespecified_gate": promote,

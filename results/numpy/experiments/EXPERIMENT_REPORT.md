@@ -7,7 +7,7 @@
 - Baseline (`baseline_standard`, 67 inputs, hidden [32] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0): validation MAE **1.0068** SOH percentage points.
 - Candidate (`baseline_standard`, 67 inputs, hidden [8] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0): validation MAE **0.9943**, RMSE **1.5039**, R² **0.9541**.
 - Seed confirmation: baseline **1.0000 ± 0.0064**, candidate **0.9999 ± 0.0083**, three seeds on the fixed split.
-- Validation was reused throughout the search, so these are not test scores. The test split is evaluated once in notebook 05.
+- Validation was reused throughout the search, so these are not test scores. Notebook 05 reproduces the recorded NumPy configurations on the previously evaluated test split.
 
 ## 1. Implementation
 
@@ -95,7 +95,7 @@ Plain gradient descent (the course rule) uses one fixed learn_rate for every wei
 
 ## 5. Balancing with SOH-band weights
 
-The target is continuous, so class balancing in the classification sense does not apply. The regression counterpart is to weight each training sample by the inverse frequency of its SOH band, so that rare low-SOH observations contribute more to the loss. Weights are computed on train only and normalised to a mean of 1.
+The target is continuous, so class balancing in the classification sense does not apply. The regression counterpart is to weight each training sample by the inverse frequency of its SOH band, so that rare low-SOH observations contribute more to the loss. Weights are computed on train only and normalised to a mean of 1. Inverse frequency equalises the total raw weight per band over the training set. Mini-batch updates divide by their own weight sum, so effective gradient contributions depend on batch composition.
 
 | sample_weighting | soh_band | rows | batteries | mae_pp |
 | --- | --- | --- | --- | --- |

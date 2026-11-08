@@ -17,8 +17,8 @@ Place the Kaggle archive in `data/raw/` as described in [data/README.md](data/RE
 
 1. **One target, one split.** Every experiment uses `state_of_health_pct` and `data/splits/battery_split.csv`. Never re-split or change the seed to chase a better score.
 2. **Fit on train only.** Imputers, encoders, scalers, caps and any data-driven selection learn from train. Validation chooses configurations.
-3. **Test is locked.** Only `python -m ev_battery evaluate` touches the test split, and only for configurations recorded in `configs/final_evaluation.json`. Never tune on test results.
-4. **Record every run.** Failed and losing runs stay in `results/experiments/` with their configuration. Never edit generated CSVs or reports by hand.
+3. **Test is locked.** The NumPy evaluation stage scores only configurations recorded in `configs/numpy/followup.json`. Treat the shared test scores as a descriptive follow-up and use validation for experiment selection.
+4. **Record every run.** Keep failed and losing runs with their configurations. Historical PyTorch and NumPy runs live under `results/experiments/` and `results/numpy/experiments/`. Fresh NumPy runs stay in the local workspace.
 5. **MLP only.** The only predictive model is the feedforward MLP trained with backpropagation. Constant train mean and median references are sanity checks, not competing models.
 6. **No claims without a run.** Every number in the report or slides must come from a file in `results/`.
 
@@ -78,7 +78,7 @@ Every member should be able to answer these questions in their own words:
 7. How does the gradient reach the first hidden layer?
 8. What is the difference between an epoch, a batch and the learning rate?
 9. Why are imputers and scalers fitted on train only?
-10. Why is no balancing applied?
+10. How are SOH-band weights computed and normalised in each mini-batch?
 11. How was the final model chosen without using the test split?
 12. What does the epoch experiment show?
 13. How stable are the results across seeds?

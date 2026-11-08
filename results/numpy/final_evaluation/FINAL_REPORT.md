@@ -1,8 +1,10 @@
-# Final Test Evaluation of the Backpropagation MLP
+# NumPy MLP follow-up on the previously evaluated split
+
+> Historical snapshot from PR #1. The same batteries were scored in the original PyTorch evaluation on 6 November 2026. See the [archive notes](../README.md) for the corrected source of the NumPy configurations and the local reproduction workflow.
 
 ## Key results
 
-The final evaluation covers **7,572 observations from 390 test batteries** that never appear in train or validation. Six checkpoints and the preprocessing were locked before any test prediction was computed. There was no fitting, retraining, seed selection, feature engineering, prediction clipping or tuning after seeing the test split.
+The final evaluation covers **7,572 observations from 390 test batteries** that never appear in train or validation. The historical NumPy lock records six checkpoints and the preprocessing before scoring that NumPy run. There was no fitting, retraining, seed selection, feature engineering, prediction clipping or tuning after seeing the test split.
 
 - Main candidate, fixed before test: mean MAE **0.97268 ± 0.00325 SOH points**, RMSE **1.43615 ± 0.00465**, R² **0.95603 ± 0.00028**.
 - Baseline MLP: mean MAE **0.96018 ± 0.00641 points**. The candidate is **0.01250 points higher** (about 1.30% of the baseline MAE).
@@ -11,11 +13,11 @@ The final evaluation covers **7,572 observations from 390 test batteries** that 
 
 ## 1. What was locked before testing
 
-`configs/final_evaluation.json` fixes the baseline and candidate, the three seeds, best-validation checkpoints, the SOH bands, and the candidate as the main model family. The candidate uses `baseline_standard`, 67 inputs, hidden [8] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0. The baseline uses `baseline_standard`, 67 inputs, hidden [32] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0. Both share the same early-stopping policy. Best epochs come from validation, never from test.
+`configs/numpy/final_evaluation.json` fixes the baseline and candidate, the three seeds, best-validation checkpoints, the SOH bands, and the candidate as the main model family. The candidate uses `baseline_standard`, 67 inputs, hidden [8] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0. The baseline uses `baseline_standard`, 67 inputs, hidden [32] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0. Both share the same early-stopping policy. Best epochs come from validation, never from test.
 
 Feature engineering remains a validation ablation. Its recommendation before testing was to keep the notebook 03 candidate without extra domain features, and engineered features are not added back into the test comparison.
 
-`evaluation_lock.json` was created at `2026-11-07T22:22:25.861474+00:00` before test inference, with fingerprint `75b44e65e2f88f74f3c276f1e7e4fbff79bbcdc2e67ff5a6a473b979da5e90e4`. The lock records SHA-256 hashes of the six checkpoints, the two fitted pipelines, the test arrays, the configurations, the manifest, the validation and feature-engineering selection evidence, and the evaluator source. Every locked file is verified to be unchanged after inference.
+`evaluation_lock.json` was created at `2026-11-07T22:22:25.861474+00:00` before test inference, with fingerprint `75b44e65e2f88f74f3c276f1e7e4fbff79bbcdc2e67ff5a6a473b979da5e90e4`. The lock records SHA-256 hashes of the six checkpoints, the fitted preprocessing and test arrays, the configurations, the manifest, the validation and feature-engineering selection evidence, and the evaluator source. Every locked file is verified to be unchanged after inference.
 
 ## 2. Final metrics and their units
 
@@ -26,7 +28,7 @@ Feature engineering remains a validation ablation. Its recommendation before tes
 
 ![Test metrics](01_test_metrics.png)
 
-MAE and RMSE are computed after inverting the target scaling. An MAE of 0.95 means an average absolute error of about 0.95 **SOH percentage points**. It is not a 99.05% accuracy and does not mean every prediction has that error. R² is not classification accuracy either.
+MAE and RMSE are computed after inverting the target scaling. An MAE of 0.97 means an average absolute error of about 0.97 **SOH percentage points**. It is not a 99.03% accuracy and does not mean every prediction has that error. R² is not classification accuracy either.
 
 SD is the sample SD (ddof = 1) over three training seeds on the same test batteries. It is not a population confidence interval, does not cover the uncertainty over all possible splits, and does not represent three independent test sets. Mean R² and RMSE are averages of per-seed metrics, not metrics of an ensemble.
 
@@ -121,18 +123,16 @@ Under the group-split protocol on this synthetic dataset, the candidate chosen o
 
 The claim is limited to estimating SOH at observation time for new batteries from the same simulator. Forecasting, remaining useful life, real vehicle data and distribution shift are not tested. The low-SOH weakness and predictions outside the physical range remain open. There is no claim of "95% accuracy", universal freedom from overfitting, or readiness for real batteries.
 
-The candidate family remains the main model because it was chosen **before** testing, and the test split serves only as the final evaluation. Feature engineering is reported as a validation ablation that did not pass its promotion rule.
+The candidate family is the recorded NumPy configuration for this follow-up. The PyTorch release retains its original candidate and evaluation. Feature engineering is reported as a validation ablation that did not pass its promotion rule.
 
 ## 10. Artifacts and reproduction
 
-- `notebooks/05_final_evaluation.ipynb`: protocol, metrics, figures, error analysis and checks.
-- `configs/final_evaluation.json`: locked models and seeds.
+- `notebooks/numpy/05_final_evaluation.ipynb`: protocol, metrics, figures, error analysis and checks.
+- `configs/numpy/final_evaluation.json`: locked models and seeds.
 - `evaluation_lock.json`: file identities and lock time before test inference.
 - `metrics_by_seed.csv`, `metrics_summary.csv`: all seed results and the summary.
 - `test_band_summary.csv`, `test_battery_summary.csv`: results per SOH band and per battery, with detailed per-seed tables alongside.
 - `predictions/`: per-observation test predictions, local and ignored by Git.
 - Weights and fitted preprocessing stay in the local `models/` folder.
 
-Command: `python -m ev_battery evaluate`, then run notebook 05. The evaluator reuses complete results that match the lock and never retrains or replaces checkpoints. Re-running the deterministic checks on the same results is not a new independent evaluation.
-
-On a fresh clone the reports can be read without any weights. To reproduce after checkpoints or preprocessing were rebuilt with different binary hashes, use `python -m ev_battery.evaluation --reproduce`, which writes to `data/processed/final_evaluation_reproduction`, separate from the released results. The protocol stays the same and this is not permission to tune on test. Never delete the released lock to replace final results.
+To reproduce this follow-up, use `python -m ev_battery all` as documented in the [project README](../../../README.md).

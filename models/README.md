@@ -1,5 +1,7 @@
 # Artefak model lokal
 
+> Folder ini mendokumentasikan artefak PyTorch pada rilis awal. Pipeline NumPy menyimpan bobot lokal di `data/processed/numpy_workspace/models/`.
+
 Model prediksi MLP sudah dilatih melalui backpropagation dalam study 17 run unik, ditambah 6 run final ablation feature engineering, hanya menggunakan train/validation. Checkpoint best/last serta endpoint epoch tertentu tersedia lokal di `mlp/<run_id>/`; enam best checkpoint validation sudah dipakai untuk evaluasi test final tanpa retraining/fit. Identitas bobot dan preprocessing dicatat sebelum scoring dalam results/final_evaluation/evaluation_lock.json. Fitted preprocessing bundle tersedia lokal di `preprocessing/<recipe>.joblib` setelah notebook 02/modul preprocessing dijalankan. Isi folder ini diabaikan Git kecuali README ini.
 
 Saat pelatihan tersedia, simpan model bersama:
