@@ -1,6 +1,6 @@
 # NumPy follow-up archive
 
-This directory preserves the first NumPy outputs from [PR #1 at `83b1b36`](https://github.com/HUB37T/EV-Battery-Health/tree/83b1b360c9e08267227d3dc0f76dc47860b33089). The [PyTorch release](../final_evaluation/FINAL_REPORT.md) evaluated these same 390 test batteries on 6 November 2026. The NumPy snapshot was scored on 7 November. Its results are descriptive follow-up evidence on the same split.
+This directory preserves the first NumPy outputs from [PR #1 at `83b1b36`](https://github.com/HUB37T/EV-Battery-Health/tree/83b1b360c9e08267227d3dc0f76dc47860b33089). The [PyTorch release](../final_evaluation/FINAL_REPORT.md) evaluated these same 390 test batteries on 6 November 2026. The NumPy snapshot was scored on 8 November WIB (7 November UTC). Its results are descriptive follow-up evidence on the same split.
 
 - [Audit](audit/AUDIT_REPORT.md), [EDA](eda/EDA_REPORT.md) and [preprocessing](preprocessing/PREPROCESSING_REPORT.md)
 - [MLP experiments](experiments/EXPERIMENT_REPORT.md) and [feature engineering](feature_engineering/FEATURE_ENGINEERING_REPORT.md)
