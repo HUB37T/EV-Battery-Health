@@ -1,0 +1,3 @@
+feature,missing_train,missing_train_pct,median_train_before_log,cap_low_train,cap_high_train,signed_log1p_after_cap,scaler_mean_train,scaler_scale_train
+fe_charge_ambient_delta_c,3674,10.518480345844427,5.0,-12.64016973083138,23.6,False,5.5020672778645485,4.542165499549379
+fe_fastcharge_dod_interaction,4225,12.095966102665406,0.1683095,,,False,0.18700087324286407,0.11522466713724455

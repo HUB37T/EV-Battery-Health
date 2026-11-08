@@ -61,6 +61,7 @@ results/eda/battery_age_means.csv
 
 # Recomputed row-level validation predictions; aggregate experiment results stay tracked.
 !/results/experiments/runs/
+!/results/numpy/experiments/runs/
 results/experiments/runs/*/validation_predictions.csv
 
 # Frozen-model test predictions are recreated locally; aggregate results stay tracked.

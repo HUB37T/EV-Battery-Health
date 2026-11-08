@@ -1,0 +1,7 @@
+feature_a,feature_b,spearman,pairwise_rows
+cycle_count,total_energy_throughput_kwh,0.9841310128367348,31064
+avg_ambient_temp_c,peak_temp_during_fast_charge_c,0.9201351770460091,31255
+battery_age_days,cycle_count,0.9030298713916547,31304
+battery_age_days,total_energy_throughput_kwh,0.8895780507713927,30582
+avg_charging_power_kw,fast_charge_ratio,0.8409361126026221,31147
+avg_depth_of_discharge_pct,avg_state_of_charge_pct,-0.7671454315110389,30917

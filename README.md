@@ -1,224 +1,36 @@
-# EV Battery Health — Proyek Jaringan Saraf Tiruan
+# EV Battery Health
 
-Proyek kelompok untuk menganalisis dataset kesehatan baterai kendaraan listrik dan menguji **Multi Layer Perceptron (MLP) yang dilatih dengan backpropagation**.
+This Jaringan Saraf Tiruan project estimates battery state of health (SOH) at observation time with multilayer perceptrons trained by backpropagation. The synthetic Kaggle dataset contains 50,000 observations from 2,600 batteries. A fixed split by `battery_id` keeps batteries disjoint across train, validation and test. See the [dataset card](docs/DATASET_CARD.md) and [project guide](CONTEXT.md).
 
-## Status proyek
+## Two result sets
 
-**Audit dataset dan EDA mendalam train sudah dijalankan.** Data sintetis berisi 50.000 observasi, 35 kolom, dan 2.600 baterai. Target kerja adalah `state_of_health_pct`: estimasi SOH saat observasi pada baterai yang belum ada di train. Preprocessing train-only sudah dijalankan untuk tiga resep kandidat. Eksperimen MLP/backpropagation sudah menjalankan 17 run unik dan konfirmasi tiga seed. Kandidat dipilih dari validation. Ablation feature engineering menambah 6 run baru. **Evaluasi akhir selesai:** enam checkpoint yang dikunci sebelum test dinilai pada 7.572 observasi / 390 baterai baru, tanpa retraining atau tuning dari test.
+| Result set | Model | Test MAE (SOH points), mean ± sample SD |
+|---|---|---:|
+| Original PyTorch evaluation, 6 November 2026 | Baseline / candidate | 1.02684 ± 0.00311 / 0.95005 ± 0.00619 |
+| NumPy follow-up snapshot, PR #1 | Baseline / candidate | 0.96018 ± 0.00641 / 0.97268 ± 0.00325 |
 
-- [Evaluasi akhir: notebook 04](notebooks/04_final_evaluation.ipynb), [laporan](results/final_evaluation/FINAL_REPORT.md), dan [HTML baca](results/final_evaluation/FINAL_READING.html).
-- [Metrik test seluruh seed](results/final_evaluation/metrics_by_seed.csv), [ringkasan](results/final_evaluation/metrics_summary.csv), dan [lock artefak](results/final_evaluation/evaluation_lock.json).
-- [Ablation feature engineering](notebooks/03b_feature_engineering_ablation.ipynb), [laporan](results/feature_engineering/FEATURE_ENGINEERING_REPORT.md), dan [HTML baca](results/feature_engineering/FEATURE_ENGINEERING_READING.html).
-- [Notebook eksperimen MLP/backpropagation](notebooks/03_mlp_experiments.ipynb).
-- [Laporan eksperimen](results/experiments/EXPERIMENT_REPORT.md) dan [HTML baca](results/experiments/EXPERIMENT_READING.html).
-- [Rekap konfigurasi dan metrik](results/experiments/run_summary.csv), [perbandingan tahap](results/experiments/stage_comparisons.csv), [konfirmasi seed](results/experiments/seed_summary.csv).
-- [Notebook preprocessing yang sudah dieksekusi](notebooks/02_preprocessing.ipynb).
-- [Laporan preprocessing dan hasil pemeriksaan](results/preprocessing/PREPROCESSING_REPORT.md).
-- [Salinan baca preprocessing tanpa kode](results/preprocessing/PREPROCESSING_READING.html).
-- [Resep preprocessing](configs/preprocessing.json): baseline 67 input; alternatif lengkap 67; compact 63.
-- [EDA mendalam: notebook yang sudah dieksekusi](notebooks/01_eda_train.ipynb).
-- [Laporan EDA dengan 18 gambar dan interpretasi](results/eda/EDA_REPORT.md).
-- [Salinan baca HTML tanpa kode](results/eda/EDA_READING.html) — unduh lalu buka di browser.
-- [Notebook audit dasar](notebooks/00_data_audit.ipynb).
-- [Ringkasan temuan dan grafik](results/audit/AUDIT_REPORT.md).
-- [Kartu dataset dan keputusan metode](docs/DATASET_CARD.md).
-- [Kontrak fitur awal](configs/feature_contract.json) dan [manifest split](data/splits/battery_split.csv).
+The [original PyTorch report and lock](results/final_evaluation/FINAL_REPORT.md) are the project's initial final evaluation. The [NumPy archive](results/numpy/README.md) documents the manual implementation and its follow-up on the **same 7,572 observations from 390 test batteries**. The NumPy scores are descriptive on a previously evaluated split. Both result sets report seeds 42, 123 and 2026. The original notebooks, reading HTMLs and experiment histories are retained at their published paths.
 
-Panduan lengkap, pembagian kerja, teori, dan rancangan eksperimen tersedia di [CONTEXT.md](CONTEXT.md). Mulai dari bagian 17 untuk audit dataset, bagian 21 untuk eksperimen, dan bagian 26 untuk pembagian kerja.
+The NumPy work adds course-style manual gradients, min-max scaling, optimizer and learning-rate comparisons, SOH-band weighting, `max_error`, and a capacity demonstration. Selection and checkpointing use validation. The NumPy baseline has 2,209 parameters and the candidate has 553. See the [NumPy methodology](docs/METHODOLOGY.md) and [experiment report](results/numpy/experiments/EXPERIMENT_REPORT.md).
 
-## Ruang lingkup
+## Run the NumPy pipeline from a new clone
 
-1. EDA: memahami target, fitur, distribusi, kualitas data, dan potensi kebocoran.
-2. Preprocessing: split yang sesuai struktur data, missing value, encoding, normalisasi, seleksi fitur, dan penanganan ketimpangan jika relevan.
-3. Eksperimen MLP: variasi input, hidden layer/neuron, aktivasi, loss, dan epoch.
-4. Evaluasi: pemilihan konfigurasi menggunakan validation, test final, analisis error, serta pelaporan hasil yang dapat direproduksi.
-
-Model selain MLP tidak termasuk ruang lingkup. Backpropagation menghitung gradien; optimizer memperbarui parameter. Timesteps hanya digunakan jika dataset benar-benar memiliki urutan pengukuran yang sah.
-
-## Dataset
-
-Sumber: [EV Battery Health & Degradation Dataset — Kaggle](https://www.kaggle.com/datasets/vinay24baghira/ev-battery-health-and-degradation-dataset?select=ev_battery_health.csv).
-
-Unduh `ev_battery_health.csv` dari sumber tersebut dan simpan di:
-
-```text
-data/raw/ev_battery_health.csv
-```
-
-Data mentah dan data hasil pemrosesan tidak dikomit secara default. Ikuti lisensi dataset dan dokumentasikan tanggal unduh, versi, asal data, serta definisi kolom. Lihat [petunjuk data](data/README.md).
-
-README dalam arsip sumber menyebut data sintetis dan lisensi CC0. Audit membuktikan `capacity_fade_pct = 100 − state_of_health_pct` pada semua nilai terisi; kolom itu dilarang menjadi input. Split menggunakan battery_id: 1.820 baterai train, 390 validation, 390 test. Timesteps ditunda karena tanggal kosong dan counter kumulatif tidak konsisten. Detail ada di kartu dataset.
-
-## Struktur repositori
-
-```text
-EV-Battery-Health/
-├── CONTEXT.md          # Panduan lengkap kelompok dan rancangan penelitian
-├── README.md           # Pengantar dan petunjuk mulai
-├── .gitignore          # Data lokal, model, cache, dan kredensial
-├── .gitattributes      # Konsistensi akhir baris berkas teks
-├── data/
-│   ├── README.md       # Cara memperoleh dan mencatat data
-│   ├── raw/            # CSV asli lokal, diabaikan Git
-│   ├── processed/      # Hasil preprocessing lokal, diabaikan Git
-│   └── splits/         # Manifest split baterai bersama
-├── configs/            # Kontrak target dan fitur
-├── docs/               # Kartu dataset
-├── src/                # Audit, EDA, preprocessing, training, reporting
-├── scripts/            # Eksekusi notebook
-├── requirements.txt    # Dependensi data/preprocessing yang diuji
-├── tests/              # Uji perilaku dan keamanan artefak preprocessing
-├── notebooks/
-│   ├── 00_data_audit.ipynb
-│   ├── 01_eda_train.ipynb
-│   ├── 02_preprocessing.ipynb
-│   ├── 03_mlp_experiments.ipynb
-│   ├── 03b_feature_engineering_ablation.ipynb
-│   ├── 04_final_evaluation.ipynb
-│   └── README.md       # Status dan urutan notebook
-├── models/
-│   └── README.md       # Aturan penyimpanan model/pipeline
-└── results/
-    ├── audit/          # Audit kualitas dasar dan split
-    ├── eda/            # EDA mendalam, PNG/SVG, tabel, HTML
-    ├── preprocessing/  # Resep, parameter train, pemeriksaan, HTML
-    ├── experiments/    # Run log, kurva, checkpoint metadata, validation
-    ├── feature_engineering/ # Ablation fitur dan konfirmasi seed
-    ├── final_evaluation/ # Test terkunci, analisis error, dan laporan
-    └── README.md       # Aturan pencatatan hasil dan artefak
-```
-
-Notebook 00–04 termasuk 03b sudah tersedia dan dieksekusi. Fitted preprocessing dan checkpoint MLP tersedia lokal, diabaikan Git. Training pada clone baru membuatnya ulang dari konfigurasi/data.
-
-## Mulai bekerja
-
-```powershell
-git clone https://github.com/HUB37T/EV-Battery-Health.git
-cd EV-Battery-Health
-```
-
-Untuk anggota yang sudah memiliki folder kerja terhubung ke Git, gunakan folder tersebut; tidak perlu clone ulang.
-
-## Menjalankan audit
-
-Lingkungan yang diuji: Python 3.13.1. Dari root proyek:
+Use Python 3.12 or 3.13. From the repository root on Windows:
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m src.data_audit
-.\.venv\Scripts\python.exe scripts/run_notebook.py
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-CSV, `README.md`, dan `data_dictionary .csv` dari arsip Kaggle harus tersedia di `data/raw/`. Spasi pada nama kamus memang berasal dari arsip. Perintah audit membuat ulang laporan/tabel/grafik; perintah notebook mengeksekusi semua sel dan menyimpan output. CSV asli tidak diubah. Versi CSV yang berbeda dan manifest split yang berubah ditolak. Notebook dapat dibuka di editor notebook dengan lingkungan Python yang sama.
-
-Dependensi mencakup PyTorch 2.11.0 untuk MLP serta library audit/EDA/preprocessing. Matriks versi dan hash sumber ada di `results/audit/provenance.json`.
-
-## Menjalankan EDA mendalam
-
-Dengan lingkungan Python yang sama dan dataset/manifest yang tersedia:
+On macOS/Linux use `.venv/bin/python` in the commands below. Extract the three Kaggle files listed in [data/README.md](data/README.md) into `data/raw/`, then run:
 
 ```powershell
-.\.venv\Scripts\python.exe -m src.eda
-.\.venv\Scripts\python.exe scripts/run_notebook.py notebooks/01_eda_train.ipynb
-.\.venv\Scripts\python.exe scripts/export_eda.py
+.\.venv\Scripts\python.exe -m ev_battery all
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Perintah pertama membuat ulang tabel/grafik/laporan; eksekusi notebook juga membuat ulang hasil tersebut lalu menyimpan output sel. Ekspor HTML memberi salinan baca tanpa kode dengan gambar tertanam. Untuk pekerjaan harian cukup jalankan notebook dan ekspor jika ingin memperbarui salinan HTML.
+`all` runs audit, EDA, preprocessing, training, feature-engineering ablation and the NumPy follow-up. The training stage rebuilds the two recorded model configurations in [the follow-up plan](configs/numpy/followup.json) for all three seeds. The evaluator reads their best validation checkpoints. Each local evaluation gets a directory under `data/processed/numpy_workspace/results/numpy_followup/<fingerprint>/`. The CLI prints the report path. The workspace also contains the fitted preprocessing, weights and run histories. Git ignores the workspace. The fingerprint captures local artifact identities, so duration or binary differences on another machine produce a separate evaluation directory.
 
-EDA mencakup semua 35 kolom, 18 gambar, korelasi dengan jumlah pasangan, hubungan kimia–umur berbobot per baterai, bootstrap per baterai, pola bersyarat, missingness, outlier, serta kualitas temporal. EDA hanya menggunakan 34.929 baris / 1.820 baterai train. Data mentah, manifest split, dan kontrak fitur tidak berubah. Detail antarobservasi/per-baterai-bin dihasilkan ulang secara lokal; ringkasan dipublikasikan.
+With the virtual environment active, use `python -m ev_battery --list` to see individual stages and `python scripts/run_notebook.py --all` to execute the six [NumPy notebooks](notebooks/numpy/README.md), or `make all` and `make notebooks` with GNU Make. A first run trains all configurations on CPU. Small numerical differences can occur across environments.
 
-## Menjalankan preprocessing
-
-```powershell
-.\.venv\Scripts\python.exe scripts/run_notebook.py notebooks/02_preprocessing.ipynb
-.\.venv\Scripts\python.exe scripts/export_eda.py --stage preprocessing
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
-```
-
-Alternatif tanpa notebook: `python -m src.preprocessing`. Semua parameter dipelajari dari train. Array hasil disimpan lokal di `data/processed/<recipe>/` dan fitted bundle di `models/preprocessing/`, diabaikan Git. Laporan/parameter/nama output tersedia di `results/preprocessing/`.
-
-```python
-from src.preprocessing import load_prepared_split
-train_data, bundle = load_prepared_split('baseline_standard', 'train')
-X_train, y_train_scaled = train_data['X'], train_data['y_scaled']
-# Setelah prediksi MLP: inverse_transform prediksi memakai bundle['target_scaler'].
-```
-
-Pipeline menangani median numerik + indikator missing, kategori missing eksplisit + one-hot, recall biner, standardisasi fitur/target, dan alternatif log/cap/fitur compact. Tidak ada resampling target atau penghapusan SOH rendah. Loader memeriksa kecocokan pipeline/array. Gunakan artefak joblib tepercaya.
-
-Default `baseline_standard` menghasilkan **67 input**; `log_sensor_caps` juga 67; `compact_log_sensor_caps` 63. Ketiganya sudah dibandingkan pada tahap awal study MLP; konfigurasi lengkap dan konteks seleksi tersedia di laporan eksperimen. Preprocessing membantu optimasi dan kualitas input, tetapi overfitting/underfitting perlu dibuktikan melalui train–validation curves dan eksperimen MLP. Untuk CV, fit ulang pipeline/target scaler pada setiap fold-train; array precomputed hanya untuk split tetap ini.
-
-## Menjalankan MLP dengan backpropagation
-
-```powershell
-.\.venv\Scripts\python.exe -m src.mlp_experiments
-.\.venv\Scripts\python.exe -m src.experiment_reporting
-.\.venv\Scripts\python.exe scripts/run_notebook.py notebooks/03_mlp_experiments.ipynb --timeout 3600
-.\.venv\Scripts\python.exe scripts/export_eda.py --stage experiments
-```
-
-Notebook juga dapat menjalankan study/report secara langsung. Run identik yang lengkap dengan fingerprint cocok dipakai ulang. Checkpoint disimpan lokal di `models/mlp/<run_id>/`; bila belum ada pada clone baru, model dilatih ulang. Array preprocessing harus dibuat lebih dahulu. Baseline saja: `python -m src.mlp_experiments --baseline`.
-
-**Hasil validation (bukan test):** baseline mean MAE tiga seed **1,0468 ± 0,0024** poin SOH; kandidat **0,9752 ± 0,0024**. Kandidat yang dipilih dari validation: log_sensor_caps, input 67, hidden [32], sigmoid, output linear, MAE, Adam lr=0,001, weight_decay=1e-4. Pencarian bertahap bukan full factorial dan tidak membuktikan optimum global.
-
-Loss dilatih pada y_scaled, metrik dikembalikan ke SOH asli. Best checkpoint dipilih dengan validation MAE; last/endpoint tidak disamakan dengan best. Seluruh seed dan hasil kurang baik tetap tercatat. Test tetap tidak dimuat oleh runner. Feature engineering domain sudah diuji terpisah pada notebook 03b, dengan training loop dan kontrol yang sama; hasilnya tidak menimpa study awal.
-
-## Ablation feature engineering
-
-```powershell
-.\.venv\Scripts\python.exe -m src.feature_engineering
-.\.venv\Scripts\python.exe -m src.feature_reporting
-.\.venv\Scripts\python.exe scripts/run_notebook.py notebooks/03b_feature_engineering_ablation.ipynb --timeout 3600
-.\.venv\Scripts\python.exe scripts/export_eda.py --stage features
-```
-
-Notebook juga dapat menjalankan study/report langsung. Empat varian menguji rasio penggunaan, konteks suhu/fast charge–DOD, interaksi kimia–paparan, dan gabungannya. Prefix 67 fitur lama tidak berubah. Ekstra fit hanya train; target scaler dipakai ulang; model [32]/sigmoid/MAE/Adam dan prosedur tetap.
-
-Mean MAE validation tiga seed: kontrol kandidat 03 **0,97525 ± 0,00236**, FE gabungan **0,96938 ± 0,00532** poin. Gain **0,00587 poin** dengan parameter 2.209 → 2.977. FE menang tiga seed tetapi tidak memenuhi ambang gain rerata 0,01 poin yang ditetapkan sebelum training; rekomendasi pra-test tetap kontrol. Ini heuristik praktis, bukan uji signifikansi. Pada SOH <70%, error turun sekitar 3,46 → 3,25 poin; lihat dukungan/variasi seed di laporan.
-
-Config/provenance berada di configs/feature_engineering.json dan results/feature_engineering/study.json. Array hanya train/validation, lokal di data/processed/<variant>; bundle inference di models/feature_engineering. Tidak membuat atau mengevaluasi test FE pada tahap ini. Kontrol dan studi 03 dipertahankan, sehingga efek fitur dapat ditelusuri.
-
-## Evaluasi akhir pada test
-
-```powershell
-python -m src.final_evaluation
-python -m src.final_reporting
-python scripts/run_notebook.py notebooks/04_final_evaluation.ipynb --timeout 3600
-python scripts/export_eda.py --stage final
-```
-
-Diperlukan array preprocessing dan enam checkpoint asli lokal. Evaluator memeriksa identitas berkas, mengunci model/seed sebelum inference, dan memakai cache jika hasil lengkap cocok. Tidak ada training, fit ulang, clipping, pemilihan seed terbaik dari test, atau ensemble. Model utama tetap kandidat tanpa FE domain yang dipilih sebelum test.
-
-| Model | Test MAE (poin SOH), mean ± SD | Test RMSE (poin SOH), mean ± SD | Test R², mean ± SD |
-|---|---:|---:|---:|
-| Baseline MLP | 1,02684 ± 0,00311 | 1,49732 ± 0,00794 | 0,95221 ± 0,00051 |
-| Kandidat utama | 0,95005 ± 0,00619 | 1,42114 ± 0,01228 | 0,95694 ± 0,00074 |
-
-Sample SD tiga seed training pada test yang sama bukan confidence interval populasi. Pada **SOH <70%**, kandidat lebih buruk: MAE **3,09049** dibanding baseline **2,80057**, dari 88 observasi / 23 baterai. Bias kandidat +2,45854 poin pada kelompok ini. Data sintetis membatasi klaim ke simulator yang sama, bukan forecasting atau penggunaan nyata. Lihat laporan final untuk seluruh seed, dukungan rentang, error per baterai, dan prediksi di luar 0–100 yang tetap tidak di-clip.
-
-Pada clone baru, laporan dan HTML langsung dapat dibaca. Jika checkpoint/pipeline dibuat ulang sehingga hash binernya berbeda, evaluator rilis sengaja menolak penggantian. Gunakan `python -m src.final_evaluation --reproduce` untuk keluaran lokal terpisah di `data/processed/final_evaluation_reproduction`. Jangan menghapus lock rilis atau melakukan tuning menggunakan test yang sudah dibuka. Notebook 04 memverifikasi artefak asli; reproduksi baru memakai evaluator dengan output terpisah.
-
-## Pekerjaan berikutnya
-
-1. Susun laporan akhir: EDA, alasan preprocessing, arsitektur/backpropagation, eksperimen, pemilihan validation, dan hasil test final.
-2. Buat slide dengan enam grafik final dan pilih temuan EDA yang menjelaskan rancangan model.
-3. Jelaskan kelemahan SOH rendah, sifat sintetis, dan batas generalisasi secara konsisten.
-4. Pastikan ketentuan dosen tentang framework/backpropagation dari nol serta format pengumpulan terpenuhi.
-5. Latihan presentasi; setiap anggota perlu menjelaskan metode dan satuan metriknya.
-
-Tahap analisis dan evaluasi final selesai. Pekerjaan berikutnya berfokus pada penulisan/presentasi; test tidak digunakan kembali untuk memilih fitur atau konfigurasi.
-
-## Aturan kerja kelompok
-
-- Gunakan satu definisi target dan manifest split bersama untuk semua eksperimen.
-- Fit preprocessing hanya pada train. Gunakan validation untuk memilih konfigurasi dan kunci test sampai evaluasi final.
-- Catat konfigurasi, seed, metrik, epoch aktual/terbaik, dan waktu training setiap run.
-- Simpan hasil buruk dan run gagal beserta keterangannya.
-- Jangan unggah kredensial Kaggle, token, `.env`, lingkungan virtual, atau dataset tanpa memeriksa hak distribusinya.
-- Periksa perubahan sebelum commit. Notebook yang akan dibagikan sebaiknya memiliki output ringkas tanpa data sensitif atau dump data besar.
-- Jangan mencantumkan skor atau kesimpulan sebelum eksperimennya benar-benar dijalankan.
-
-## Hasil akhir yang dituju
-
-Kamus data dan EDA, pipeline preprocessing, implementasi MLP/backpropagation, tabel eksperimen, evaluasi final, artefak model yang cocok dengan pipeline, laporan, slide, dan instruksi reproduksi. Detail kriteria selesai ada pada bagian 13 dan 30 `CONTEXT.md`.
+For a runnable copy of the PyTorch pipeline, check out [the original release commit](https://github.com/HUB37T/EV-Battery-Health/tree/479ed842d141017591a3fe755647040c237dfd6c) in a separate clone or worktree and follow its README. The archived reports and executed notebooks are readable from the current branch.

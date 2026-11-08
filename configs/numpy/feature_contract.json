@@ -1,0 +1,88 @@
+{
+  "task": "Regression of SOH at observation time for batteries not seen in train (not forecasting or RUL)",
+  "target": "state_of_health_pct",
+  "target_unit": "percent, MAE/RMSE errors in percentage points",
+  "dataset_sha256": "cacdf6afcf50db86583be3754207a89acbfd60b04dfff8f69b71e29cfd78218d",
+  "seed": 42,
+  "split_unit": "battery_id",
+  "split_ratios_batteries": {
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "primary_features": [
+    "chemistry",
+    "manufacturer",
+    "vehicle_model",
+    "pack_capacity_kwh",
+    "battery_age_days",
+    "cycle_count",
+    "climate_zone",
+    "avg_daily_distance_km",
+    "avg_charging_power_kw",
+    "fast_charge_ratio",
+    "avg_depth_of_discharge_pct",
+    "avg_state_of_charge_pct",
+    "charge_cycles_per_month",
+    "total_energy_throughput_kwh",
+    "avg_ambient_temp_c",
+    "humidity_pct",
+    "altitude_m",
+    "peak_temp_during_fast_charge_c",
+    "service_count",
+    "bms_firmware_version",
+    "recall_flag"
+  ],
+  "categorical_features": [
+    "chemistry",
+    "manufacturer",
+    "vehicle_model",
+    "climate_zone",
+    "bms_firmware_version"
+  ],
+  "numeric_features": [
+    "pack_capacity_kwh",
+    "battery_age_days",
+    "cycle_count",
+    "avg_daily_distance_km",
+    "avg_charging_power_kw",
+    "fast_charge_ratio",
+    "avg_depth_of_discharge_pct",
+    "avg_state_of_charge_pct",
+    "charge_cycles_per_month",
+    "total_energy_throughput_kwh",
+    "avg_ambient_temp_c",
+    "humidity_pct",
+    "altitude_m",
+    "peak_temp_during_fast_charge_c",
+    "service_count"
+  ],
+  "binary_features": [
+    "recall_flag"
+  ],
+  "excluded_features": {
+    "battery_id": "Group ID used for splitting, not a feature.",
+    "observation_id": "Observation ID used for tracking, not a feature.",
+    "capacity_fade_pct": "Direct identity 100 - SOH, target leakage.",
+    "remaining_useful_life_cycles": "Alternative target or health label, not an input for SOH regression.",
+    "failure_risk_label": "Alternative target or health label, not an input for SOH regression.",
+    "degradation_category": "Alternative target or health label, not an input for SOH regression.",
+    "manufacture_date": "Raw date excluded from the baseline, battery_age_days is used instead.",
+    "observation_date": "Raw date excluded from the baseline, battery_age_days is used instead.",
+    "last_service_date": "Raw date excluded from the baseline, battery_age_days is used instead.",
+    "internal_resistance_mohm": "Candidate synthetic sensor proxy, only for a separate ablation after reviewing origin and availability.",
+    "voltage_avg_v": "Candidate synthetic sensor proxy, only for a separate ablation after reviewing origin and availability.",
+    "current_avg_a": "Candidate synthetic sensor proxy, only for a separate ablation after reviewing origin and availability.",
+    "charge_time_avg_min": "Candidate synthetic sensor proxy, only for a separate ablation after reviewing origin and availability."
+  },
+  "proxy_ablation_candidates": [
+    "internal_resistance_mohm",
+    "voltage_avg_v",
+    "current_avg_a",
+    "charge_time_avg_min"
+  ],
+  "availability_assumption": "Usage, environment summaries and metadata are known at observation time. The source does not document aggregation windows, no claim of prediction before a session or into the future.",
+  "timesteps": "Not used: dates are missing and cumulative counters are not always monotonic, requires further temporal audit.",
+  "preprocessing_status": "Not fitted here. Imputation, encoding, scaling and data-driven selection may learn from train only.",
+  "balancing": "No class balancing because the target is continuous."
+}

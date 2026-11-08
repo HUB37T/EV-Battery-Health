@@ -1,0 +1,87 @@
+{
+  "locked_at_utc": "2026-11-07T22:22:25.861474+00:00",
+  "fingerprint": "75b44e65e2f88f74f3c276f1e7e4fbff79bbcdc2e67ff5a6a473b979da5e90e4",
+  "payload": {
+    "plan": {
+      "schema_version": 1,
+      "primary_group_fixed_before_test": "candidate",
+      "seeds": [
+        42,
+        123,
+        2026
+      ],
+      "groups": {
+        "baseline": {
+          "recipe": "baseline_standard",
+          "run_ids_by_seed": {
+            "42": "run_cd4e6f80a183",
+            "123": "run_96e0465b8c5f",
+            "2026": "run_27c8116694bb"
+          }
+        },
+        "candidate": {
+          "recipe": "baseline_standard",
+          "run_ids_by_seed": {
+            "42": "run_0015e8ebf51d",
+            "123": "run_17e82e31806b",
+            "2026": "run_125d105f67b2"
+          }
+        }
+      },
+      "soh_band_edges": [
+        0,
+        70,
+        80,
+        90,
+        95,
+        101
+      ],
+      "soh_band_labels": [
+        "<70",
+        "70–<80",
+        "80–<90",
+        "90–<95",
+        ">=95"
+      ],
+      "rules": [
+        "Use the validation-selected best checkpoint (best.npz) of the six locked runs, no new training or fit.",
+        "All three seeds are reported, do not select a winning seed from test.",
+        "The primary model family remains the candidate chosen before test, regardless of test ranking.",
+        "Domain feature engineering stays a validation ablation and is not added to this test comparison.",
+        "Keep original SOH units and un-clipped predictions, no resampling or test-driven threshold adjustment.",
+        "Test subgroup analyses are descriptive final assessment, not grounds for retuning against the same test set."
+      ]
+    },
+    "source_sha256": "4b5a2c294b05bbc35b333a7508c5b65702b4fb9aff97906dd4d3eba3b7d9a879",
+    "selection_source_commit": "ed55f113393bb38dc568a79b38c33f56dcbca305",
+    "files_sha256": {
+      "configs/feature_contract.json": "1cffec850bb7b84a5837d635ec4055d6d6fd1921dd54e7e56f587eb4138edb8b",
+      "configs/final_evaluation.json": "0c751aab276a6ebe6d2289cc3f5bf58f7a6f62dc9bf83a23b27537e619b8dd01",
+      "configs/mlp_study.json": "d23cfac31919feefac6dc561a1720aca361e3fb743bd26dd90d02d9dad82b634",
+      "configs/preprocessing.json": "d2d8ec51a4242f10fe58d9cb24f80b4352bf8c3282ae8859a9e351ed6dcffbdb",
+      "data/processed/baseline_standard/test.npz": "3d4b318c2eab9f1517316165013dcb2f31a1aba2be20a5b44e56bfc028d816f1",
+      "data/splits/battery_split.csv": "9529f65692528d6f9ed63773880a84c75d0b28d0a8b7803018a2bcd9ac00b8ad",
+      "models/mlp/run_0015e8ebf51d/best.npz": "fa4c61d6739794e69847be209e222cea2567c2b8c29d36105e9a1d008484fc55",
+      "models/mlp/run_125d105f67b2/best.npz": "8bac421fa2912dfd1c10176dbbef2c5bef1d693dfcf4ddd9cf3d8f8ea58b7e94",
+      "models/mlp/run_17e82e31806b/best.npz": "cbce957f3b90a6c50e1bd54304db5ca4ede271866e546b1e84d1c4c0f61765ed",
+      "models/mlp/run_27c8116694bb/best.npz": "fe6896765820041cf640971351d0eeb8b7ed43c44e413b8ff13f7c4d790ef803",
+      "models/mlp/run_96e0465b8c5f/best.npz": "34561f45e730e983edac86dcb11fde9da601264923049964a0d40f5b5edf24f3",
+      "models/mlp/run_cd4e6f80a183/best.npz": "21776ecaabf2d06f06884dae461bd10836e9e78501f682dfac8a81126945ac4a",
+      "models/preprocessing/baseline_standard.joblib": "8d3d32f2b58487541d7d1cb38be47cf499aab719e743b46e3f7d3474bd7786b2",
+      "results/experiments/runs/run_0015e8ebf51d/summary.json": "75f859e2eca613b2313fa22babfc335470ca2b49e134302af5fd5b9184175a9d",
+      "results/experiments/runs/run_125d105f67b2/summary.json": "ca18c8e258153abfdf324f18660107aa3edf00c8b78b735f5a60e79e4344d5d3",
+      "results/experiments/runs/run_17e82e31806b/summary.json": "8088a6c7b48535b5a7f1defffd7906df267a822772dd714e3b71894c12d09e1f",
+      "results/experiments/runs/run_27c8116694bb/summary.json": "cd8ec12c31fb78f13ba990a04b34f11fcb37fc6de17ff8aa2ce705c475a1dc33",
+      "results/experiments/runs/run_96e0465b8c5f/summary.json": "a372f983344e805291251e8ebb51adfc67c31ecd8cebc188e140e02e15a31864",
+      "results/experiments/runs/run_cd4e6f80a183/summary.json": "f0e026bc2ae6449e08c70ff5685aedffa64f1c7afd135c04434b96ff82a364c7",
+      "results/experiments/seed_confirmation.csv": "75c0de8d6774f5c75b256d48626ae83ebc8ed28de76528fffcbced0ba1a746f6",
+      "results/experiments/study.json": "85a1dbb999e6108409383970bd07b40b1c78705f30fcb5e4ac42f5ba833cf9fc",
+      "results/feature_engineering/study.json": "d5d27fbb60133d9a3589044ba5583189cdd66e67b59b5dba6d3d6337c7b0b2a1"
+    },
+    "checkpoint_selection": "best validation epoch, fixed before test",
+    "test_predictions_computed_at_lock": false,
+    "data_fingerprints": {
+      "baseline_standard": "6c91eeb59bc2829774eaf5eebac47b523b1bef0df5254599a974c4c525438125"
+    }
+  }
+}

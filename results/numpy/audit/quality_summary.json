@@ -1,0 +1,82 @@
+{
+  "rows": 50000,
+  "columns": 35,
+  "unique_batteries": 2600,
+  "duplicate_rows": 0,
+  "duplicate_observation_ids": 0,
+  "missing_targets": 0,
+  "missing_observation_dates": 2216,
+  "duplicate_battery_date_non_null": 0,
+  "date_parse_errors": {
+    "manufacture_date": 0,
+    "observation_date": 0,
+    "last_service_date": 0
+  },
+  "observation_before_manufacture": 0,
+  "service_after_observation": 0,
+  "service_before_manufacture": 0,
+  "age_check_eligible": 43199,
+  "age_date_mismatches": 0,
+  "fade_identity_eligible": 48131,
+  "fade_identity_max_abs_error": 0.0,
+  "observations_per_battery": {
+    "count": 2600.0,
+    "mean": 19.23076923076923,
+    "std": 4.366947917449025,
+    "min": 7.0,
+    "25%": 16.0,
+    "50%": 19.0,
+    "75%": 22.0,
+    "max": 37.0
+  },
+  "date_ranges": {
+    "manufacture_date": {
+      "min": "2020-09-29",
+      "max": "2026-07-29"
+    },
+    "observation_date": {
+      "min": "2020-10-07",
+      "max": "2026-09-27"
+    },
+    "last_service_date": {
+      "min": "2020-10-11",
+      "max": "2026-09-27"
+    }
+  },
+  "service_missing_count_zero": 18205,
+  "service_missing_count_positive": 0,
+  "service_missing_count_missing": 626,
+  "infinite_numeric_values": 0,
+  "temporal_counter_checks": {
+    "cycle_count": {
+      "eligible_pairs": 43017,
+      "decreasing_pairs": 7820
+    },
+    "battery_age_days": {
+      "eligible_pairs": 42320,
+      "decreasing_pairs": 0
+    },
+    "total_energy_throughput_kwh": {
+      "eligible_pairs": 41948,
+      "decreasing_pairs": 8923
+    }
+  },
+  "within_battery_static_conflicts": {
+    "chemistry": 0,
+    "manufacturer": 0,
+    "vehicle_model": 0,
+    "pack_capacity_kwh": 0,
+    "manufacture_date": 0,
+    "climate_zone": 0
+  },
+  "outside_basic_ranges": {
+    "state_of_health_pct": 0,
+    "capacity_fade_pct": 0,
+    "fast_charge_ratio": 0,
+    "avg_depth_of_discharge_pct": 0,
+    "avg_state_of_charge_pct": 0,
+    "humidity_pct": 0,
+    "recall_flag": 0
+  },
+  "unexpected_recall_values": 0
+}

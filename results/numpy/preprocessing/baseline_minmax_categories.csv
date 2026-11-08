@@ -1,0 +1,36 @@
+feature,category,block_index
+chemistry,LFP,0
+chemistry,LMO,1
+chemistry,NCA,2
+chemistry,NMC,3
+chemistry,__MISSING__,4
+manufacturer,Amperion,0
+manufacturer,CellTech,1
+manufacturer,GigaWatt Labs,2
+manufacturer,IonFlux,3
+manufacturer,NexCell,4
+manufacturer,PowerGrid Batteries,5
+manufacturer,StormCell,6
+manufacturer,VoltaCore,7
+manufacturer,__MISSING__,8
+vehicle_model,Compact-E1,0
+vehicle_model,Crossover-X2,1
+vehicle_model,Hatch-E3,2
+vehicle_model,Pickup-E7,3
+vehicle_model,SUV-E5,4
+vehicle_model,Sedan-E1,5
+vehicle_model,Sport-E9,6
+vehicle_model,Van-E4,7
+vehicle_model,__MISSING__,8
+climate_zone,__MISSING__,0
+climate_zone,cold,1
+climate_zone,hot_arid,2
+climate_zone,mixed,3
+climate_zone,temperate,4
+climate_zone,tropical_humid,5
+bms_firmware_version,BMS_v2.1,0
+bms_firmware_version,BMS_v2.3,1
+bms_firmware_version,BMS_v3.0,2
+bms_firmware_version,BMS_v3.2,3
+bms_firmware_version,BMS_v3.5,4
+bms_firmware_version,__MISSING__,5

@@ -1,0 +1,16 @@
+feature,median_train_original,cap_lower_train,cap_upper_train,signed_log1p,scaler,scaler_center_train,scaler_spread_train
+pack_capacity_kwh,72.5,,,False,minmax,40.1,59.800000000000004
+battery_age_days,418.0,,,False,minmax,1.0,2183.0
+cycle_count,372.0,,,False,minmax,1.0,5072.0
+avg_daily_distance_km,39.3,,,False,minmax,3.0,397.0
+avg_charging_power_kw,28.6,,,False,minmax,1.4958134809039372,146.2757919215928
+fast_charge_ratio,0.272,,,False,minmax,0.0,0.937
+avg_depth_of_discharge_pct,65.0,,,False,minmax,10.0,90.0
+avg_state_of_charge_pct,67.9,,,False,minmax,30.9,64.1
+charge_cycles_per_month,19.0,,,False,minmax,2.0,55.5
+total_energy_throughput_kwh,24155.3,,,False,minmax,36.4,402383.5
+avg_ambient_temp_c,21.5,,,False,minmax,-23.4,107.1146074856938
+humidity_pct,54.8,,,False,minmax,5.0,95.0
+altitude_m,209.0,,,False,minmax,0.0,3214.0
+peak_temp_during_fast_charge_c,26.9,,,False,minmax,-10.903885362093838,100.72412101526186
+service_count,1.0,,,False,minmax,0.0,15.0
