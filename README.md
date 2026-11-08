@@ -95,6 +95,16 @@ pytest                                # test suite
 ruff check . && ruff format --check .
 ```
 
+With GNU Make installed, the same commands are available as shortcuts. Run `make`
+to list every target.
+
+```bash
+make all          # every pipeline stage, or one stage: make audit, make train, ...
+make notebooks    # re-execute notebooks 00 to 05
+make notebook NB=notebooks/01_eda.ipynb
+make check        # lint and tests
+```
+
 The full pipeline runs on CPU in about ten minutes. Runs whose code, data and
 configuration fingerprints match are reused, so repeating `all` is fast.
 

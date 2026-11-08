@@ -36,6 +36,8 @@ ruff format . && ruff check .
 pytest
 ```
 
+With GNU Make, `make format` followed by `make check` does the same.
+
 ## Writing conventions
 
 - Code, comments, error messages and documentation are in English.
