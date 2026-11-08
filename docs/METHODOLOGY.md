@@ -272,7 +272,7 @@ the mean by only 0.00286 points, so the control stayed the main candidate.
 ## 8. Evaluation protocol
 
 1. Fix every feature, preprocessing, architecture, checkpoint and seed decision on train and validation.
-2. Write the plan to `configs/final_evaluation.json`.
+2. Rebuild the configurations and seeds in `configs/numpy/followup.json`. The plan keeps the original NumPy reference IDs, while the local training stage resolves new run IDs.
 3. Hash the six local checkpoints, fitted preprocessing, test arrays and recorded NumPy configurations into the follow-up workspace lock before computing this run’s predictions.
 4. Score the baseline and candidate on test for all three seeds in one step.
 5. Report every seed, the mean and the sample SD. Never select a seed, ensemble, clip or retune after seeing test.
