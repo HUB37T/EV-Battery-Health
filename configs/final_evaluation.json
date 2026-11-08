@@ -1,50 +1,34 @@
 {
   "schema_version": 1,
   "primary_group_fixed_before_test": "candidate",
-  "seeds": [
-    42,
-    123,
-    2026
-  ],
+  "seeds": [42, 123, 2026],
   "groups": {
     "baseline": {
       "recipe": "baseline_standard",
       "run_ids_by_seed": {
-        "42": "run_cd4e6f80a183",
-        "123": "run_96e0465b8c5f",
-        "2026": "run_27c8116694bb"
+        "42": "run_83aa5197bac6",
+        "123": "run_567cd20b04c3",
+        "2026": "run_e8aecfd9751c"
       }
     },
     "candidate": {
-      "recipe": "baseline_standard",
+      "recipe": "log_sensor_caps",
       "run_ids_by_seed": {
-        "42": "run_0015e8ebf51d",
-        "123": "run_17e82e31806b",
-        "2026": "run_125d105f67b2"
+        "42": "run_417429878fc7",
+        "123": "run_312fdc17ada1",
+        "2026": "run_73d0ae8e6140"
       }
     }
   },
-  "soh_band_edges": [
-    0,
-    70,
-    80,
-    90,
-    95,
-    101
-  ],
-  "soh_band_labels": [
-    "<70",
-    "70–<80",
-    "80–<90",
-    "90–<95",
-    ">=95"
-  ],
+  "cpu_threads": 2,
+  "soh_band_edges": [0, 70, 80, 90, 95, 101],
+  "soh_band_labels": ["<70", "70–<80", "80–<90", "90–<95", ">=95"],
   "rules": [
-    "Use the validation-selected best checkpoint (best.npz) of the six locked runs, no new training or fit.",
-    "All three seeds are reported, do not select a winning seed from test.",
+    "Use validation-selected best.pt from the six locked runs; no new training or fit.",
+    "All three seeds are reported; do not select a winning seed from test.",
     "The primary model family remains the candidate chosen before test, regardless of test ranking.",
     "Domain feature engineering stays a validation ablation and is not added to this test comparison.",
-    "Keep original SOH units and un-clipped predictions, no resampling or test-driven threshold adjustment.",
+    "Keep original SOH units and un-clipped predictions; no resampling or test-driven threshold adjustment.",
     "Test subgroup analyses are descriptive final assessment, not grounds for retuning against the same test set."
   ]
 }

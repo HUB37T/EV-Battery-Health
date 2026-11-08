@@ -1,121 +1,121 @@
-# Feature Engineering Ablation for the MLP
+# Ablation Feature Engineering untuk MLP
 
-## Result and recommendation
+## Hasil dan rekomendasi
 
-**Recommendation: keep the control without domain features as the main candidate.** The new features were genuinely tested, and a small improvement is not by itself a reason to add complexity.
+**Rekomendasi: pertahankan kontrol tanpa fitur domain sebagai kandidat utama.** Fitur baru benar-benar diuji; peningkatan kecil tidak otomatis dijadikan alasan menambah kompleksitas.
 
-- The control is the notebook 03 candidate, **not** the original baseline.
-- Three-seed mean validation MAE: control **0.99988 ± 0.00831**, best engineered variant **0.99702 ± 0.00523** SOH points.
-- Mean paired gain **0.00286 points** (0.29% relative to the control MAE), better on **2/3** seeds.
-- Inputs: control 67, best variant 71. Parameters 553 to 585 (**+5.8%**), hidden layers fixed at [8].
-- Promotion rule fixed before training: mean gain of at least **0.01 points** and better on at least two seeds. Passed: **False**. This is a practical heuristic, not a significance test or a physical threshold.
-- The test split is not transformed, loaded or evaluated. The synthetic data still limits generalisation.
+- Kontrol adalah kandidat notebook 03, **bukan** baseline awal [64,32] ReLU.
+- Mean validation MAE tiga seed: kontrol **0.97525 ± 0.00236**, FE terbaik **0.96938 ± 0.00532** poin SOH.
+- Gain berpasangan rerata **0.00587 poin** (0.60% relatif terhadap MAE kontrol), menang pada **3/3** seed.
+- Input kontrol 67, FE terbaik 91. Parameter 2,209 → 2,977 (**+34.8%**), hidden tetap [32].
+- Ambang promosi yang ditetapkan sebelum training: gain rerata minimal **0.01 poin** dan menang minimal dua seed. Lolos: **False**. Ini heuristik praktis, bukan uji signifikansi atau ambang fisika baterai.
+- Test tidak ditransform, tidak dimuat sebagai array, dan tidak dievaluasi. Data sintetis tetap membatasi generalisasi.
 
-## 1. Question and protocol
+## 1. Pertanyaan dan protokol
 
-Do derived features reduce MLP error when the hidden layers, activation, output, loss, learning rate, batch size, seeds, checkpointing and early stopping are unchanged? The control is frozen from run `run_0015e8ebf51d`: `baseline_standard`, 67 inputs, hidden [8] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0, at most 200 epochs, patience 15.
+Apakah fitur turunan menurunkan error MLP jika hidden, aktivasi, output, loss, learning rate, batch, seed, dan aturan checkpoint/early stopping sama? Kontrol dibekukan dari run `run_417429878fc7`: log_sensor_caps, hidden [32], sigmoid, output linear, MAE, Adam lr=0.001, batch 256, weight_decay=1e-4, dropout 0, max 200 epoch, patience 15.
 
-Four variants are screened on seed 42, then only the variant with the lowest screening MAE is confirmed on seeds 42, 123 and 2026. The three existing control runs are reused with identical fingerprints. This final version adds **6 new training runs**, and the notebook 03 study history stays intact.
+Screening empat varian dilakukan pada seed 42, lalu hanya FE dengan MAE screening terkecil dikonfirmasi pada 42/123/2026. Tiga run kontrol yang sudah ada dipakai ulang dengan fingerprint yang sama. Ada **6 run training baru** dalam versi final ini; riwayat study notebook 03 tetap utuh.
 
-Validation is used for both screening and confirmation, so this is not yet an independent final evaluation. The search is not extended until results look good, and no best seed is selected.
+Validation dipakai untuk screening dan konfirmasi, sehingga hasil ini belum evaluasi independen akhir. Tidak menjalankan pencarian tanpa batas sampai hasil terlihat bagus dan tidak memilih seed terbaik.
 
-## 2. Feature definitions
+## 2. Definisi fitur
 
 | block | feature | formula | unit |
 | --- | --- | --- | --- |
-| usage_rates | fe_cycles_per_day | cycle_count / battery_age_days | cycles/day, snapshot ratio |
-| usage_rates | fe_energy_per_cycle_kwh | total_energy_throughput_kwh / cycle_count | kWh/cycle |
+| usage_rates | fe_cycles_per_day | cycle_count / battery_age_days | siklus/hari; rasio snapshot |
+| usage_rates | fe_energy_per_cycle_kwh | total_energy_throughput_kwh / cycle_count | kWh/siklus |
 | context | fe_charge_ambient_delta_c | peak_temp_during_fast_charge_c - avg_ambient_temp_c | °C |
-| context | fe_fastcharge_dod_interaction | fast_charge_ratio * avg_depth_of_discharge_pct / 100 | ratio interaction |
-| chemistry | fe_chem_<chemistry>_log_cycles | I(chemistry=c) * log1p(cycle_count) | interaction, 4 columns from train chemistries |
-| chemistry | fe_chem_<chemistry>_log_age_years | I(chemistry=c) * log1p(battery_age_days / 365.25) | interaction, 4 columns from train chemistries |
+| context | fe_fastcharge_dod_interaction | fast_charge_ratio * avg_depth_of_discharge_pct / 100 | interaksi rasio |
+| chemistry | fe_chem_<kimia>_log_cycles | I(chemistry=kimia) * log1p(cycle_count) | interaksi; 4 kolom dari kimia train |
+| chemistry | fe_chem_<kimia>_log_age_years | I(chemistry=kimia) * log1p(battery_age_days / 365.25) | interaksi; 4 kolom dari kimia train |
 
-Chemistry categories are taken from the non-missing categories of the frozen train encoder. For a known chemistry, the non-matching interaction columns are zero. For a missing or unseen chemistry, or a missing exposure, the interaction becomes missing. Unknown values are never mapped to one of the known chemistries.
+Chemistry dipelajari dari kategori nonmissing pada encoder train yang telah dibekukan. Untuk kimia diketahui, interaksi kategori yang tidak cocok bernilai nol; untuk kimia missing/baru atau exposure missing, fitur interaksi menjadi missing. Tidak menyamaratakan unknown menjadi salah satu kimia yang dikenal.
 
-Ratios are only computed when the denominator is positive and both operands are present after domain checks. No epsilon or floor changes the meaning of a division. Unavailable values stay missing until the extra imputation. The target, `capacity_fade_pct`, RUL, risk and degradation labels, IDs, future data and group fills are never used.
+Rasio hanya dihitung jika denominator >0 dan kedua operand terisi setelah pemeriksaan domain. Tidak memakai epsilon/floor yang mengubah arti pembagian. Nilai yang tidak tersedia dipertahankan sebagai missing sebelum imputasi ekstra. Tidak memakai target, capacity_fade_pct, RUL, label risiko/degradasi, ID, data masa depan, atau group fill.
 
-Cumulative ratios are snapshot summaries, not degradation rates or evidence of a physical mechanism. Non-monotonic cycle and energy counters remain a limitation of the source, and feature engineering does not repair them.
+Rasio kumulatif adalah ringkasan snapshot, bukan estimasi laju degradasi atau bukti mekanisme fisik. Counter siklus/energi yang tidak selalu monoton tetap menjadi keterbatasan sumber; feature engineering tidak memperbaikinya secara otomatis.
 
-## 3. Extra preprocessing and fairness
+## 3. Preprocessing ekstra dan fairness
 
-All **67 base pipeline outputs remain bit-for-bit identical** as the input prefix. New features are appended together with their own missing indicators. Medians, 0.5% and 99.5% caps for the two ratios and the temperature delta, and the extra scaler are fitted on train only. The two ratios use signed `log1p` after capping. Chemistry interactions are built on log exposure and are not logged twice. The fast-charge by depth-of-discharge product is not capped because it is already a valid product of ratios.
+Seluruh **67 output base pipeline tetap bit-for-bit sama** sebagai prefix input. Fitur baru diappend bersama indikator missing masing-masing. Median, batas cap 0.5%/99.5% untuk dua rasio dan delta suhu, serta scaler ekstra di-fit hanya train. Dua rasio memakai signed log1p setelah cap; interaksi kimia sudah dibentuk pada log exposure dan tidak dilog dua kali. Fast charge–DOD tidak dicap karena sudah berupa produk rasio yang valid.
 
-The target scaler is reused without refitting. No observations or low-SOH rows are removed and no new test arrays are created. The source CSV is read in chunks with input and ID columns only, and test rows are dropped while loading, before any arithmetic or statistics. Target labels are not read in this step.
+Target scaler dipakai ulang tanpa refit. Tidak menghapus observasi atau SOH rendah. Tidak ada array test baru. CSV sumber dibaca secara chunk dengan kolom input+ID saja; baris test dibuang saat loading sebelum aritmetika/statistik. Label target tidak diambil dari pembacaan CSV ini.
 
-The MLP configuration is identical except for the input width and the resulting parameter count. Because parameters increase, this ablation measures the combined effect of the feature representation and input capacity, not a causal effect of the features at a fixed parameter count. All parameter counts are recorded.
+Konfigurasi MLP sama kecuali jumlah input dan parameter yang mengikuti dimensi. Karena parameter bertambah, ablation ini mengukur paket representasi fitur+kapasitas input, bukan mengisolasi efek kausal fitur pada jumlah parameter identik. Seluruh jumlah parameter dicatat.
 
 ## 4. Screening
 
 | variant | run_id | seed | input_neurons | parameters | train_mae_pp | validation_mae_pp | validation_rmse_pp | validation_r2 | best_epoch | epochs_actual |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| control_no_domain_features | run_0015e8ebf51d | 42 | 67 | 553 | 0.96289 | 0.99428 | 1.50387 | 0.9541 | 96 | 105 |
-| fe_usage_rates | run_c3f70c44f506 | 42 | 71 | 585 | 0.97804 | 1.00386 | 1.51949 | 0.95314 | 27 | 42 |
-| fe_context | run_2297ec26d5df | 42 | 71 | 585 | 0.96977 | 0.99875 | 1.50901 | 0.95379 | 62 | 77 |
-| fe_chemistry | run_10b2a2751fe1 | 42 | 83 | 681 | 0.99445 | 1.02063 | 1.53223 | 0.95235 | 27 | 42 |
-| fe_combined | run_7875bbe5a00b | 42 | 91 | 745 | 0.9889 | 1.02786 | 1.53416 | 0.95223 | 41 | 42 |
+| control_no_domain_features | run_417429878fc7 | 42 | 67 | 2209 | 0.92277 | 0.97258 | 1.49731 | 0.9545 | 123 | 126 |
+| fe_usage_rates | run_5b7a4eefc1a0 | 42 | 71 | 2337 | 0.91587 | 0.96871 | 1.48088 | 0.95549 | 82 | 97 |
+| fe_context | run_0c7f8ab3b7d9 | 42 | 71 | 2337 | 0.93156 | 0.98029 | 1.5091 | 0.95378 | 82 | 97 |
+| fe_chemistry | run_b5ff9581a95f | 42 | 83 | 2721 | 0.94149 | 0.98656 | 1.52395 | 0.95287 | 55 | 67 |
+| fe_combined | run_e19f105ebb61 | 42 | 91 | 2977 | 0.91642 | 0.96738 | 1.47532 | 0.95583 | 70 | 85 |
 
-![Feature screening](01_feature_screening.png)
+![Screening](01_feature_screening.png)
 
-The screening winner is `fe_context`. A block can make results worse, so not every derived feature has to be used, and losing variants are kept in the record. Single-seed screening can be sensitive to optimisation noise, which is why it is followed by three-seed confirmation. Only the winner is confirmed, so a very small gap to the ratio variant does not prove that the ranking is stable on other seeds.
+Pemenang screening adalah `fe_combined`. Sebuah blok dapat memperburuk hasil; bukan semua fitur turunan harus dipakai. Tidak menghapus hasil varian yang kalah. Screening satu seed dapat sensitif terhadap optimasi, sehingga disertai konfirmasi tiga seed. Hanya pemenang screening yang dikonfirmasi; selisih sangat kecil dengan varian rasio tidak membuktikan peringkat tersebut stabil pada seed lain.
 
-## 5. Paired confirmation
+## 5. Konfirmasi berpasangan
 
 | variant | n_seeds | mae_mean_pp | mae_sd_pp | rmse_mean_pp | r2_mean | parameters |
 | --- | --- | --- | --- | --- | --- | --- |
-| control_no_domain_features | 3 | 0.99988 | 0.00831 | 1.50328 | 0.95414 | 553 |
-| fe_context | 3 | 0.99702 | 0.00523 | 1.50461 | 0.95406 | 585 |
+| control_no_domain_features | 3 | 0.97525 | 0.00236 | 1.50177 | 0.95423 | 2209 |
+| fe_combined | 3 | 0.96938 | 0.00532 | 1.48237 | 0.9554 | 2977 |
 
-| seed | control_no_domain_features | fe_context | mae_improvement_pp |
+| seed | control_no_domain_features | fe_combined | mae_improvement_pp |
 | --- | --- | --- | --- |
-| 42 | 0.99428 | 0.99875 | -0.00447 |
-| 123 | 1.00942 | 1.00117 | 0.00825 |
-| 2026 | 0.99594 | 0.99115 | 0.00479 |
+| 42 | 0.97258 | 0.96738 | 0.0052 |
+| 123 | 0.9761 | 0.97541 | 0.0007 |
+| 2026 | 0.97706 | 0.96535 | 0.01171 |
 
-![Paired seed improvements](02_paired_seed_improvements.png)
+![Seed](02_paired_seed_improvements.png)
 
-SD is the sample SD over three seeds on a fixed split, not a population CI or evidence of significance. The 0.01-point threshold applies to the **mean gain**, not to each seed. The engineered variant is better on 2 of 3 seeds. With n = 3, both the direction and the size of the gain matter.
+SD adalah sample SD tiga seed pada split tetap, bukan CI populasi atau bukti signifikansi. Ambang 0.01 poin berlaku pada **rerata gain**, bukan syarat tiap seed. Menang tiga seed dapat menunjukkan arah konsisten pada seed yang diuji, tetapi n=3 dan besarnya gain tetap perlu dipertimbangkan.
 
-## 6. Low-SOH tail and complexity
+## 6. Ekor SOH rendah dan kompleksitas
 
 | variant | band | n_rows | batteries | mae_mean_pp | mae_sd_pp |
 | --- | --- | --- | --- | --- | --- |
-| control_no_domain_features | <70 | 106 | 28 | 3.51128 | 0.08834 |
-| control_no_domain_features | 70–<80 | 338 | 80 | 2.17285 | 0.05553 |
-| control_no_domain_features | 80–<90 | 1390 | 218 | 1.33646 | 0.02355 |
-| control_no_domain_features | 90–<95 | 1814 | 305 | 0.98765 | 0.01782 |
-| control_no_domain_features | >=95 | 3851 | 384 | 0.71208 | 0.00384 |
-| fe_context | <70 | 106 | 28 | 3.41149 | 0.28217 |
-| fe_context | 70–<80 | 338 | 80 | 2.15865 | 0.02956 |
-| fe_context | 80–<90 | 1390 | 218 | 1.32564 | 0.00431 |
-| fe_context | 90–<95 | 1814 | 305 | 0.99603 | 0.00419 |
-| fe_context | >=95 | 3851 | 384 | 0.71046 | 0.00492 |
+| control_no_domain_features | <70 | 106 | 28 | 3.46259 | 0.07584 |
+| control_no_domain_features | 70–<80 | 338 | 80 | 2.07372 | 0.03321 |
+| control_no_domain_features | 80–<90 | 1390 | 218 | 1.30747 | 0.01038 |
+| control_no_domain_features | 90–<95 | 1814 | 305 | 0.95365 | 0.00178 |
+| control_no_domain_features | >=95 | 3851 | 384 | 0.70063 | 0.00618 |
+| fe_combined | <70 | 106 | 28 | 3.24724 | 0.06555 |
+| fe_combined | 70–<80 | 338 | 80 | 2.07532 | 0.02963 |
+| fe_combined | 80–<90 | 1390 | 218 | 1.29632 | 0.01309 |
+| fe_combined | 90–<95 | 1814 | 305 | 0.96717 | 0.01153 |
+| fe_combined | >=95 | 3851 | 384 | 0.69264 | 0.00586 |
 
-![Errors by SOH band](03_validation_tail_errors.png)
+![Rentang SOH](03_validation_tail_errors.png)
 
-Read each band's mean error together with its observation and battery counts and the seed variation. Battery counts can overlap across bands. A feature is not promoted only because one small validation group looks better.
+Baca mean error tiap band bersama jumlah observasi/baterai dan variasi seed. Jumlah baterai antarband dapat tumpang tindih. Tidak mempromosikan suatu fitur hanya karena satu kelompok validation kecil tampak lebih bagus.
 
-![Learning curves and parameters](04_learning_and_complexity.png)
+![Learning dan parameter](04_learning_and_complexity.png)
 
-Learning curves show seed-42 validation from epoch 5. Differences in the number of epochs come from the same early-stopping rule. More features mean more parameters, and adding features does not guarantee less overfitting or underfitting.
+Learning curves adalah validation seed 42, zoom epoch ≥5. Perbedaan epoch aktual mengikuti aturan early stopping yang sama. Penambahan fitur meningkatkan jumlah parameter; menambah fitur bukan jaminan menghilangkan overfitting/underfitting.
 
-## 7. Train feature diagnostics
+## 7. Diagnostik fitur train
 
-`train_feature_diagnostics.csv` contains missingness, raw ranges, medians, caps, scaler parameters and the **train** target correlation of every engineered feature. Per-variant parameters and output feature names are stored as well. Correlations support interpretation only and are not used to choose further subsets after seeing validation results. In train, the two ratios are missing in about 10.38% and 11.07% of rows, because a missing operand makes the ratio missing. Derived features add no independent measurements and can increase redundancy and complexity, so a small improvement is plausible without proving its cause.
+`train_feature_diagnostics.csv` berisi missing, rentang raw, median, cap, scaler, dan korelasi target **train**. Kolom parameter per varian dan nama fitur output juga disimpan. Korelasi hanya membantu interpretasi; tidak dipakai untuk memilih subset tambahan setelah melihat hasil validation. Pada train, dua rasio kosong sekitar 10.38% dan 11.07%, sebab jika salah satu operand kosong hasil juga kosong. Fitur turunan tidak menambah pengukuran independen dan dapat meningkatkan redundansi/kompleksitas, sehingga peningkatan kecil masuk akal tanpa membuktikan penyebabnya. Fitur rasio yang kuat berkaitan dengan fitur asal dapat redundan, dan interaksi kimia bukan informasi fisik baru.
 
-## 8. Artifacts and reproduction
+## 8. Artefak dan reproduksi
 
-- Notebook `04_feature_engineering.ipynb`, separate so that the notebook 03 study is not rewritten.
+- Notebook `03b_feature_engineering_ablation.ipynb`, terpisah agar study 03 tidak ditulis ulang.
 - Config: `configs/feature_engineering.json`.
-- Code: `src/ev_battery/features.py`, reusing the MLP training loop unchanged.
-- Engineered train and validation arrays: `data/processed/<variant>/`, local and ignored by Git.
-- Inference bundle: `models/feature_engineering/<variant>.joblib`. `bundle['preprocessor'].transform(new_rows[bundle['required_columns']])` computes the base and extra features consistently. Load only trusted artifacts.
-- MLP checkpoints: `models/mlp/<run_id>/`, local. Config, history, summary and status are in `results/experiments/runs/<run_id>/`.
-- Study summary: `results/feature_engineering/study.json`. The control stays recorded in `results/experiments/study.json`.
+- Kode: `src/feature_engineering.py`, memakai training loop MLP yang sama tanpa modifikasi.
+- Array train/validation FE: `data/processed/<variant>/`, lokal dan diabaikan Git.
+- Bundle inference: `models/feature_engineering/<variant>.joblib`; `bundle['preprocessor'].transform(new_rows[bundle['required_columns']])` menghitung base+fitur ekstra konsisten. Load hanya artefak tepercaya.
+- Checkpoint MLP: `models/mlp/<run_id>/`, lokal. Config/history/summary/status ada di `results/experiments/runs/<run_id>/`.
+- Ringkasan study: `results/feature_engineering/study.json`. Kontrol tetap tercatat di `results/experiments/study.json`; tidak diganti diam-diam.
 
-Reproduce with `python -m ev_battery features`, then run notebook 04. Runs with identical source, data and config fingerprints are reused. For cross-validation, fit the base and extra transforms on every training fold.
+Reproduksi: `python -m src.feature_engineering`, `python -m src.feature_reporting`, kemudian jalankan notebook 03b. Run dengan fingerprint source/data/config sama dipakai ulang. Untuk cross-validation, fit base serta ekstra pada tiap fold-train; jangan memakai fitted global-train untuk fold-validation.
 
-## 9. Limits and next stage
+## 9. Batas kesimpulan dan langkah berikutnya
 
-The current result supports the decision to **keep the control without domain features as the main candidate** under the practical rule fixed in advance, while keeping the engineered variant as a valid ablation result. This is not a population-level statistical claim, a test score, or evidence of validity on real batteries.
+Hasil saat ini mendukung **pertahankan kontrol tanpa fitur domain sebagai kandidat utama** menurut aturan praktis yang telah ditetapkan, sambil menyimpan FE sebagai hasil ablation yang sah. Tidak ada kebutuhan memaksakan FE agar selalu menang. Keputusan ini belum klaim statistik populasi, skor test, atau validitas pada baterai nyata.
 
-The next stage locks the configuration and seeds for the test evaluation in notebook 05. The test split is never used to choose new features or adjust the decision threshold.
+Langkah berikutnya adalah meninjau rekomendasi, lalu mengunci konfigurasi/seed untuk evaluasi test di notebook 04. Jangan memakai test untuk memilih fitur baru atau menyesuaikan ambang keputusan.

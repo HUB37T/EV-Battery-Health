@@ -1,6 +1,6 @@
 {
-  "locked_at_utc": "2026-11-07T22:22:25.861474+00:00",
-  "fingerprint": "75b44e65e2f88f74f3c276f1e7e4fbff79bbcdc2e67ff5a6a473b979da5e90e4",
+  "locked_at_utc": "2026-11-06T04:46:57.766275+00:00",
+  "fingerprint": "bd989baf6c7a34b7c7a8cec0c73209b2d95f32deda3d8d4e193089592d74a430",
   "payload": {
     "plan": {
       "schema_version": 1,
@@ -14,20 +14,21 @@
         "baseline": {
           "recipe": "baseline_standard",
           "run_ids_by_seed": {
-            "42": "run_cd4e6f80a183",
-            "123": "run_96e0465b8c5f",
-            "2026": "run_27c8116694bb"
+            "42": "run_83aa5197bac6",
+            "123": "run_567cd20b04c3",
+            "2026": "run_e8aecfd9751c"
           }
         },
         "candidate": {
-          "recipe": "baseline_standard",
+          "recipe": "log_sensor_caps",
           "run_ids_by_seed": {
-            "42": "run_0015e8ebf51d",
-            "123": "run_17e82e31806b",
-            "2026": "run_125d105f67b2"
+            "42": "run_417429878fc7",
+            "123": "run_312fdc17ada1",
+            "2026": "run_73d0ae8e6140"
           }
         }
       },
+      "cpu_threads": 2,
       "soh_band_edges": [
         0,
         70,
@@ -44,44 +45,47 @@
         ">=95"
       ],
       "rules": [
-        "Use the validation-selected best checkpoint (best.npz) of the six locked runs, no new training or fit.",
-        "All three seeds are reported, do not select a winning seed from test.",
+        "Use validation-selected best.pt from the six locked runs; no new training or fit.",
+        "All three seeds are reported; do not select a winning seed from test.",
         "The primary model family remains the candidate chosen before test, regardless of test ranking.",
         "Domain feature engineering stays a validation ablation and is not added to this test comparison.",
-        "Keep original SOH units and un-clipped predictions, no resampling or test-driven threshold adjustment.",
+        "Keep original SOH units and un-clipped predictions; no resampling or test-driven threshold adjustment.",
         "Test subgroup analyses are descriptive final assessment, not grounds for retuning against the same test set."
       ]
     },
-    "source_sha256": "4b5a2c294b05bbc35b333a7508c5b65702b4fb9aff97906dd4d3eba3b7d9a879",
+    "source_sha256": "f5dd73251e94053245dd6b6802b1a2a4624b035052c451ebb834fc50b16c3c1e",
     "selection_source_commit": "ed55f113393bb38dc568a79b38c33f56dcbca305",
     "files_sha256": {
-      "configs/feature_contract.json": "1cffec850bb7b84a5837d635ec4055d6d6fd1921dd54e7e56f587eb4138edb8b",
-      "configs/final_evaluation.json": "0c751aab276a6ebe6d2289cc3f5bf58f7a6f62dc9bf83a23b27537e619b8dd01",
-      "configs/mlp_study.json": "d23cfac31919feefac6dc561a1720aca361e3fb743bd26dd90d02d9dad82b634",
-      "configs/preprocessing.json": "d2d8ec51a4242f10fe58d9cb24f80b4352bf8c3282ae8859a9e351ed6dcffbdb",
-      "data/processed/baseline_standard/test.npz": "3d4b318c2eab9f1517316165013dcb2f31a1aba2be20a5b44e56bfc028d816f1",
+      "configs/feature_contract.json": "c73100ae49744a0caf87ee1ce561149d06195014d9845e47602f03be9ef6171a",
+      "configs/final_evaluation.json": "9d0693c497d1a6bb496ca8eb9000632ae88387ddb67e19e3e0451ebcd43845da",
+      "configs/mlp_study.json": "c1f9b044432a5ef4767c57a5ad71dd8e92ae9545216e3123a9192db812c9a15f",
+      "configs/preprocessing.json": "1be8c02046b7f58ef0be9e875d75a1f09ae9984fe66b1620635cdddbd23283b9",
+      "data/processed/baseline_standard/test.npz": "b441d5a7a068e726d35127ffb6de5bdafa625aa06c5920a00f118fdc9b4274d1",
+      "data/processed/log_sensor_caps/test.npz": "94ab8c2f794d1e6c45ee57c5139556cec98a617aac2ea278387e3362693504fa",
       "data/splits/battery_split.csv": "9529f65692528d6f9ed63773880a84c75d0b28d0a8b7803018a2bcd9ac00b8ad",
-      "models/mlp/run_0015e8ebf51d/best.npz": "fa4c61d6739794e69847be209e222cea2567c2b8c29d36105e9a1d008484fc55",
-      "models/mlp/run_125d105f67b2/best.npz": "8bac421fa2912dfd1c10176dbbef2c5bef1d693dfcf4ddd9cf3d8f8ea58b7e94",
-      "models/mlp/run_17e82e31806b/best.npz": "cbce957f3b90a6c50e1bd54304db5ca4ede271866e546b1e84d1c4c0f61765ed",
-      "models/mlp/run_27c8116694bb/best.npz": "fe6896765820041cf640971351d0eeb8b7ed43c44e413b8ff13f7c4d790ef803",
-      "models/mlp/run_96e0465b8c5f/best.npz": "34561f45e730e983edac86dcb11fde9da601264923049964a0d40f5b5edf24f3",
-      "models/mlp/run_cd4e6f80a183/best.npz": "21776ecaabf2d06f06884dae461bd10836e9e78501f682dfac8a81126945ac4a",
-      "models/preprocessing/baseline_standard.joblib": "8d3d32f2b58487541d7d1cb38be47cf499aab719e743b46e3f7d3474bd7786b2",
-      "results/experiments/runs/run_0015e8ebf51d/summary.json": "75f859e2eca613b2313fa22babfc335470ca2b49e134302af5fd5b9184175a9d",
-      "results/experiments/runs/run_125d105f67b2/summary.json": "ca18c8e258153abfdf324f18660107aa3edf00c8b78b735f5a60e79e4344d5d3",
-      "results/experiments/runs/run_17e82e31806b/summary.json": "8088a6c7b48535b5a7f1defffd7906df267a822772dd714e3b71894c12d09e1f",
-      "results/experiments/runs/run_27c8116694bb/summary.json": "cd8ec12c31fb78f13ba990a04b34f11fcb37fc6de17ff8aa2ce705c475a1dc33",
-      "results/experiments/runs/run_96e0465b8c5f/summary.json": "a372f983344e805291251e8ebb51adfc67c31ecd8cebc188e140e02e15a31864",
-      "results/experiments/runs/run_cd4e6f80a183/summary.json": "f0e026bc2ae6449e08c70ff5685aedffa64f1c7afd135c04434b96ff82a364c7",
-      "results/experiments/seed_confirmation.csv": "75c0de8d6774f5c75b256d48626ae83ebc8ed28de76528fffcbced0ba1a746f6",
-      "results/experiments/study.json": "85a1dbb999e6108409383970bd07b40b1c78705f30fcb5e4ac42f5ba833cf9fc",
-      "results/feature_engineering/study.json": "d5d27fbb60133d9a3589044ba5583189cdd66e67b59b5dba6d3d6337c7b0b2a1"
+      "models/mlp/run_312fdc17ada1/best.pt": "de4bc835a69599fed2ff9c39e67ba7db6331a324a6381b287d4472c090745557",
+      "models/mlp/run_417429878fc7/best.pt": "6d6af5ac0e4604bdc1280726fbf3dba9c96eb12adf2ab0e8af865a17cd3860a0",
+      "models/mlp/run_567cd20b04c3/best.pt": "bd2e07fec264be0426ed80d37588927a63547e41f43e843ac106fca75217d219",
+      "models/mlp/run_73d0ae8e6140/best.pt": "56773f0a832658ee9839ffa6792c69164a53a8e0958fd1b24dcc1e14129162cb",
+      "models/mlp/run_83aa5197bac6/best.pt": "2025a8f5bdfa7802c62f0b07998ca2a599f4a70eff9b999c5b1184b106d7ea2d",
+      "models/mlp/run_e8aecfd9751c/best.pt": "035e8d3af6e4be64a1559f1738a441bb69bfcb366418d1991af03ed9c9b82c1c",
+      "models/preprocessing/baseline_standard.joblib": "c7c91a82d6d55d8f33a33d1c7d74cd4c606c31d688e186691b02f9e9499e6ab9",
+      "models/preprocessing/log_sensor_caps.joblib": "b72f774ef421387bfc5b84fbe1ea7930daf2949f3ad2de4983b3eba8d1d6ebab",
+      "results/experiments/runs/run_312fdc17ada1/summary.json": "9296accd6c9b1ed7d8143800382f87637a20ca7ad171c92c05e51258d3ff8099",
+      "results/experiments/runs/run_417429878fc7/summary.json": "9cee56b4961a1d6fbc5b2456f0daf701559c5ec0589a384830094efaade54252",
+      "results/experiments/runs/run_567cd20b04c3/summary.json": "05ed28c203e5d531bcad91e6a501e6d6d5bb37cd16afbb94abd84dea1eb05684",
+      "results/experiments/runs/run_73d0ae8e6140/summary.json": "79aef4232779cc6decb4d697a41cdba083c97e612551512ad093d6a8d4a49321",
+      "results/experiments/runs/run_83aa5197bac6/summary.json": "edd4a67140fa3a4406ede7d7f8c23cbdcf5d71cb44280fd0418abd407534d2e0",
+      "results/experiments/runs/run_e8aecfd9751c/summary.json": "4e2f5c0712d988668efa5e82041b50e29b3f02a7e044f21a5cc983f8cb5e73ab",
+      "results/experiments/seed_confirmation.csv": "678cb86d90e85f128b211716af6f23b28b06d6170afea9574c00a12ccd4da858",
+      "results/experiments/study.json": "a0d0c9c4b068e6235b26a79c5d0d7f0960f5d5daa3b948262cdf52199e5e9e8c",
+      "results/feature_engineering/study.json": "8c392ae5a14e310aa4b55a22be0e4956a462080d283cfd2c091616c4532cfe04"
     },
     "checkpoint_selection": "best validation epoch, fixed before test",
     "test_predictions_computed_at_lock": false,
     "data_fingerprints": {
-      "baseline_standard": "6c91eeb59bc2829774eaf5eebac47b523b1bef0df5254599a974c4c525438125"
+      "baseline_standard": "d7be74f7931fb45900794de3385988c918595b89dd7bde625a846ee750a78f8c",
+      "log_sensor_caps": "5a1ec612c42eaf854e9fd409adf3e48a1da726536226155acc722d42140a6e03"
     }
   }
 }

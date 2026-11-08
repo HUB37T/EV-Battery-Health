@@ -1,7 +1,7 @@
 {
   "status": "complete",
-  "evaluated_at_utc": "2026-11-07T22:22:26.919714+00:00",
-  "lock_fingerprint": "75b44e65e2f88f74f3c276f1e7e4fbff79bbcdc2e67ff5a6a473b979da5e90e4",
+  "evaluated_at_utc": "2026-11-06T04:47:00.763554+00:00",
+  "lock_fingerprint": "bd989baf6c7a34b7c7a8cec0c73209b2d95f32deda3d8d4e193089592d74a430",
   "primary_group_fixed_before_test": "candidate",
   "model_selection_from_test": false,
   "training_or_fit_performed": false,
@@ -14,8 +14,8 @@
     123,
     2026
   ],
-  "prediction_policy": "Unclipped, original SOH scale, per-seed predictions, no ensemble.",
+  "prediction_policy": "Unclipped, original SOH scale; per-seed predictions, no ensemble.",
   "sd_interpretation": "Sample SD over three training seeds on the same test batteries, not population confidence interval.",
-  "source_sha256": "4b5a2c294b05bbc35b333a7508c5b65702b4fb9aff97906dd4d3eba3b7d9a879",
+  "source_sha256": "f5dd73251e94053245dd6b6802b1a2a4624b035052c451ebb834fc50b16c3c1e",
   "all_locked_files_unchanged_after_inference": true
 }

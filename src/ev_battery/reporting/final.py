@@ -1,6 +1,8 @@
 """Report frozen final test results, no selection, fitting, or training."""
 
+import argparse
 import json
+from pathlib import Path
 
 import matplotlib
 
@@ -10,15 +12,14 @@ import numpy as np
 import pandas as pd
 
 from ev_battery.audit import markdown_table
-from ev_battery.paths import ROOT
 from ev_battery.reporting.experiments import config_sentence
 
 COLORS = {"baseline": "#a5b4bd", "candidate": "#247e88"}
 NAMES = {"baseline": "Baseline MLP", "candidate": "Main candidate"}
 
 
-def read_results(root=ROOT):
-    output = root / "results/final_evaluation"
+def read_results(output):
+    output = Path(output)
     result = json.loads((output / "evaluation.json").read_text(encoding="utf-8"))
     lock = json.loads((output / "evaluation_lock.json").read_text(encoding="utf-8"))
     if (
@@ -43,9 +44,9 @@ def read_results(root=ROOT):
     return output, result, lock, tables
 
 
-def build_report(root=ROOT):
-    output, result, lock, tables = read_results(root)
-    prior = json.loads((root / "results/experiments/study.json").read_text(encoding="utf-8"))
+def build_report(output):
+    output, result, lock, tables = read_results(output)
+    groups = lock["payload"]["plan"]["groups"]
     summary = tables["metrics_summary"].set_index("group")
     candidate = summary.loc["candidate"]
     baseline = summary.loc["baseline"]
@@ -259,11 +260,11 @@ def build_report(root=ROOT):
             f"candidate reaches almost the same accuracy with {ratio:.1f} times fewer parameters, which is the "
             "practical argument for the smaller network. Both MLPs clearly beat the constant references."
         )
-    source = f"""# Final Test Evaluation of the Backpropagation MLP
+    source = f"""# NumPy MLP follow-up on the previously evaluated split
 
 ## Key results
 
-The final evaluation covers **7,572 observations from 390 test batteries** that never appear in train or validation. Six checkpoints and the preprocessing were locked before any test prediction was computed. There was no fitting, retraining, seed selection, feature engineering, prediction clipping or tuning after seeing the test split.
+This NumPy follow-up uses **7,572 observations from the same 390 batteries** scored in the original PyTorch release (`{result["original_pytorch_release_commit"]}`) on 6 November 2026. The six local checkpoints and fitted preprocessing were locked before this run scored them. Training used only train, checkpoint selection used validation, and the follow-up reuses the recorded NumPy configurations. This is a descriptive comparison on a previously evaluated split.
 
 - Main candidate, fixed before test: mean MAE **{candidate.test_mae_mean_pp:.5f} ± {candidate.test_mae_sd_pp:.5f} SOH points**, RMSE **{candidate.test_rmse_mean_pp:.5f} ± {candidate.test_rmse_sd_pp:.5f}**, R² **{candidate.test_r2_mean:.5f} ± {candidate.test_r2_sd:.5f}**.
 - Baseline MLP: mean MAE **{baseline.test_mae_mean_pp:.5f} ± {baseline.test_mae_sd_pp:.5f} points**. {difference}
@@ -272,11 +273,11 @@ The final evaluation covers **7,572 observations from 390 test batteries** that 
 
 ## 1. What was locked before testing
 
-`configs/final_evaluation.json` fixes the baseline and candidate, the three seeds, best-validation checkpoints, the SOH bands, and the candidate as the main model family. The candidate uses {config_sentence(prior["candidate_config"], inputs["candidate"])}. The baseline uses {config_sentence(prior["baseline_config"], inputs["baseline"])}. Both share the same early-stopping policy. Best epochs come from validation, never from test.
+`configs/numpy/followup.json` fixes the baseline and candidate, the three seeds, best-validation checkpoints, the SOH bands, and the candidate as the main model family. The candidate uses {config_sentence(groups["candidate"]["config"], inputs["candidate"])}. The baseline uses {config_sentence(groups["baseline"]["config"], inputs["baseline"])}. Both share the same early-stopping policy. Best epochs come from validation, never from test.
 
-Feature engineering remains a validation ablation. Its recommendation before testing was to keep the notebook 03 candidate without extra domain features, and engineered features are not added back into the test comparison.
+The historical NumPy configuration records come from `{result["selection_reference_commit"]}`. The feature engineering study remains a validation ablation, and rebuilt results report the same frozen base configurations even if a fresh validation search ranks alternatives differently.
 
-`evaluation_lock.json` was created at `{lock["locked_at_utc"]}` before test inference, with fingerprint `{lock["fingerprint"]}`. The lock records SHA-256 hashes of the six checkpoints, the two fitted pipelines, the test arrays, the configurations, the manifest, the validation and feature-engineering selection evidence, and the evaluator source. Every locked file is verified to be unchanged after inference.
+`evaluation_lock.json` was created at `{lock["locked_at_utc"]}` before test inference, with fingerprint `{lock["fingerprint"]}`. The lock records SHA-256 hashes of the six checkpoints, the fitted preprocessing and test arrays, the configurations, the manifest, the validation and feature-engineering selection evidence, and the evaluator source. Every locked file is verified to be unchanged after inference.
 
 ## 2. Final metrics and their units
 
@@ -284,7 +285,7 @@ Feature engineering remains a validation ablation. Its recommendation before tes
 
 ![Test metrics](01_test_metrics.png)
 
-MAE and RMSE are computed after inverting the target scaling. An MAE of 0.95 means an average absolute error of about 0.95 **SOH percentage points**. It is not a 99.05% accuracy and does not mean every prediction has that error. R² is not classification accuracy either.
+MAE and RMSE are computed after inverting the target scaling. An MAE of 0.97 means an average absolute error of about 0.97 **SOH percentage points**. R² measures explained variance relative to the test target mean.
 
 SD is the sample SD (ddof = 1) over three training seeds on the same test batteries. It is not a population confidence interval, does not cover the uncertainty over all possible splits, and does not represent three independent test sets. Mean R² and RMSE are averages of per-seed metrics, not metrics of an ensemble.
 
@@ -344,12 +345,12 @@ The median and mean are learned from `y_train` only and serve as a sanity check.
 
 The claim is limited to estimating SOH at observation time for new batteries from the same simulator. Forecasting, remaining useful life, real vehicle data and distribution shift are not tested. The low-SOH weakness and predictions outside the physical range remain open. There is no claim of "95% accuracy", universal freedom from overfitting, or readiness for real batteries.
 
-The candidate family remains the main model because it was chosen **before** testing, and the test split serves only as the final evaluation. Feature engineering is reported as a validation ablation that did not pass its promotion rule.
+The NumPy candidate is the frozen configuration for this follow-up. The original PyTorch release retains its own candidate and evaluation. The shared test split supports descriptive comparisons, and independent evidence would require a new evaluation set.
 
 ## 10. Artifacts and reproduction
 
-- `notebooks/05_final_evaluation.ipynb`: protocol, metrics, figures, error analysis and checks.
-- `configs/final_evaluation.json`: locked models and seeds.
+- `notebooks/numpy/05_final_evaluation.ipynb`: protocol, metrics, figures, error analysis and checks.
+- `configs/numpy/followup.json`: recorded NumPy configurations and seeds.
 - `evaluation_lock.json`: file identities and lock time before test inference.
 - `metrics_by_seed.csv`, `metrics_summary.csv`: all seed results and the summary.
 - `test_band_summary.csv`, `test_battery_summary.csv`: results per SOH band and per battery, with detailed per-seed tables alongside.
@@ -358,11 +359,13 @@ The candidate family remains the main model because it was chosen **before** tes
 
 Command: `python -m ev_battery evaluate`, then run notebook 05. The evaluator reuses complete results that match the lock and never retrains or replaces checkpoints. Re-running the deterministic checks on the same results is not a new independent evaluation.
 
-On a fresh clone the reports can be read without any weights. To reproduce after checkpoints or preprocessing were rebuilt with different binary hashes, use `python -m ev_battery.evaluation --reproduce`, which writes to `data/processed/final_evaluation_reproduction`, separate from the released results. The protocol stays the same and this is not permission to tune on test. Never delete the released lock to replace final results.
+On a fresh clone, `python -m ev_battery all` rebuilds the required artifacts and writes a local evaluation under `data/processed/numpy_workspace/results/numpy_followup/<fingerprint>`. New artifact identities receive their own directory. The original PyTorch release and historical NumPy snapshot can be read directly from Git.
 """
     (output / "FINAL_REPORT.md").write_text(source, encoding="utf-8", newline="\n")
     return {"figures": figures, "report": output / "FINAL_REPORT.md"}
 
 
 if __name__ == "__main__":
-    print(build_report()["report"])
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("output", type=Path, help="Path to a completed NumPy follow-up evaluation")
+    print(build_report(parser.parse_args().output)["report"])

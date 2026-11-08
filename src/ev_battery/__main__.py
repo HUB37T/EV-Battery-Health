@@ -14,6 +14,8 @@ from __future__ import annotations
 import argparse
 from collections.abc import Callable
 
+from ev_battery.paths import ROOT, prepare_workspace
+
 
 def _audit() -> None:
     from ev_battery.audit import run_audit
@@ -34,10 +36,12 @@ def _preprocess() -> None:
 
 
 def _train() -> None:
+    from ev_battery.followup import train_followup_runs
     from ev_battery.reporting.experiments import build_report
     from ev_battery.training import run_study
 
     run_study()
+    train_followup_runs()
     build_report()
 
 
@@ -50,11 +54,13 @@ def _features() -> None:
 
 
 def _evaluate() -> None:
-    from ev_battery.evaluation import run_final_evaluation
+    from ev_battery.evaluation import evaluation_directory, run_final_evaluation
     from ev_battery.reporting.final import build_report
 
-    run_final_evaluation()
-    build_report()
+    result = run_final_evaluation()
+    output = evaluation_directory(ROOT, result["lock_fingerprint"])
+    report = build_report(output)["report"]
+    print(f"NumPy follow-up report: {report}", flush=True)
 
 
 STAGES: dict[str, tuple[Callable[[], None], str]] = {
@@ -63,7 +69,7 @@ STAGES: dict[str, tuple[Callable[[], None], str]] = {
     "preprocess": (_preprocess, "fit preprocessing recipes on train, write model inputs"),
     "train": (_train, "staged MLP study (backpropagation) on train/validation"),
     "features": (_features, "domain feature-engineering ablation on validation"),
-    "evaluate": (_evaluate, "score the locked checkpoints once on the test split"),
+    "evaluate": (_evaluate, "score frozen NumPy configurations on the previously evaluated split"),
 }
 
 
@@ -78,6 +84,7 @@ def main(argv: list[str] | None = None) -> None:
         for name, (_, help_text) in STAGES.items():
             print(f"{name:<11} {help_text}")
         return
+    prepare_workspace()
     selected = list(STAGES) if args.stage == "all" else [args.stage]
     for name in selected:
         print(f"==> {name}", flush=True)

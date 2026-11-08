@@ -1,67 +1,67 @@
-# Exploratory Data Analysis (Train Only)
+# EDA Mendalam EV Battery Health
 
-## Summary
+## Ringkasan yang perlu dipahami kelompok
 
-1. The analysis uses **34,929 observations from 1,820 train batteries**. Validation and test are not summarised, plotted or used to choose patterns.
-2. SOH is skewed towards healthy batteries: median **95.23%**, mean **92.92%**, **51.62%** of observations at or above 95% and **6.36%** below 80%. Errors on low SOH must be reported separately.
-3. Cycle count has the strongest association with SOH among the main features (Spearman **-0.907**). Age and cumulative energy are also strong. The three are strongly related to each other, so they are not three independent pieces of evidence.
-4. Chemistries differ in their SOH distribution. Within the same age band, with equal weight per battery, the differences remain, but usage conditions are not fully controlled. This is a simulator pattern, not a causal effect of chemistry in a real fleet.
-5. For the main features, the median SOH gap between missing and observed rows ranges from **-0.24 to 0.28 percentage points**. This does not prove MCAR. Missing service dates differ strongly and are linked to the usage stage.
-6. Across **31,528** consecutive pairs with valid dates, SOH increases by more than 0.01 points in **10,360 (32.86%)** pairs. Intervals are irregular and cumulative counters are inconsistent, so timesteps are not built and SOH increases are not interpreted as physical recovery.
-7. No preprocessing is fitted, no final feature selection is made and no model is trained here. The raw data and the split manifest are unchanged.
+1. Analisis ini memakai **34.929 observasi dari 1.820 baterai train**. Validation dan test tidak diringkas, divisualisasikan, atau digunakan untuk memilih pola.
+2. Target SOH condong ke kondisi tinggi: median **95.23%**, rerata **92.92%**, **51.62%** observasi mencapai ≥95%, sedangkan **6.36%** di bawah 80%. Error pada SOH rendah perlu dilaporkan terpisah kelak.
+3. Jumlah siklus paling kuat berkaitan dengan SOH di antara fitur utama (Spearman **-0.907**). Umur dan energi kumulatif juga kuat. Ketiganya saling berkaitan, sehingga bukan tiga bukti pengaruh yang independen.
+4. Kimia baterai berbeda dalam distribusi SOH. Perbandingan dalam rentang umur yang sama dengan bobot sama per baterai masih menunjukkan perbedaan, tetapi belum mengontrol semua kondisi penggunaan. Ini pola simulator, bukan efek kausal kimia pada armada nyata.
+5. Missing fitur utama menunjukkan perbedaan median SOH missing–terisi sebesar **-0.24 hingga 0.28 poin persentase**. Ini tidak membuktikan MCAR. Missing tanggal servis sangat berbeda dan berkaitan dengan tahap pemakaian.
+6. Pada **31,528** pasangan berurutan bertanggal valid, SOH naik >0.01 poin pada **10,360 (32.86%)** pasangan. Interval tidak seragam dan counter kumulatif tidak konsisten; jangan langsung membangun timestep atau menyebut kenaikan SOH sebagai pemulihan fisik.
+7. Belum ada preprocessing fit, feature selection final, training, atau penilaian performa. Seluruh data asli dan manifest split dipertahankan.
 
-## 1. Questions, source and units
+## 1. Pertanyaan, sumber, dan cara membaca hasil
 
-Goal: describe distributions, relationships, data quality and observation structure before designing preprocessing and the MLP experiments.
+Tujuan EDA: menjelaskan distribusi, hubungan, kualitas, dan struktur pengamatan sebelum menentukan preprocessing serta eksperimen MLP/backpropagation.
 
-Source: [Kaggle EV Battery Health & Degradation](https://www.kaggle.com/datasets/vinay24baghira/ev-battery-health-and-degradation-dataset). The README and data dictionary in the archive describe the data as **fully synthetic** (CC0), with injected missing values and outliers, and electrical measurements related to SOH and chemistry. The generator and the injection masks are not available.
+Sumber: [Kaggle EV Battery Health & Degradation](https://www.kaggle.com/datasets/vinay24baghira/ev-battery-health-and-degradation-dataset). README dan kamus di dalam arsip menyebut data **sepenuhnya sintetis** dengan lisensi CC0, missing dan outlier yang diinjeksi, serta pengukuran listrik terkait SOH/kimia. Generator dan mask injeksi tidak tersedia di proyek ini.
 
-The CSV and manifest hashes are recorded in `eda_provenance.json`. The CSV is read only to select train rows from the manifest. Every EDA function receives train only. Data is never combined across subsets to recover missing values.
+EDA menggunakan versi CSV dan manifest yang hash-nya dicatat pada `eda_provenance.json`. Kode membaca CSV untuk memuat train sesuai manifest, lalu seluruh fungsi EDA hanya menerima train. Tidak menggabungkan data antar-subset untuk memulihkan missing.
 
-Two summary units are used:
-- **Observation:** one measurement row. Batteries with more rows carry more weight.
-- **Battery:** the grouping unit. For the chemistry and age curves, each battery contributes one mean SOH per age band, which is then averaged across batteries.
+Ada dua unit ringkasan:
+- **Observasi:** satu baris pengukuran; baterai dengan banyak baris mendapat bobot lebih besar.
+- **Baterai:** unit kelompok. Untuk kurva kimia–umur, setiap baterai menyumbang satu rerata SOH per rentang umur, kemudian dirata-ratakan antar-baterai.
 
-`chemistry_group` is an EDA-only label: the single non-missing chemistry value that is consistent across the battery's **train** observations. The raw chemistry column stays unchanged and its missingness is still counted. It is not an imputer for model inputs. Raw category comparisons use the original row values, including Missing.
+Label `chemistry_group` hanya dipakai untuk EDA: satu nilai kimia nonkosong yang konsisten dalam pengamatan **train** baterai tersebut. Kolom kimia asli tetap utuh dan missing-nya tetap dihitung. Ini bukan imputer untuk input model. Perbandingan kategori mentah memakai nilai baris asli, termasuk Missing.
 
-No p-values are computed, because the 34,929 rows are not independent. Correlations and group differences are descriptive. No causal claims or battery safety recommendations are drawn from a simulator.
+Tidak ada uji p-value berbasis asumsi 34.929 baris independen. Korelasi dan perbedaan kelompok bersifat deskriptif. Tidak ada klaim sebab akibat atau rekomendasi keselamatan baterai dari simulator.
 
-## 2. Target distribution and units of analysis
+## 2. Distribusi target dan representasi unit
 
-- Train SOH: 55.00% to 100.00%, median 95.23%, mean 92.92%.
-- Exactly 100%: 1,603 rows. Exactly 55%: 80 rows. Pile-up at the observed bounds is consistent with clipping or rounding in the simulator, but the generator is not available to confirm it.
-- Median with equal weight per battery: 95.21%. Mean with equal weight per battery: 92.91%.
-- Spearman correlation between observations per battery and battery mean SOH: 0.014. This checks for bias from the number of observations. It does not prove independent sampling.
+- SOH train: 55.00–100.00%, median 95.23%, rerata 92.92%.
+- Nilai tepat 100%: 1,603; tepat 55%: 80. Penumpukan di batas yang teramati konsisten dengan kemungkinan pembatasan/rounding simulator, tetapi kode generator tidak tersedia untuk memastikan mekanismenya.
+- Median dengan bobot sama per baterai: 95.21%. Rerata berbobot sama per baterai: 92.91%.
+- Korelasi Spearman jumlah observasi dengan rerata SOH per baterai: 0.014; ini pemeriksaan potensi bias banyaknya pengamatan, bukan bukti independensi sampling.
 
-![Target and weighting](01_target_and_weighting.png)
+![Target dan pembobotan](01_target_and_weighting.png)
 
-Both histograms use the same bins. The orange line weights each row by 1 / (rows of its battery). The ECDF shows the share of observations at or below each SOH value. The 80% line is the end-of-life reference from the dataset documentation, not a class threshold introduced here.
+Histogram memakai bin yang sama; garis oranye memakai bobot baris 1/jumlah baris baterai. ECDF menunjukkan proporsi target pada/bawah suatu nilai. Garis 80% mengikuti referensi end-of-life dalam dokumentasi dataset, bukan ambang kelas yang baru dibuat kelompok.
 
-![Observation structure](16_battery_observation_structure.png)
+![Struktur pengamatan](16_battery_observation_structure.png)
 
-**Implication:** use MAE and RMSE on the original target scale, not a regression "accuracy". Final evaluation should include SOH bands and per-battery summaries. The nominal sample size is not the number of independent batteries.
+**Implikasi:** gunakan MAE/RMSE pada skala target asli; jangan memakai accuracy regresi. Pada evaluasi kelak, sertakan rentang SOH dan ringkasan per baterai. Jumlah sampel nominal bukan jumlah baterai independen.
 
-## 3. All numeric and categorical features
+## 3. Seluruh fitur numerik dan kategori
 
-![Numeric features, part 1](02_numeric_distributions_1.png)
+![Numerik bagian 1](02_numeric_distributions_1.png)
 
-![Numeric features, part 2](02_numeric_distributions_2.png)
+![Numerik bagian 2](02_numeric_distributions_2.png)
 
-All 15 numeric candidates, `recall_flag` and the four sensor proxy candidates are covered. Every panel shows observed and missing counts. Histograms keep outliers. Minimum, p1, p5, quartiles, p95, p99, maximum and skewness are in `numeric_distributions.csv` and `tails_and_iqr.csv`.
+Seluruh 15 kandidat numerik, recall_flag, dan empat kandidat proxy sensor dicakup. Setiap panel mencantumkan jumlah terisi dan missing. Histogram tidak membuang outlier. Bentuk miring, diskret, atau rentang lebar dapat dilihat langsung; statistik minimum, p1, p5, kuartil, p95, p99, maksimum, dan skewness tersedia di `numeric_distributions.csv` dan `tails_and_iqr.csv`.
 
-![Category support](03_categorical_support.png)
+![Dukungan kategori](03_categorical_support.png)
 
-The Missing category is not a new battery type. Firmware and recall status can change between observations and should not be treated as static attributes. Batteries in changing categories can overlap, so their counts must not be summed as if categories were mutually exclusive per battery. `recall_flag = 1` is rare. Row counts are shown so that small groups are not over-interpreted.
+Kategori Missing bukan jenis baterai baru. Firmware dan recall dapat berubah antarobservasi; jangan dianggap atribut statis hanya karena bentuknya kategori. Jumlah baterai dalam kategori yang berubah dapat tumpang tindih dan tidak boleh dijumlahkan seolah-olah kategori saling eksklusif pada tingkat baterai. Recall=1 jarang; banyaknya baris per kategori tercantum agar pembaca tidak menyimpulkan dari kelompok kecil.
 
-**Implication:** numeric imputation, encoding of unseen categories, numeric scaling and binary handling are designed in preprocessing. Weakly correlated features and rare categories are not removed on the basis of EDA alone.
+**Implikasi:** imputer numerik, encoding kategori tak dikenal, skala numerik, dan perlakuan biner perlu dirancang pada tahap preprocessing. Tidak otomatis menghapus fitur berkorelasi rendah atau kategori langka dari EDA saja.
 
-## 4. Chemistry and age: a fairer comparison
+## 4. Kimia dan umur: perbandingan yang lebih adil
 
-![Chemistry and age](04_chemistry_and_age.png)
+![Kimia dan umur](04_chemistry_and_age.png)
 
-The left panel shows observation-level median and IQR, not confidence intervals. The right panel groups age into fixed yearly bands, averages SOH per battery within each band, and gives each battery equal weight.
+Panel kiri merangkum median/IQR observasi, bukan interval kepercayaan. Panel kanan mengelompokkan umur menjadi rentang tahunan tetap, merata-ratakan SOH per baterai dalam rentang itu, lalu memberi bobot sama pada setiap baterai.
 
-Example for the **1-2 years** band:
+Contoh rentang **1–2 tahun**:
 
 | chemistry | rows | batteries | battery_balanced_mean_soh | ci95_low | ci95_high |
 | --- | --- | --- | --- | --- | --- |
@@ -70,25 +70,25 @@ Example for the **1-2 years** band:
 | NCA | 1665 | 344 | 91.817 | 91.513 | 92.115 |
 | NMC | 2718 | 501 | 92.845 | 92.634 | 93.038 |
 
-Bands in the right panel are 95% percentile bootstrap intervals from **1,000 battery resamples within each chemistry and age cell** (seed 42). They are pointwise intervals for the cell mean, not for the whole curve or for differences between chemistries, and they do not address confounding. They are not used as significance tests. The same battery can appear in several age bands, so points along a curve are correlated.
+Pita pada panel kanan adalah interval persentil bootstrap 95% dari **1,000 resampling baterai dalam setiap sel kimia–umur**, seed 42. Ini interval pointwise untuk rerata sel, bukan untuk keseluruhan kurva atau perbedaan kimia, dan tidak mengatasi confounding. Tidak digunakan untuk uji signifikansi. Baterai yang sama dapat muncul di beberapa rentang umur, sehingga titik-titik sepanjang kurva tetap berkaitan.
 
-![Chemistry and age support](05_chemistry_age_support.png)
+![Dukungan kimia dan umur](05_chemistry_age_support.png)
 
-Cells with fewer than 30 batteries are marked with x on the curve. Low-support cells:
+Sel dengan <30 baterai diberi tanda × pada kurva. Dukungan rendah:
 
 | chemistry | age_band | rows | batteries |
 | --- | --- | --- | --- |
-| LMO | >5 years | 51 | 22 |
+| LMO | >5 tahun | 51 | 22 |
 
-**Conclusion:** chemistry and age should be considered together because the patterns differ between chemistries. These curves summarise observations and batteries across age bands. They are not controlled degradation curves of single batteries and do not show that any chemistry is always better.
+**Kesimpulan terbatas:** kimia dan umur layak dipertimbangkan bersama karena pola antarkimia tidak identik. Kurva ini adalah ringkasan lintas observasi/baterai pada rentang umur, bukan kurva degradasi terkontrol satu baterai atau bukti kimia tertentu selalu lebih baik.
 
-## 5. Numeric relationships, nonlinearity and redundancy
+## 5. Hubungan numerik, nonlinearitas, dan redundansi
 
-![Baseline correlations](06_baseline_correlations.png)
+![Korelasi baseline](06_baseline_correlations.png)
 
-Spearman measures rank-based monotonic association and does not assume a straight line. Pearson complements it for linear association. Correlations use pairwise-complete rows without imputation. Pair counts range from **30,368 to 33,825** in the stored matrix. See `correlation_pair_counts.csv`.
+Spearman mengukur hubungan monoton berbasis ranking dan tidak mengharuskan garis lurus. Pearson melengkapi hubungan linear. Korelasi dihitung pairwise-complete, tanpa mengisi missing; jumlah pasangan antarvariabel berkisar **30,368–33,825** pada matriks yang disimpan. Matriks jumlah pasangan terpisah ada di `correlation_pair_counts.csv`.
 
-Strongest target associations among baseline and proxy candidates:
+Asosiasi target terbesar pada kandidat baseline/proxy:
 
 | feature | role | pairwise_rows | batteries | pearson_pooled | spearman_pooled |
 | --- | --- | --- | --- | --- | --- |
@@ -103,11 +103,11 @@ Strongest target associations among baseline and proxy candidates:
 | peak_temp_during_fast_charge_c | primary | 33439 | 1820 | 0.022 | 0.053 |
 | voltage_avg_v | proxy_not_baseline | 33002 | 1820 | 0.048 | 0.023 |
 
-![Associations and dependence](07_target_associations_and_dependence.png)
+![Asosiasi dan dependensi](07_target_associations_and_dependence.png)
 
-The right panel compares **Pearson** coefficients, not the Spearman values on the left: pooled over all observed pairs, between batteries using per-battery means, and within batteries after subtracting each battery's mean. Centering is not a causal model and does not control for age, chemistry or other variables. Features that are constant within a battery have no defined centered correlation. Those values are left empty.
+Panel kanan membandingkan **Pearson**, bukan nilai Spearman panel kiri: pooled pada seluruh pasangan terisi; antar-baterai pada rerata pasangan per baterai; dan dalam-baterai setelah mengurangi rerata masing-masing baterai. Centering bukan model kausal dan tidak mengontrol umur/kimia atau semua variabel lain. Fitur konstan dalam baterai tidak punya korelasi centered yang terdefinisi; nilai tersebut dibiarkan kosong dalam tabel.
 
-Main-feature pairs with |Spearman| at or above 0.70 (an exploratory threshold, not a removal rule):
+Pasangan fitur utama dengan |Spearman| ≥0.70 (ambang eksplorasi, bukan aturan penghapusan):
 
 | feature_a | feature_b | spearman | pairwise_rows |
 | --- | --- | --- | --- |
@@ -118,87 +118,87 @@ Main-feature pairs with |Spearman| at or above 0.70 (an exploratory threshold, n
 | avg_charging_power_kw | fast_charge_ratio | 0.841 | 31147 |
 | avg_depth_of_discharge_pct | avg_state_of_charge_pct | -0.767 | 30917 |
 
-![Relationships by chemistry](08_relationships_by_chemistry.png)
+![Hubungan menurut kimia](08_relationships_by_chemistry.png)
 
-The scatter plots use a deterministic sample of 6,000 train rows with no fitted lines. More cycles and greater age generally go with lower SOH, but the spread and the chemistry differences show that a single linear relationship does not describe all observations. This motivates testing an MLP. It does not prove that an MLP will score best.
+Scatter memakai sampel deterministik 6.000 baris train tanpa fitting garis/model. Warna menambah konteks kimia. Makin banyak siklus/umur umumnya berasosiasi dengan SOH lebih rendah, tetapi sebaran dan perbedaan kimia menunjukkan satu hubungan linear tunggal tidak cukup menggambarkan semua observasi. Ini alasan menguji MLP, bukan bukti MLP pasti memberi skor terbaik.
 
-**Implication:** overlapping usage features are compared in controlled experiments later. Weak pooled correlations for fast charging, depth of discharge and temperature do not prove that these features are useless or that the factors do not matter for real batteries. In particular, the train Spearman correlation between fast-charge ratio and SOH is only about -0.003. The source mentions a fast-charge penalty in the simulator, but without the generator it is impossible to check how observed features relate to latent parameters.
+**Implikasi:** bandingkan fitur pemakaian yang saling tumpang tindih melalui eksperimen terkontrol nanti. Korelasi rendah fast charge/DOD/suhu secara pooled tidak membuktikan fitur tidak berguna atau faktor tersebut tidak memengaruhi baterai nyata. Secara khusus, Spearman fast charge–SOH pada train hanya sekitar −0.003; sumber menyebut penalti fast charge dalam simulator, tetapi generator tidak tersedia untuk memeriksa bagaimana fitur observasi dan parameter laten saling terkait.
 
-## 6. Conditional patterns: do not rely on pooled correlations
+## 6. Pola bersyarat: jangan tertipu korelasi pooled
 
-![Age and fast charging](09_age_fastcharge_conditioning.png)
+![Umur dan fast charge](09_age_fastcharge_conditioning.png)
 
-The grid uses fixed age and ratio bands and shows median SOH with the number of observations. Only cells with at least 100 rows and 30 batteries are shown. Chemistry and other usage factors are not balanced. The grid helps separate age variation from fast-charge variation. It does not identify a causal effect of charging.
+Grid memakai rentang umur/rasio tetap, menampilkan median SOH dan n observasi. Hanya sel dengan ≥100 baris dan ≥30 baterai ditampilkan. Kimia dan penggunaan lain belum diseimbangkan. Grid membantu membedakan variasi umur dari rasio fast charge; tidak mengidentifikasi efek kausal charging.
 
-`stratified_associations.csv` computes Spearman correlations for fast-charge ratio, depth of discharge, temperature, charging frequency and `service_count` within chemistry by age cells with the same support rules. Age bands are still wide, so confounding within cells is possible. Cells are not pooled into a single "effect" and are not cherry-picked.
+Tabel `stratified_associations.csv` menghitung Spearman fast charge, DOD, suhu, frekuensi pengisian, dan service_count di dalam sel kimia × umur dengan dukungan yang sama. Rentang umur masih lebar; confounding di dalam sel tetap mungkin. Tidak merangkum semua sel menjadi satu “efek” atau memilih hanya sel yang menarik.
 
-![Category comparisons](10_category_comparisons.png)
+![Perbandingan kategori](10_category_comparisons.png)
 
-Manufacturer, model, climate and firmware categories are compared together with their support and median age. The SOH axis starts at 90%, marked explicitly, so the variation is visible. Small differences are not automatically important, and age differences can explain part of the raw gap.
+Kategori produsen/model/iklim/firmware dibandingkan bersama dukungan dan median umur. Sumbu SOH dimulai 90% agar variasi terlihat dan ditandai eksplisit. Selisih kecil tidak otomatis penting; perbedaan usia dapat menjelaskan sebagian perbedaan mentah. Jangan menyebut merek/model fiktif paling awet tanpa kontrol kondisi dan validasi lebih lanjut.
 
-## 7. Missingness
+## 7. Missingness: apa yang hilang dan apakah terkait kondisi?
 
-![Missingness diagnostics](11_missingness_diagnostics.png)
+![Diagnostik missing](11_missingness_diagnostics.png)
 
-The missing versus observed median gap is descriptive only: missingness can be related to conditions, to the injection process or to group composition. Small gaps do not prove Missing Completely At Random. Correlations between missing indicators (`missingness_phi.csv`) and all ordered pairs (`missingness_pairs.csv`) are stored without changing the data. The maximum |phi| is about 0.017 in train, so no large linear co-missingness appears among the indicator pairs checked. Nonlinear or conditional dependence is not ruled out.
+Perbedaan median missing–terisi hanya ringkasan deskriptif: missing dapat terkait kondisi, sumber injeksi, atau komposisi kelompok. Selisih kecil tidak membuktikan data Missing Completely At Random. Korelasi indikator missing (`missingness_phi.csv`) dan semua pasangan terurut (`missingness_pairs.csv`) disimpan tanpa mengubah data. Nilai maksimum |phi| sekitar 0.017 pada train, sehingga tidak tampak ko-missing linear besar pada pasangan indikator yang diperiksa; ketergantungan nonlinear atau bersyarat belum dikesampingkan.
 
-![Service date context](12_service_missingness_context.png)
+![Konteks tanggal servis](12_service_missingness_context.png)
 
-Median SOH is **97.79%** when the service date is missing and **92.70%** when it is observed. Median ages are **174** and **662** days. This is consistent with different usage stages and is **not** evidence that servicing reduces health. Service dates are not imputed here.
+Median SOH untuk tanggal servis kosong adalah **97.79%**, dibanding **92.70%** ketika terisi; median umur masing-masing **174** dan **662** hari. Ini konsisten dengan tahap penggunaan berbeda, **bukan** bukti servis menurunkan kesehatan. Tidak melakukan pengisian tanggal dan tidak menambahkan indikator servis sebagai fitur melalui notebook ini.
 
-## 8. Outliers and sensitivity
+## 8. Outlier dan sensitivitas kesimpulan
 
-![Outliers and tails](13_outliers_and_tail.png)
+![Outlier dan ekor](13_outliers_and_tail.png)
 
-The 1.5 x IQR fences only mark values that are extreme relative to the train distribution. Low target values and rare binary flags can also be flagged without being errors, so this rule is not used to remove outliers.
+Pagar 1.5×IQR hanya menandai nilai ekstrem terhadap distribusi train. Nilai target rendah dan flag biner langka juga dapat ditandai IQR tanpa menjadi kesalahan. Jangan menerapkan satu aturan ini untuk menghapus seluruh outlier.
 
-The charge-duration histogram uses a log axis to show the tail. The raw values are not log-transformed for the model at this stage. `outlier_association_sensitivity.csv` compares Spearman on all pairs with Spearman inside each feature's IQR fences. This is a sensitivity analysis, not a decision to drop rows, and the denominators are recorded. For `recall_flag` the fences keep only zeros, so the filtered correlation is undefined and left empty. For cycles, age and energy the strong negative relationship remains inside the fences, which does not prove that removing outliers would improve predictions. There is no official mask of injected outliers.
+Histogram durasi menggunakan sumbu log agar ekor terlihat; nilai asli tidak dilog-transform untuk model. `outlier_association_sensitivity.csv` membandingkan Spearman semua pasangan dengan pasangan di dalam pagar IQR fitur tersebut. Ini analisis sensitivitas, bukan keputusan membuang baris; denominator perbandingan dicatat. Untuk recall_flag, pagar IQR menyisakan hanya 0 sehingga korelasi setelah penyaringan tidak terdefinisi dan dibiarkan kosong. Untuk siklus/umur/energi, hubungan negatif kuat tetap tampak pada subset di dalam pagar, tanpa membuktikan bahwa penghapusan outlier akan memperbaiki prediksi. Tidak ada mask resmi outlier injeksi untuk menilai apakah titik tertentu pasti salah.
 
-## 9. Temporal structure and simulator consistency
+## 9. Struktur temporal dan konsistensi simulator
 
-![Battery trajectories](14_battery_trajectories.png)
+![Contoh lintasan](14_battery_trajectories.png)
 
-Examples are chosen deterministically: the first three IDs in alphabetical order per chemistry with at least 10 dated observations. SOH values are not used to choose them. These trajectories do not summarise the population, and missing dates are not invented or connected as known intervals.
+Contoh dipilih secara deterministik: tiga ID pertama secara alfabet dalam setiap kimia dengan ≥10 observasi bertanggal. Nilai SOH tidak dipakai untuk memilih contoh. Lintasan ini tidak merangkum seluruh populasi; tanggal yang kosong tidak dibuat-buat atau dihubungkan sebagai interval yang diketahui.
 
-![Temporal quality](15_temporal_quality.png)
+![Kualitas temporal](15_temporal_quality.png)
 
 | label | rows | pct_pairs |
 | --- | --- | --- |
-| down >0.01 pp | 20498 | 65.015 |
-| stable ±0.01 pp | 670 | 2.125 |
-| up >0.01 pp | 10360 | 32.86 |
+| turun >0.01 pp | 20498 | 65.015 |
+| stabil ±0.01 pp | 670 | 2.125 |
+| naik >0.01 pp | 10360 | 32.86 |
 
-Differences are computed between dated observations of the same battery with increasing dates. Pairs may skip observations whose date is missing. SOH changes are rounded to the recorded precision of 0.01 points before classifying them as down, stable or up, so floating-point artefacts do not move values at the boundary. Because intervals vary, the delta-SOH histogram is **not a degradation rate per day**. SOH increases in some pairs. The source describes the data as synthetic and noisy, but the mechanism behind each increase cannot be confirmed without the generator. Decreasing cycle and energy counters were already identified in the audit.
+Selisih dihitung antarobservasi bertanggal valid dari baterai sama, pada tanggal yang meningkat. Pasangan dapat melompati observasi yang tanggalnya kosong. Perubahan SOH dibulatkan ke presisi pencatatan 0.01 poin sebelum klasifikasi naik/stabil/turun, agar artefak floating-point tidak menggeser nilai tepat di batas. Karena selang waktu berbeda, histogram ΔSOH **bukan laju degradasi per hari**. SOH naik pada sebagian pasangan; sumber menyebut data sintetis/noisy, tetapi mekanisme tiap kenaikan tidak dapat dipastikan tanpa generator. Counter siklus/energi yang turun sudah teridentifikasi pada audit sebelumnya.
 
-**Implication:** keeping a tabular baseline and deferring timesteps is justified. Trajectories are not forced to be monotonic or sorted by the target. The group split tests new batteries, not new calendar periods.
+**Implikasi:** mempertahankan baseline tabular dan menunda timesteps tetap masuk akal. Jangan memaksa monoton atau menyortir berdasarkan target untuk merapikan lintasan. Group split menguji baterai baru, bukan periode kalender baru.
 
-## 10. Alternative targets: understood, not used as inputs
+## 10. Target alternatif: dipahami, bukan dimasukkan ke input
 
-![Alternative targets](17_alternative_targets.png)
+![Target alternatif](17_alternative_targets.png)
 
-Risk and degradation labels help to understand the simulator mix and class imbalance, but the task remains SOH regression. In train, Low, Medium and High risk account for about 85.26%, 8.84% and 5.90%, consistent with the composition described by the source. Normal degradation reaches 92.13%. RUL, risk and degradation are neither features nor auxiliary tasks. `capacity_fade_pct` equals 100 minus SOH and stays excluded. A perfect correlation with it is not predictive skill.
+Label risiko/degradasi membantu membaca komposisi simulator dan ketimpangan kelas, tetapi tugas tetap regresi SOH. Pada train, risiko Low/Medium/High masing-masing sekitar 85.26%/8.84%/5.90%, konsisten dengan perkiraan komposisi yang disebut sumber. Degradasi Normal mencapai 92.13%. RUL/risiko/degradasi tidak dijadikan fitur atau tugas tambahan. Kolom capacity_fade_pct memiliki identitas langsung 100−SOH dan tetap dilarang; korelasi sempurna bukan prestasi prediktif.
 
-## 11. Decisions supported by the EDA
+## 11. Keputusan yang didukung EDA dan yang belum diputuskan
 
-| Finding | Implication for later stages | Limit of the conclusion |
+| Temuan | Implikasi tahap berikutnya | Batas kesimpulan |
 | --- | --- | --- |
-| Target skewed towards high SOH | Report errors per SOH band and per battery | Do not automatically rebalance a continuous target |
-| Age, cycles and energy strongly related | Important candidate features, test redundant subsets | Not three independent causes |
-| Chemistries differ within the same age band | Keep chemistry, allow nonlinear interactions | Usage conditions not fully controlled |
-| Numeric and categorical missingness, structural service missingness | Train-only imputation and encoding of unseen categories | Not all missingness is equivalent or MCAR |
-| Very different feature ranges | Standardise numeric features in the baseline | Scaler statistics are fitted in preprocessing, not here |
-| Sensor tails and rare values | Evaluate targeted outlier handling and sensitivity | IQR is not ground truth for errors |
-| Repeated observations and temporal quality | Keep the group split, defer timesteps | No forecasting claim |
-| Proxies and derived targets | Keep leaking columns excluded, sensors only in a separate ablation | Not a universal ban on real measured sensors |
+| Target condong ke SOH tinggi | Analisis error per rentang SOH dan per baterai | Tidak otomatis menyeimbangkan target kontinu |
+| Umur/siklus/energi berkaitan kuat | Kandidat fitur penting; uji subset redundan nanti | Tidak menyatakan ketiganya penyebab independen |
+| Kimia berbeda pada rentang umur sama | Pertahankan kimia sebagai kandidat; pertimbangkan interaksi nonlinear | Belum mengontrol seluruh kondisi penggunaan |
+| Missing numerik/kategori dan servis struktural | Rancang imputasi train-only dan encoding kategori baru | Jangan menganggap semua missing setara/MCAR |
+| Rentang fitur sangat berbeda | Standardisasi numerik sebagai baseline preprocessing | Statistik scaler belum dihitung/disimpan untuk model |
+| Ekor sensor/nilai langka | Evaluasi penanganan outlier terarah dan sensitivitas | IQR bukan ground truth kesalahan |
+| Pengamatan berulang dan kualitas waktu | Pertahankan group split, tunda timestep | Tidak mengklaim forecasting |
+| Proxy dan target turunan | Tetap keluarkan kebocoran; sensor hanya ablation terpisah | Bukan larangan universal terhadap sensor terukur nyata |
 
-The initial feature list is **unchanged**. No score-based feature selection, model, imputer, encoder, scaler, balancing or tuning is applied in this stage.
+Daftar fitur awal **tidak diubah**. Belum ada feature selection berbasis skor, model, imputer, encoder, scaler, balancing, atau tuning. Fokus pekerjaan ini hanya pemahaman data.
 
-## 12. Reproduction
+## 12. Reproduksi dan bahan penilaian EDA
 
-- Notebook: `../../notebooks/01_eda.ipynb` with questions, methods, tables, figures, interpretation and checks.
-- Commands from the repository root: `python -m ev_battery eda` and `python scripts/run_notebook.py notebooks/01_eda.ipynb`.
-- All 35 columns are listed in `column_coverage.csv`, including IDs, dates and alternative targets with their roles.
-- Every table is computed from train. Figures are saved as 140 dpi PNG.
-- No naive row-level p-values, no causal conclusions, and no use of holdout data to refine the narrative.
+- Notebook: `../../notebooks/01_eda_train.ipynb`, berisi pertanyaan, metode, tabel, gambar, interpretasi, dan pemeriksaan.
+- Perintah dari root: `python -m src.eda` dan `python scripts/run_notebook.py notebooks/01_eda_train.ipynb`.
+- Semua 35 kolom tercantum pada `column_coverage.csv`, termasuk ID/tanggal/target alternatif dengan peran yang jelas.
+- Seluruh tabel merupakan hasil hitung aktual train; grafik tersimpan sebagai PNG resolusi 140 dpi dan SVG untuk ekspor laporan.
+- Tidak menggunakan p-value naif antarbaris, tidak menyimpulkan sebab akibat, dan tidak mengintip holdout untuk menyempurnakan narasi.
 
-Main limitations: synthetic data, unavailable generator, undocumented aggregation windows, missing values and outliers without original masks, repeated observations, small-support groups, and confounding that is not fully controlled.
+Keterbatasan utama: data sintetis, generator tidak tersedia, interval fitur agregat tidak lengkap, missing/outlier tanpa mask asli, pengamatan berulang, sel kelompok dengan dukungan kecil, dan confounding yang belum seluruhnya dikontrol.

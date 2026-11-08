@@ -1,22 +1,22 @@
-# Dataset Audit and Initial Train Profile
+# Audit Dataset dan EDA Awal Train
 
-## Key decisions
+## Keputusan utama
 
-- Task: **regression of SOH at observation time for unseen batteries**, target `state_of_health_pct`.
-- The source README describes the data as synthetic, not real fleet telemetry. No model is trained at this stage.
-- Full dataset: **50,000 rows, 35 columns, 2,600 batteries**.
-- 70/15/15 split by **battery_id** with seed 42. No battery appears in more than one subset. The ratios apply to batteries, so row counts are not exactly 70/15/15.
-- Distribution and relationship profiles and IQR bounds use train only. Global checks are limited to schema, IDs, dates, missingness, basic ranges and the target identity. The test split is not used for any selection or scoring.
-- `21` raw candidate features **before encoding**. The number of input neurons is only known after preprocessing is fitted on train.
+- Tugas: **regresi SOH saat observasi pada baterai baru**, target `state_of_health_pct`.
+- Data sintetis menurut README sumber, bukan telemetry armada nyata. Tidak ada model dilatih pada tahap ini.
+- Seluruh data: **50,000 baris, 35 kolom, 2,600 baterai**.
+- Split 70/15/15 berdasarkan **battery_id**, seed 42; tidak ada baterai melintasi subset. Persentase ini berlaku pada baterai; jumlah baris tidak harus tepat 70/15/15.
+- EDA distribusi/relasi dan batas IQR hanya memakai train. Pemeriksaan global dibatasi pada integritas skema, ID, tanggal, missing, rentang dasar, dan identitas target; test belum digunakan untuk seleksi atau penilaian model.
+- `21` kolom kandidat baseline **sebelum encoding**. Jumlah neuron input baru diketahui setelah preprocessing fit pada train.
 
-## Source and version
+## Sumber dan versi
 
-[Kaggle dataset](https://www.kaggle.com/datasets/vinay24baghira/ev-battery-health-and-degradation-dataset). Column definitions come from `data/raw/README.md` and `data/raw/data_dictionary .csv` in the downloaded archive. The source README states a **CC0** licence and fully synthetic data. The dictionary file name contains a space before `.csv` and is kept as is. The archive does not contain the sample notebook mentioned in its README.
+[Dataset Kaggle](https://www.kaggle.com/datasets/vinay24baghira/ev-battery-health-and-degradation-dataset). Definisi bersumber dari `data/raw/README.md` dan `data/raw/data_dictionary .csv` dalam arsip yang diunduh. README sumber menyebut lisensi **CC0** dan data sepenuhnya sintetis. Nama kamus dalam arsip memiliki spasi sebelum `.csv`; tidak diubah. Arsip tidak berisi sample notebook meskipun README menyebutnya.
 
-CSV SHA-256: `cacdf6afcf50db86583be3754207a89acbfd60b04dfff8f69b71e29cfd78218d`.
-Environment details and documentation hashes are stored in `provenance.json`. The split manifest `../../data/splits/battery_split.csv` is locked to this CSV version. All outputs can be regenerated without modifying the CSV.
+SHA-256 CSV: `cacdf6afcf50db86583be3754207a89acbfd60b04dfff8f69b71e29cfd78218d`.
+Lingkungan dan hash dokumentasi sumber tersimpan di `provenance.json`. Manifest split di `../../data/splits/battery_split.csv` dikunci ke versi CSV ini. Semua hasil dapat dibuat ulang tanpa mengubah CSV.
 
-## Split manifest
+## Manifest split
 
 | split | batteries | rows | row_pct |
 | --- | --- | --- | --- |
@@ -24,22 +24,22 @@ Environment details and documentation hashes are stored in `provenance.json`. Th
 | validation | 390 | 7499 | 14.998 |
 | test | 390 | 7572 | 15.144 |
 
-The manifest has one row per battery. Join on `battery_id` to select rows. Never split randomly by observation. The algorithm sorts battery IDs, permutes them with NumPy `default_rng(42)`, and assigns train, validation and test in that order. There is no stratification on the target and the seed was not chosen from model scores.
+Manifest menyimpan satu baris per baterai. Untuk mengambil baris data, lakukan merge/map pada battery_id; jangan melakukan random split per observasi. Algoritma menggunakan NumPy default_rng(42), ID diurutkan sebelum permutasi, dan urutan train → validation → test. Tidak ada stratifikasi berdasarkan target dan tidak memilih seed dari skor model.
 
-## Global integrity
+## Integritas data global
 
-- Fully duplicated rows: 0. Duplicated `observation_id`: 0.
-- Missing targets: 0. Infinite numeric values: 0.
-- Missing `observation_date`: 2216. Duplicated battery and date among rows with a date: 0. Missing dates are not treated as same-day measurements.
-- Non-empty dates that failed to parse: 0.
-- Observation before manufacture: 0. Service after observation: 0. Service before manufacture: 0.
-- Age inconsistent with the date difference: 0 of 43,199 checkable rows.
-- Observations per battery: 7 to 37, mean 19.23. The source README says roughly 10 to 40. The audited numbers are used.
-- No conflicting non-missing values were found in the static attributes checked (chemistry, manufacturer, model, nominal capacity, manufacture date, climate zone). This does not prove that every column is constant per battery.
+- Duplikasi seluruh baris: 0; duplikasi observation_id: 0.
+- Target kosong: 0; nilai numerik tak hingga: 0.
+- observation_date kosong: 2216. Duplikasi battery_id + tanggal pada baris dengan tanggal terisi: 0. Missing tanggal tidak dianggap sebagai pengukuran pada tanggal yang sama.
+- Format tanggal yang terisi gagal diparse: 0.
+- Observasi sebelum manufaktur: 0; servis sesudah observasi: 0; servis sebelum manufaktur: 0.
+- Usia tidak sesuai selisih tanggal: 0 dari 43,199 baris yang dapat diperiksa.
+- Jumlah pengamatan per baterai: 7–37, rerata 19.23. README menyebut sekitar 10–40; angka audit aktual yang dipakai.
+- Tidak ditemukan konflik nilai nonkosong dalam atribut statis yang diperiksa (kimia, produsen, model, kapasitas nominal, tanggal manufaktur, iklim). Ini tidak membuktikan semua kolom selalu konstan.
 
-## Missing values
+## Missing value
 
-This table is a quality audit of the whole CSV, not imputer statistics. Imputation statistics are computed from train only.
+Tabel berikut merupakan audit kualitas seluruh CSV, bukan statistik imputer. Statistik imputasi harus dihitung ulang hanya dari train.
 
 | column | missing_count | missing_pct |
 | --- | --- | --- |
@@ -73,17 +73,17 @@ This table is a quality audit of the whole CSV, not imputer statistics. Imputati
 | capacity_fade_pct | 1869 | 3.738 |
 | service_count | 1600 | 3.2 |
 
-`last_service_date` is not always missing because of data corruption: 18,205 rows with a missing service date have `service_count = 0`, 626 also have a missing `service_count`, and 0 have `service_count > 0`. These dates must not all be imputed as real service dates, so the column is excluded from the baseline.
+`last_service_date` tidak selalu hilang karena kerusakan data: 18,205 baris tanggal servis kosong memiliki service_count=0, 626 juga memiliki service_count kosong, dan 0 memiliki service_count>0. Jangan mengimputasi semua tanggal sebagai tanggal servis nyata. Tanggal ini dikeluarkan dari baseline.
 
-## Target leakage and sensor proxies
+## Kebocoran target dan kandidat proxy
 
-Across the 48,131 rows that have `capacity_fade_pct`, **capacity_fade_pct + SOH = 100** with a maximum absolute deviation of 0.0. This is a direct identity, so `capacity_fade_pct` is never used as an input.
+Pada 48,131 baris yang memiliki capacity_fade_pct, **capacity_fade_pct + SOH = 100** dengan maksimum selisih absolut 0.0. Ini identitas langsung, sehingga capacity_fade_pct dilarang menjadi input.
 
-The three alternative targets (`remaining_useful_life_cycles`, `failure_risk_label`, `degradation_category`) are also excluded. The source README states that the electrical measurements are derived from SOH and chemistry, naming internal resistance explicitly. Internal resistance, voltage, current and charge time are therefore conservatively excluded from the baseline and kept only as candidates for a separate sensor ablation. A real measured sensor can be valid for current-state estimation, but in this synthetic dataset such columns may act as target proxies.
+Tiga target alternatif (`remaining_useful_life_cycles`, `failure_risk_label`, `degradation_category`) juga dikeluarkan. README sumber menyatakan pengukuran listrik diturunkan dari SOH dan kimia, dengan internal resistance disebut eksplisit. Karena itu internal resistance, voltage, current, dan charge time dikeluarkan secara konservatif dari baseline dan hanya menjadi kandidat ablation sensor terpisah. Tidak diasumsikan semua empat kolom punya rumus ketergantungan yang sama. Sensor terukur dapat sah untuk estimasi saat ini jika benar tersedia, tetapi data sintetis ini membuat interpretasi proxy perlu kehati-hatian.
 
-Feature roles and reasons are stored in `../../configs/feature_contract.json` and `schema_audit.csv`. The main features cover chemistry and metadata, age and usage, and environment. Availability of every summary at observation time is an assumption, because the source does not document aggregation windows.
+Daftar fitur beserta alasan tersimpan di `../../configs/feature_contract.json` dan `schema_audit.csv`. Fitur utama meliputi kimia/metadata, umur/pemakaian, dan lingkungan. Availability seluruh ringkasan pada saat observasi adalah asumsi; dokumentasi tidak menjelaskan interval agregasi sehingga belum sah untuk klaim prediksi sebelum sesi.
 
-## Temporal feasibility
+## Kelayakan temporal
 
 | counter | eligible_pairs | decreasing_pairs |
 | --- | --- | --- |
@@ -91,13 +91,13 @@ Feature roles and reasons are stored in `../../configs/feature_contract.json` an
 | battery_age_days | 42320 | 0 |
 | total_energy_throughput_kwh | 41948 | 8923 |
 
-The check compares consecutive valid measurements of the same battery after dropping missing dates or counter values, and only where the date increases. Pairs may skip missing observations. `cycle_count` and throughput are defined as cumulative yet frequently decrease. This is treated as an inconsistency of the synthetic data rather than repaired by sorting, cumulative maxima or mass deletion.
+Pemeriksaan membandingkan pengukuran valid berurutan setelah mengeluarkan tanggal/nilai counter yang kosong, dalam baterai yang sama, dan hanya saat tanggal bertambah. Pasangan bisa melompati observasi yang kosong. cycle_count dan throughput yang didefinisikan kumulatif ternyata sering menurun. Fakta ini perlu dibahas sebagai ketidakkonsistenan data sintetis, bukan langsung diperbaiki dengan sorting nilai, cumulative maximum, atau penghapusan massal.
 
-**Decision:** a tabular baseline without timesteps. Forecasting and windowing are deferred. The group split tests generalisation to unseen batteries, not to future time periods.
+**Keputusan:** baseline tabular tanpa timesteps. Forecasting/windowing ditunda sampai kualitas urutan, nilai hilang, dan makna horizon ditinjau. Group split ini menguji baterai yang belum terlihat, bukan jaminan generalisasi ke periode masa depan.
 
-## Initial train profile
+## EDA awal train
 
-Train rows: 34,929. Train SOH: min 55.00, median 95.23, mean 92.92, max 100.00 percent.
+Jumlah train: 34,929. SOH train: min 55.00, median 95.23, rerata 92.92, maksimum 100.00 persen.
 
 | soh_band_pct | train_rows | train_pct |
 | --- | --- | --- |
@@ -107,24 +107,29 @@ Train rows: 34,929. Train SOH: min 55.00, median 95.23, mean 92.92, max 100.00 p
 | 90–<95 | 8264 | 23.659 |
 | >=95 | 18031 | 51.622 |
 
-The target is unevenly distributed. Because the target is continuous, SMOTE or class balancing is not applied. Final evaluation must report errors per SOH band with sample counts instead of relying on aggregate MAE alone.
+Sebaran target tidak merata. Karena target kontinu, SMOTE/balancing kelas tidak diterapkan. Evaluasi akhir harus menyertakan error per rentang SOH beserta jumlah sampelnya; jangan hanya mengandalkan MAE agregat.
 
-![Missing values in train](01_missing_train.png)
+![Missing train](01_missing_train.png)
 
-Missingness affects both numeric and categorical features. Median imputation and an explicit missing category are reasonable baselines. No imputer or scaler is fitted in this audit.
+Missing tersebar pada fitur numerik maupun kategori. Median numerik dan kategori missing eksplisit layak menjadi baseline, tetapi belum ada imputer/scaler yang di-fit dalam audit ini.
 
-![Target and chemistry](02_target_chemistry_train.png)
+![Target dan kimia](02_target_chemistry_train.png)
 
-Chemistry shares are counted per observation, not per battery, and observations of the same battery are correlated. Row shares must not be read as real fleet prevalence.
+Komposisi kimia dihitung per observasi, bukan per baterai. Observasi satu baterai saling berkaitan. Proporsi baris tidak boleh ditafsirkan sebagai prevalensi armada nyata.
 
-![Feature and target relationships](03_relationships_train.png)
+![Relasi fitur-target](03_relationships_train.png)
 
-The plots use a deterministic sample of at most 5,000 train rows and skip missing pairs. They show observational relationships inside a simulator, not causal effects. Internal resistance is shown to discuss proxy risk. It is not part of the baseline.
+Grafik memakai sampel deterministik maksimal 5.000 baris train dan mengabaikan pasangan kosong saat plotting. Pola menunjukkan hubungan observasional dalam simulator, bukan bukti sebab akibat. Resistance ditampilkan untuk membahas risiko proxy, bukan dimasukkan diam-diam ke baseline.
 
-![Sensor ranges](04_sensor_ranges_train.png)
+![Rentang sensor](04_sensor_ranges_train.png)
 
-Points beyond the whiskers are candidates for inspection, not confirmed errors. `outlier_flags_train.csv` applies the 1.5 x IQR rule on train without removing or clipping values. The source mentions injected sensor outliers but provides no mask of affected rows.
+Titik di luar whisker adalah kandidat pemeriksaan, bukan otomatis data salah. Tabel `outlier_flags_train.csv` memakai aturan 1.5×IQR train, tanpa menghapus atau memotong nilai. Outlier sensor diinjeksi menurut sumber, tetapi sumber tidak menyediakan mask baris mana yang diinjeksi.
 
-## Next stage
+## Langkah berikutnya
 
-The deeper train-only EDA is in `../eda/EDA_REPORT.md`. Preprocessing, the MLP study and the final evaluation follow in later stages. This report contains the audit and an initial profile only, **not the full EDA, final preprocessing or any prediction results**.
+1. Terima skenario estimasi SOH saat ini pada baterai baru dan daftar fitur utama, atau catat perubahan sebelum training.
+2. Perdalam EDA **train** pada notebook 01: distribusi setiap fitur, korelasi/redundansi, kategori langka, error domain, dan temuan yang memengaruhi seleksi.
+3. Buat pipeline imputasi, encoding kategori tak dikenal, standardisasi numerik, dan penanganan recall_flag. Fit hanya pada train. Jangan melatih model sebelum pipeline dan input diuji.
+4. Catat p setelah encoding, lalu buat baseline MLP dan matriks eksperimen sesuai CONTEXT.md. Belum memilih framework atau mengklaim performa.
+
+Artefak ini berisi audit dan EDA awal, **bukan EDA lengkap, preprocessing final, atau hasil prediksi**.

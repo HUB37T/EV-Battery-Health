@@ -10,7 +10,8 @@ from unittest.mock import patch
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
-from ev_battery.evaluation import describe_subgroup, evaluate_locked_predictions, lock_payload, validate_plan
+from ev_battery.evaluation import describe_subgroup, evaluate_locked_predictions, lock_payload
+from ev_battery.followup import validate_plan
 from ev_battery.model import MLP, init_weights
 
 
@@ -27,7 +28,7 @@ class FinalEvaluationTests(unittest.TestCase):
 
     def test_plan_rejects_seed_cherry_picking_or_fe_promotion(self):
         root = Path(__file__).resolve().parents[1]
-        plan = json.loads((root / "configs/final_evaluation.json").read_text(encoding="utf-8"))
+        plan = json.loads((root / "configs/numpy/followup.json").read_text(encoding="utf-8"))
         validate_plan(plan)
         changed = copy.deepcopy(plan)
         changed["seeds"] = [42]

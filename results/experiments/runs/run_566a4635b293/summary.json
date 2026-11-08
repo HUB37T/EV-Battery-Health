@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "run_id": "run_566a4635b293",
+  "fingerprint": "566a4635b293a8b73e24b2d5c9f66e366187554f6657e1b8b8faa1ca88e6662f",
+  "config": {
+    "recipe": "fe_combined",
+    "hidden_layers": [
+      32
+    ],
+    "activation": "sigmoid",
+    "loss": "mae",
+    "huber_delta": 1.0,
+    "learning_rate": 0.001,
+    "batch_size": 256,
+    "max_epochs": 200,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta_pp": 0.001,
+    "weight_decay": 0.0001,
+    "dropout": 0.0,
+    "seed": 2026
+  },
+  "input_features": 91,
+  "parameters": 2977,
+  "epochs_actual": 76,
+  "best_epoch": 61,
+  "stopped_early": true,
+  "optimizer_updates": 10412,
+  "training_seconds": 6.925424299999577,
+  "train": {
+    "mae": 0.9158772544843269,
+    "rmse": 1.4357754625927772,
+    "r2": 0.9601532917756782,
+    "bias_pp": 0.05572727159465898,
+    "outside_0_100_pct": 0.40081307795814364,
+    "battery_mean_mae": 0.9163323642711105
+  },
+  "validation": {
+    "mae": 0.9653500477951572,
+    "rmse": 1.4798900348776347,
+    "r2": 0.9555539964402389,
+    "bias_pp": -0.026651610752417686,
+    "outside_0_100_pct": 0.3733831177490332,
+    "battery_mean_mae": 0.9681192288505147
+  },
+  "train_objective_scaled": 0.12733475863933563,
+  "validation_objective_scaled": 0.13421298563480377,
+  "first_update": {
+    "batch_loss_scaled": 0.9872652292251587,
+    "gradient_l2_norm": 1.3766496831248347,
+    "first_layer_gradient_l2_norm": 0.4106559157371521,
+    "first_layer_max_weight_change": 0.0010000020265579224
+  },
+  "checkpoint_best": "models/mlp/run_566a4635b293/best.pt",
+  "checkpoint_last": "models/mlp/run_566a4635b293/last.pt",
+  "identity": {
+    "config": {
+      "recipe": "fe_combined",
+      "hidden_layers": [
+        32
+      ],
+      "activation": "sigmoid",
+      "loss": "mae",
+      "huber_delta": 1.0,
+      "learning_rate": 0.001,
+      "batch_size": 256,
+      "max_epochs": 200,
+      "early_stopping": true,
+      "patience": 15,
+      "min_delta_pp": 0.001,
+      "weight_decay": 0.0001,
+      "dropout": 0.0,
+      "seed": 2026
+    },
+    "data_fingerprint": "1619700f9f88e5675d9f635461dc6c5ed33f044923464db804e82a0e4f077e57",
+    "training_source_sha256": "54492bf7b0f745f1b6c695cc37cda6f5a6bfc901810ad060a69a95e5ececcd6a",
+    "torch": "2.11.0+cpu",
+    "threads": 2,
+    "device": "cpu"
+  }
+}

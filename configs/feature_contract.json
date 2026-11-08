@@ -1,7 +1,7 @@
 {
-  "task": "Regression of SOH at observation time for batteries not seen in train (not forecasting or RUL)",
+  "task": "Regresi SOH saat observasi untuk baterai yang tidak ada di train (bukan forecasting/RUL)",
   "target": "state_of_health_pct",
-  "target_unit": "percent, MAE/RMSE errors in percentage points",
+  "target_unit": "persen; error MAE/RMSE dalam poin persentase",
   "dataset_sha256": "cacdf6afcf50db86583be3754207a89acbfd60b04dfff8f69b71e29cfd78218d",
   "seed": 42,
   "split_unit": "battery_id",
@@ -61,19 +61,19 @@
     "recall_flag"
   ],
   "excluded_features": {
-    "battery_id": "Group ID used for splitting, not a feature.",
-    "observation_id": "Observation ID used for tracking, not a feature.",
-    "capacity_fade_pct": "Direct identity 100 - SOH, target leakage.",
-    "remaining_useful_life_cycles": "Alternative target or health label, not an input for SOH regression.",
-    "failure_risk_label": "Alternative target or health label, not an input for SOH regression.",
-    "degradation_category": "Alternative target or health label, not an input for SOH regression.",
-    "manufacture_date": "Raw date excluded from the baseline, battery_age_days is used instead.",
-    "observation_date": "Raw date excluded from the baseline, battery_age_days is used instead.",
-    "last_service_date": "Raw date excluded from the baseline, battery_age_days is used instead.",
-    "internal_resistance_mohm": "Candidate synthetic sensor proxy, only for a separate ablation after reviewing origin and availability.",
-    "voltage_avg_v": "Candidate synthetic sensor proxy, only for a separate ablation after reviewing origin and availability.",
-    "current_avg_a": "Candidate synthetic sensor proxy, only for a separate ablation after reviewing origin and availability.",
-    "charge_time_avg_min": "Candidate synthetic sensor proxy, only for a separate ablation after reviewing origin and availability."
+    "battery_id": "ID kelompok untuk split, bukan fitur.",
+    "observation_id": "ID observasi untuk pelacakan, bukan fitur.",
+    "capacity_fade_pct": "Identitas langsung: 100 - SOH; kebocoran target.",
+    "remaining_useful_life_cycles": "Target alternatif/label kesehatan; bukan input regresi SOH.",
+    "failure_risk_label": "Target alternatif/label kesehatan; bukan input regresi SOH.",
+    "degradation_category": "Target alternatif/label kesehatan; bukan input regresi SOH.",
+    "manufacture_date": "Tanggal mentah dikeluarkan dari baseline; gunakan battery_age_days yang tersedia.",
+    "observation_date": "Tanggal mentah dikeluarkan dari baseline; gunakan battery_age_days yang tersedia.",
+    "last_service_date": "Tanggal mentah dikeluarkan dari baseline; gunakan battery_age_days yang tersedia.",
+    "internal_resistance_mohm": "Kandidat proxy sensor sintetis; hanya untuk ablation terpisah setelah meninjau asal/availability.",
+    "voltage_avg_v": "Kandidat proxy sensor sintetis; hanya untuk ablation terpisah setelah meninjau asal/availability.",
+    "current_avg_a": "Kandidat proxy sensor sintetis; hanya untuk ablation terpisah setelah meninjau asal/availability.",
+    "charge_time_avg_min": "Kandidat proxy sensor sintetis; hanya untuk ablation terpisah setelah meninjau asal/availability."
   },
   "proxy_ablation_candidates": [
     "internal_resistance_mohm",
@@ -81,8 +81,8 @@
     "current_avg_a",
     "charge_time_avg_min"
   ],
-  "availability_assumption": "Usage, environment summaries and metadata are known at observation time. The source does not document aggregation windows, no claim of prediction before a session or into the future.",
-  "timesteps": "Not used: dates are missing and cumulative counters are not always monotonic, requires further temporal audit.",
-  "preprocessing_status": "Not fitted here. Imputation, encoding, scaling and data-driven selection may learn from train only.",
-  "balancing": "No class balancing because the target is continuous."
+  "availability_assumption": "Ringkasan penggunaan/lingkungan dan metadata diketahui pada saat observasi. Jendela agregasi tidak dirinci sumber; tidak mengklaim prediksi sebelum sesi atau masa depan.",
+  "timesteps": "Belum dipakai: tanggal hilang dan penghitung kumulatif tidak selalu monoton; perlu audit temporal lanjutan.",
+  "preprocessing_status": "Belum fit. Imputasi/encoding/scaling dan seleksi berbasis data hanya boleh belajar dari train.",
+  "balancing": "Tidak menerapkan balancing kelas karena target kontinu."
 }

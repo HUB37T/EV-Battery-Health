@@ -1,23 +1,21 @@
-"""Evaluate exactly the six frozen MLP checkpoints. No fitting or training.
-
-python -m ev_battery.evaluation
-python -m ev_battery.evaluation --reproduce  # separate local reproduction output
-"""
+"""Score rebuilt NumPy checkpoints in a local, fingerprinted follow-up directory."""
 
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from ev_battery.paths import ROOT
+from ev_battery.followup import load_plan
+from ev_battery.paths import ROOT, prepare_workspace
 from ev_battery.preprocessing import load_prepared_split
 from ev_battery.training import (
+    RunConfig,
     configure_runtime,
     load_checkpoint,
     load_training_data,
@@ -63,75 +61,44 @@ def lock_payload(output, payload):
     return locked
 
 
-def validate_plan(plan):
+def prepare_locked_inputs(root):
+    plan = load_plan(root)
+    confirmation_path = "results/experiments/followup_runs.csv"
+    confirmation = pd.read_csv(root / confirmation_path)
+    expected_pairs = {(group, seed) for group in plan["groups"] for seed in plan["seeds"]}
     if (
-        plan["primary_group_fixed_before_test"] != "candidate"
-        or plan["seeds"] != [42, 123, 2026]
-        or set(plan["groups"]) != {"baseline", "candidate"}
+        len(confirmation) != len(expected_pairs)
+        or set(zip(confirmation.group, confirmation.seed)) != expected_pairs
     ):
-        raise ValueError("Final plan differs from the agreed models or seeds.")
-    if any(group["recipe"].startswith("fe_") for group in plan["groups"].values()):
-        raise ValueError("Feature-engineering variants are a validation ablation, not final models.")
-    identifiers = []
-    for group in plan["groups"].values():
-        if set(group["run_ids_by_seed"]) != {str(s) for s in plan["seeds"]}:
-            raise ValueError("A seed is missing or was added.")
-        identifiers.extend(group["run_ids_by_seed"].values())
-    if len(identifiers) != len(set(identifiers)):
-        raise ValueError("Checkpoint run ID used more than once.")
-    if plan["soh_band_edges"] != [0, 70, 80, 90, 95, 101] or len(plan["soh_band_labels"]) != 5:
-        raise ValueError("Final SOH bands do not match.")
-
-
-def prepare_locked_inputs(root, output):
-    plan_path = root / "configs/final_evaluation.json"
-    plan = json.loads(plan_path.read_text(encoding="utf-8"))
-    validate_plan(plan)
-    prior = json.loads((root / "results/experiments/study.json").read_text(encoding="utf-8"))
-    features = json.loads((root / "results/feature_engineering/study.json").read_text(encoding="utf-8"))
-    if (
-        features["recommendation"] != "control_no_domain_features"
-        or features["reference_candidate_run_id"] != prior["candidate_run_id"]
-    ):
-        raise ValueError("Pre-test decisions differ from the final plan.")
-    confirmation = pd.read_csv(root / "results/experiments/seed_confirmation.csv")
-    train_data = {}
+        raise ValueError("Run the NumPy train stage to rebuild all six follow-up checkpoints.")
+    training = {}
     models = []
-    files = [
-        "configs/final_evaluation.json",
+    files = {
+        "configs/followup.json",
         "configs/feature_contract.json",
         "configs/preprocessing.json",
-        "configs/mlp_study.json",
         "data/splits/battery_split.csv",
-        "results/experiments/study.json",
-        "results/experiments/seed_confirmation.csv",
-        "results/feature_engineering/study.json",
-    ]
+        confirmation_path,
+    }
     for group, spec in plan["groups"].items():
         recipe = spec["recipe"]
-        if recipe != prior[f"{group}_config"]["recipe"]:
-            raise ValueError("Final recipes must match the configurations selected on validation.")
-        data = load_training_data(recipe, root)
-        train_data[recipe] = data
-        if data["fingerprint"] != prior["data_fingerprints"][recipe]:
-            raise ValueError("Preprocessing changed before the final evaluation.")
-        files.extend([f"models/preprocessing/{recipe}.joblib", f"data/processed/{recipe}/test.npz"])
+        if recipe not in training:
+            training[recipe] = load_training_data(recipe, root)
+        data = training[recipe]
+        files.update((f"models/preprocessing/{recipe}.joblib", f"data/processed/{recipe}/test.npz"))
         for seed in plan["seeds"]:
-            run_id = spec["run_ids_by_seed"][str(seed)]
-            expected = confirmation.loc[confirmation.group.eq(group) & confirmation.seed.eq(seed)]
-            if len(expected) != 1 or expected.iloc[0].run_id != run_id:
-                raise ValueError("Run ID does not match the validation seed confirmation.")
+            row = confirmation.loc[confirmation.group.eq(group) & confirmation.seed.eq(seed)].iloc[0]
+            run_id = row.run_id
             record_path = root / "results/experiments/runs" / run_id / "summary.json"
             record = json.loads(record_path.read_text(encoding="utf-8"))
-            reference = prior[f"{group}_config"].copy()
-            reference["seed"] = seed
-            if record["config"] != reference or record["status"] != "complete":
-                raise ValueError("Final checkpoint configuration differs.")
+            expected = replace(RunConfig(**spec["config"]), seed=seed)
+            if RunConfig(**record["config"]) != expected or record["status"] != "complete":
+                raise ValueError("Rebuilt checkpoint configuration differs from the NumPy follow-up plan.")
             path = root / record["checkpoint_best"]
             model, checkpoint = load_checkpoint(path, data)
             if checkpoint["run_id"] != run_id or checkpoint["epoch"] != record["best_epoch"]:
-                raise ValueError("Not the agreed best-validation checkpoint.")
-            files.extend([path.relative_to(root).as_posix(), record_path.relative_to(root).as_posix()])
+                raise ValueError("Checkpoint does not match the best validation epoch.")
+            files.update((path.relative_to(root).as_posix(), record_path.relative_to(root).as_posix()))
             models.append(
                 {
                     "group": group,
@@ -140,20 +107,23 @@ def prepare_locked_inputs(root, output):
                     "run_id": run_id,
                     "record": record,
                     "model": model,
-                    "checkpoint": checkpoint,
                 }
             )
     payload = {
         "plan": plan,
         "source_sha256": file_sha256(Path(__file__)),
-        "selection_source_commit": "ed55f113393bb38dc568a79b38c33f56dcbca305",
-        "files_sha256": {name: file_sha256(root / name) for name in sorted(set(files))},
-        "checkpoint_selection": "best validation epoch, fixed before test",
-        "test_predictions_computed_at_lock": False,
-        "data_fingerprints": {recipe: data["fingerprint"] for recipe, data in train_data.items()},
+        "selection_reference_commit": plan["selection_reference_commit"],
+        "original_pytorch_release_commit": plan["original_pytorch_release_commit"],
+        "checkpoint_selection": "best validation epoch of the recorded NumPy configuration",
+        "test_split_previously_evaluated": True,
+        "files_sha256": {name: file_sha256(root / name) for name in sorted(files)},
+        "data_fingerprints": {recipe: data["fingerprint"] for recipe, data in training.items()},
     }
-    locked = lock_payload(output, payload)
-    return plan, train_data, models, locked
+    return plan, training, models, payload
+
+
+def evaluation_directory(root, fingerprint):
+    return root / "results/numpy_followup" / fingerprint
 
 
 def describe_subgroup(y, pred, battery_ids):
@@ -173,12 +143,13 @@ def evaluate_locked_predictions(model, test, bundle):
     return original_scale(scaled, bundle)
 
 
-def run_final_evaluation(root=ROOT, output=None):
-    output = Path(output) if output is not None else root / "results/final_evaluation"
-    plan, training, models, locked = prepare_locked_inputs(root, output)
+def run_final_evaluation(root=ROOT):
+    plan, training, models, payload = prepare_locked_inputs(root)
+    output = evaluation_directory(root, canonical_sha256(payload))
+    locked = lock_payload(output, payload)
     configure_runtime(42)
     print(
-        f"LOCKED {len(models)} checkpoints before test predictions: {locked['fingerprint'][:16]}", flush=True
+        f"LOCKED {len(models)} NumPy checkpoints for this follow-up: {locked['fingerprint'][:16]}", flush=True
     )
     status_path = output / "evaluation.json"
     required = [
@@ -191,6 +162,7 @@ def run_final_evaluation(root=ROOT, output=None):
         "validation_test_comparison.csv",
         "constant_references.csv",
     ]
+    required.extend(f"predictions/{item['group']}_seed_{item['seed']}.csv" for item in models)
     if status_path.is_file():
         previous = json.loads(status_path.read_text(encoding="utf-8"))
         if previous["lock_fingerprint"] != locked["fingerprint"]:
@@ -372,6 +344,10 @@ def run_final_evaluation(root=ROOT, output=None):
         "model_selection_from_test": False,
         "training_or_fit_performed": False,
         "test_evaluated": True,
+        "evaluation_scope": plan["evaluation_scope"],
+        "selection_reference_commit": plan["selection_reference_commit"],
+        "original_pytorch_release_commit": plan["original_pytorch_release_commit"],
+        "test_split_previously_evaluated": True,
         "n_checkpoints": len(models),
         "test_rows": 7572,
         "test_batteries": 390,
@@ -386,12 +362,5 @@ def run_final_evaluation(root=ROOT, output=None):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--reproduce",
-        action="store_true",
-        help="Write independent local reproduction, preserving released final lock/results.",
-    )
-    args = parser.parse_args()
-    destination = ROOT / "data/processed/final_evaluation_reproduction" if args.reproduce else None
-    run_final_evaluation(output=destination)
+    prepare_workspace()
+    run_final_evaluation()

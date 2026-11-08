@@ -1,0 +1,25 @@
+{
+  "config": {
+    "recipe": "fe_usage_rates",
+    "hidden_layers": [
+      32
+    ],
+    "activation": "sigmoid",
+    "loss": "mae",
+    "huber_delta": 1.0,
+    "learning_rate": 0.001,
+    "batch_size": 256,
+    "max_epochs": 200,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta_pp": 0.001,
+    "weight_decay": 0.0001,
+    "dropout": 0.0,
+    "seed": 42
+  },
+  "data_fingerprint": "99ede6fa2bc9dd7f1f5b3017a65a281256b70af3591b50a2f36405f78a86644d",
+  "training_source_sha256": "54492bf7b0f745f1b6c695cc37cda6f5a6bfc901810ad060a69a95e5ececcd6a",
+  "torch": "2.11.0+cpu",
+  "threads": 2,
+  "device": "cpu"
+}

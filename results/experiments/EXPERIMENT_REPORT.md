@@ -1,195 +1,140 @@
-# MLP Experiments with Backpropagation
+# Eksperimen MLP dengan Backpropagation
 
-## Key results
+## Hasil utama dan status
 
-- The MLP and backpropagation are implemented **from scratch in NumPy** (`src/ev_battery/model.py`), following `bp_fit` and `bp_predict` from the course modules. No deep-learning framework is used.
-- **28 unique training runs** completed, including the three-seed confirmation and the underfitting and overfitting demonstration.
-- Baseline (`baseline_standard`, 67 inputs, hidden [32] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0): validation MAE **1.0068** SOH percentage points.
-- Candidate (`baseline_standard`, 67 inputs, hidden [8] sigmoid, linear output, MSE loss, gradient descent with learn_rate 0.1, batch size 32, sample weighting `none`, max_error 0): validation MAE **0.9943**, RMSE **1.5039**, R² **0.9541**.
-- Seed confirmation: baseline **1.0000 ± 0.0064**, candidate **0.9999 ± 0.0083**, three seeds on the fixed split.
-- Validation was reused throughout the search, so these are not test scores. The test split is evaluated once in notebook 05.
+- **17 run unik** selesai, termasuk konfirmasi tiga seed. Run identik digunakan ulang, bukan dihitung sebagai eksperimen baru.
+- Baseline: validation MAE **1.0495** poin persentase SOH, train **0.8861**; best epoch 22 dari 37 epoch aktual.
+- Kandidat seed 42: validation MAE **0.9726**, RMSE **1.4973**, R² **0.9545**. Ini hasil validation yang dipakai berulang selama pencarian, bukan performa test independen.
+- Konfirmasi baseline: mean MAE **1.0468 ± 0.0024**; kandidat **0.9752 ± 0.0024**, tiga seed pada split tetap.
+- Semua model prediksi adalah **MLP feedforward dengan backpropagation**. Test tidak dimuat/dievaluasi. Belum ada evaluasi akhir notebook 04 atau klaim generalisasi pada baterai nyata.
 
-## 1. Implementation
+## 1. Data dan batas evaluasi
 
-The network follows the structure of the course `bp_fit`:
+Train 34.929 baris, validation 7.499 baris, grup baterai tidak tumpang tindih. Input berasal dari tiga fitted preprocessing recipe, semuanya fit train-only. Target dilatih pada skala terstandar dan metrik dikembalikan ke SOH asli melalui target scaler yang cocok.
 
-- `layer_conf` lists the neurons per layer, for example `(67, 8, 1)`.
-- Weights are a list of matrices of shape `(n_in + 1, n_out)`. The last row is the bias, which corresponds to an extra input neuron fixed at 1.
-- Forward pass: `net = [a, 1] @ W`, then the activation (`sig`, `tanh` or `relu`) in hidden layers and a linear output for regression.
-- Backward pass: the output delta is the loss gradient, `delta = (delta_next @ W_next[:-1].T) * f'(net)` for hidden layers, and the weight gradient is `[a, 1].T @ delta`.
-- Update: plain gradient descent `W = W - learn_rate * gradient` as in the course, or Adam (written by hand) as a comparison.
-- Stopping: `max_epoch`, `max_error` on the epoch MSE (as in the course), and early stopping on validation MAE with patience 15.
+Runner hanya meminta split `train` dan `validation`; ada pengujian yang menolak jika loader meminta `test`. Tidak menjalankan ulang preprocessing, membentuk fitur domain baru, mengubah split, atau memakai label turunan target. Feature engineering domain masih merupakan eksperimen lanjutan setelah baseline ini.
 
-Updates use mini-batches of 32 samples, because per-sample updates over 34,929 rows would make each experiment take hours. The gradient formula is identical: with `batch_size=1`, no shuffling and a sigmoid output, a unit test shows that the implementation produces exactly the same weights as the course `bp_fit`. A second test checks every gradient against finite differences.
+## 2. Arsitektur, forward pass, dan backpropagation
 
-![Candidate architecture](03_candidate_architecture.png)
+Untuk layer l: `z[l] = W[l] a[l-1] + b[l]`, lalu `a[l] = activation(z[l])`. Output berupa satu neuron linear yang memprediksi SOH terstandar. Semua linear layer memakai Xavier uniform gain=1 dan bias nol sebagai kebijakan inisialisasi yang sama antaraktivasi.
 
-## 2. Reference configuration
+Di setiap mini-batch:
+1. Bersihkan gradien sebelumnya (`optimizer.zero_grad`).
+2. Hitung prediksi dengan forward pass dan loss terhadap y_scaled.
+3. `loss.backward()` menghitung gradien setiap bobot/bias dengan chain rule.
+4. Adam memperbarui parameter (`optimizer.step`).
 
-The baseline mirrors the course defaults: sigmoid hidden units, MSE loss and plain gradient descent with learn_rate 0.1, batch size 32, at most 200 epochs and seed 42 during the search.
+PyTorch 2.11.0 menyediakan autograd; ini backpropagation, bukan ELM atau algoritma JST lain. Implementasi manual dari nol tidak menjadi asumsi tugas. Test terpisah mencocokkan gradien satu jaringan kecil dengan contoh hitung manual di CONTEXT.md.
 
-| model | recipe | hidden | activation | loss | optimizer | learn_rate | parameters | best_epoch | epochs_actual | train_MAE_pp | validation_MAE_pp | validation_R2 |
+![Arsitektur kandidat](03_candidate_architecture.png)
+
+Semua kandidat memiliki minimal satu hidden layer nonlinear. Bias, jumlah parameter, output shape `(N,)` termasuk batch satu, dan hilangnya dropout saat evaluasi diperiksa. Tidak ada CNN/RNN/Transformer atau model non-MLP.
+
+## 3. Konfigurasi acuan
+
+Baseline: input 67, hidden [64,32], ReLU, loss MSE, output linear, Adam learning rate 0.001, batch **256**, maksimum 200 epoch, patience 15, min_delta 0.001 poin SOH, tanpa dropout/weight decay. Batch 256 menggantikan rekomendasi awal 32 demi pelatihan CPU yang praktis; nilai ini tetap pada seluruh pembanding dan tidak dituning dari validation. CPU dua thread, seed 42 untuk pencarian.
+
+| model | recipe | hidden | activation | loss | input | parameters | best_epoch | epochs_actual | train_MAE_pp | validation_MAE_pp | validation_RMSE_pp | validation_R2 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Baseline seed 42 | baseline_standard | [32] | sigmoid | mse | gd | 0.1 | 2209 | 62 | 77 | 0.9473 | 1.0068 | 0.9551 |
-| Candidate seed 42 | baseline_standard | [8] | sigmoid | mse | gd | 0.1 | 553 | 96 | 105 | 0.9629 | 0.9943 | 0.9541 |
+| Baseline seed 42 | baseline_standard | [64, 32] | relu | mse | 67 | 6465 | 22 | 37 | 0.8861 | 1.0495 | 1.535 | 0.9522 |
+| Kandidat seed 42 | log_sensor_caps | [32] | sigmoid | mae | 67 | 2209 | 123 | 126 | 0.9228 | 0.9726 | 1.4973 | 0.9545 |
 
 ![Learning curves](01_learning_curves.png)
 
-Train and validation losses are computed with the same weights at the end of every epoch. Epoch 0 is the untrained network and serves only as a reference.
+Kurva objective train/validation dihitung pada bobot yang sama di akhir epoch, dalam mode eval sehingga dropout nonaktif. `batch_objective_scaled` di history adalah rata-rata mini-batch saat bobot berubah dan dropout aktif; jangan menyamakannya dengan full-train evaluation loss. Panel objective menampilkan sejak epoch 0; panel MAE diperbesar mulai epoch 5 untuk keterbacaan generalization gap. Epoch 0 adalah jaringan sebelum update dan hanya titik acuan, bukan checkpoint terpilih.
 
-## 3. Staged experiment matrix
+## 4. Early stopping dan checkpoint
 
-The search changes one factor per stage and carries the validation winner forward:
+Checkpoint `best.pt` selalu menyimpan **MAE validation minimum persis** pada epoch training 1..N, bukan hanya perbaikan yang melewati min_delta. Patience direset bila ada perbaikan signifikan >min_delta terhadap referensi patience. Dengan demikian perbaikan kecil tetap tersimpan meski tidak mereset patience.
 
-| stage | values tested | selected | validation MAE (pp) |
-| --- | --- | --- | --- |
-| preprocessing | baseline_standard, baseline_minmax, log_sensor_caps, compact_log_sensor_caps | baseline_standard | 1.0068 |
-| hidden_layers | 2, 8, 32, 64, 64-32, 128-64-32 | 8 | 0.9943 |
-| activation | sigmoid, tanh, relu | sigmoid | 0.9943 |
-| loss | mse, mae, huber | mse | 0.9943 |
-| learning_rate | 0.01, 0.05, 0.1, 0.3 | 0.1 | 0.9943 |
-| optimizer | gd (lr=0.1), adam (lr=0.001) | gd (lr=0.1) | 0.9943 |
-| balancing | none, inverse_sqrt, inverse | none | 0.9943 |
-| max_error | 0, 0.05, 0.1 | 0 | 0.9943 |
+`last.pt` menyimpan bobot pada epoch terakhir. File menyertakan state_dict, optimizer, konfigurasi, nama input, fingerprint data, epoch, serta RNG torch/shuffle. Checkpoint terbaik dimuat ulang dan MAE-nya direkonsiliasi dengan nilai minimum history. Cache hanya menggunakan run **selesai** dengan fingerprint dan file checkpoint yang cocok. Run terputus dapat diulang dari awal; runner belum menawarkan resume tengah-epoch.
 
-![Stage comparisons](02_stage_comparisons.png)
+Semua checkpoint di `models/mlp/<run_id>/` disimpan lokal dan diabaikan Git. Konfigurasi, history, ringkasan, dan daftar run tetap dibagikan. Rerun dari clone baru melatih ulang bila checkpoint lokal belum ada; tidak menyajikan bobot rekaan.
 
-All runs:
+## 5. Matriks eksperimen bertahap
 
-| stage | value | validation_mae_pp | train_mae_pp | epochs_actual | best_epoch | stop_reason | selected |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| preprocessing | baseline_standard | 1.0068 | 0.9473 | 77 | 62 | early_stopping | True |
-| preprocessing | baseline_minmax | 1.0129 | 0.9567 | 135 | 120 | early_stopping | False |
-| preprocessing | log_sensor_caps | 1.0077 | 0.9605 | 65 | 50 | early_stopping | False |
-| preprocessing | compact_log_sensor_caps | 1.0137 | 0.9714 | 67 | 52 | early_stopping | False |
-| hidden_layers | 2 | 1.0892 | 1.0888 | 54 | 39 | early_stopping | False |
-| hidden_layers | 8 | 0.9943 | 0.9629 | 105 | 96 | early_stopping | True |
-| hidden_layers | 32 | 1.0068 | 0.9473 | 77 | 62 | early_stopping | False |
-| hidden_layers | 64 | 0.995 | 0.9491 | 65 | 50 | early_stopping | False |
-| hidden_layers | 64-32 | 0.996 | 0.938 | 77 | 62 | early_stopping | False |
-| hidden_layers | 128-64-32 | 0.9966 | 0.9495 | 77 | 65 | early_stopping | False |
-| activation | sigmoid | 0.9943 | 0.9629 | 105 | 96 | early_stopping | True |
-| activation | tanh | 1.0093 | 0.9771 | 56 | 41 | early_stopping | False |
-| activation | relu | 1.0244 | 0.9823 | 77 | 62 | early_stopping | False |
-| loss | mse | 0.9943 | 0.9629 | 105 | 96 | early_stopping | True |
-| loss | mae | 1.0025 | 0.9951 | 27 | 12 | early_stopping | False |
-| loss | huber | 1.0031 | 0.974 | 75 | 60 | early_stopping | False |
-| learning_rate | 0.01 | 1.0035 | 0.9847 | 189 | 187 | early_stopping | False |
-| learning_rate | 0.05 | 0.995 | 0.974 | 75 | 67 | early_stopping | False |
-| learning_rate | 0.1 | 0.9943 | 0.9629 | 105 | 96 | early_stopping | True |
-| learning_rate | 0.3 | 1.018 | 0.9766 | 46 | 37 | early_stopping | False |
-| optimizer | gd (lr=0.1) | 0.9943 | 0.9629 | 105 | 96 | early_stopping | True |
-| optimizer | adam (lr=0.001) | 0.9985 | 0.9544 | 42 | 39 | early_stopping | False |
-| balancing | none | 0.9943 | 0.9629 | 105 | 96 | early_stopping | True |
-| balancing | inverse_sqrt | 1.0306 | 0.9921 | 63 | 48 | early_stopping | False |
-| balancing | inverse | 1.1688 | 1.125 | 28 | 13 | early_stopping | False |
-| max_error | 0 | 0.9943 | 0.9629 | 105 | 96 | early_stopping | True |
-| max_error | 0.05 | 1.0737 | 1.0487 | 12 | 12 | max_error | False |
-| max_error | 0.1 | 1.4028 | 1.3743 | 3 | 3 | max_error | False |
+![Perbandingan tahap](02_stage_comparisons.png)
 
-This is a sequential search, **not a full factorial design**: it does not isolate every interaction and does not prove a global optimum. Raw loss values are never compared across MSE, MAE and Huber, every decision uses validation MAE in original SOH units. The Huber delta of 1 on the standardised target corresponds to about 7.19 SOH points.
+Tahap: preprocessing → hidden layer → aktivasi → loss → dua probe regularisasi. Pemenang MAE validation seed 42 diteruskan ke tahap berikutnya. Arsitektur [32], [64], [64,32], [128,64,32]; aktivasi ReLU/tanh/sigmoid; loss MSE/MAE/Huber. Huber delta=1 pada target terstandar, setara 7.1927 poin persentase SOH pada versi data ini.
 
-## 4. Optimizer: gradient descent vs Adam
+File `stage_comparisons.csv` mencatat setiap kandidat dan pilihan. Ini pencarian berurutan, **bukan full factorial**: tidak mengisolasi seluruh interaksi faktor dan tidak membuktikan optimum global. Tidak membandingkan angka loss mentah lintas MSE/MAE/Huber; keputusan memakai MAE pada skala asli. Weight decay berlaku pada Adam; objective loss yang diplot tidak menambahkan penalti optimizer secara eksplisit.
 
-Plain gradient descent (the course rule) uses one fixed learn_rate for every weight. Adam keeps running averages of each gradient and its square, which gives every weight its own adaptive step size. The optimizer stage compares the two on the configuration selected so far, see the `optimizer` rows above.
+Resep log/cap mengubah beberapa transformasi sekaligus; compact menguji pengurangan dua fitur. Kesimpulan manfaat tiap transformasi sendiri masih memerlukan ablation tersendiri. Probe dropout 0.1 dan weight decay 1e-4 menguji regularisasi, tanpa otomatis menyimpulkan keduanya pasti memperbaiki generalisasi.
 
-## 5. Balancing with SOH-band weights
+## 6. Eksperimen epoch yang benar-benar berbeda
 
-The target is continuous, so class balancing in the classification sense does not apply. The regression counterpart is to weight each training sample by the inverse frequency of its SOH band, so that rare low-SOH observations contribute more to the loss. Weights are computed on train only and normalised to a mean of 1.
-
-| sample_weighting | soh_band | rows | batteries | mae_pp |
-| --- | --- | --- | --- | --- |
-| none | <70 | 106 | 28 | 3.6015 |
-| none | 70–<80 | 338 | 80 | 2.1118 |
-| none | 80–<90 | 1390 | 218 | 1.3309 |
-| none | 90–<95 | 1814 | 305 | 0.9797 |
-| none | >=95 | 3851 | 384 | 0.7098 |
-| inverse_sqrt | <70 | 106 | 28 | 3.3613 |
-| inverse_sqrt | 70–<80 | 338 | 80 | 2.1282 |
-| inverse_sqrt | 80–<90 | 1390 | 218 | 1.3814 |
-| inverse_sqrt | 90–<95 | 1814 | 305 | 0.9894 |
-| inverse_sqrt | >=95 | 3851 | 384 | 0.7629 |
-| inverse | <70 | 106 | 28 | 4.5456 |
-| inverse | 70–<80 | 338 | 80 | 2.1022 |
-| inverse | 80–<90 | 1390 | 218 | 1.517 |
-| inverse | 90–<95 | 1814 | 305 | 1.0639 |
-| inverse | >=95 | 3851 | 384 | 0.9176 |
-
-![Balancing by band](08_balancing_by_band.png)
-
-For SOH below 70%, validation MAE is **3.601** without weighting, **3.361** with `inverse_sqrt` and **4.546** with `inverse` weights. The selection rule uses overall validation MAE, so balancing is only selected if it also improves the aggregate error.
-
-## 6. Epoch budget
-
-![Epoch budget](04_epoch_budget.png)
+![Budget epoch](04_epoch_budget.png)
 
 | epoch | train_mae | validation_mae | validation_rmse | validation_r2 |
 | --- | --- | --- | --- | --- |
-| 50 | 0.9822 | 1.0119 | 1.5298 | 0.9525 |
-| 100 | 0.9638 | 1.0019 | 1.5176 | 0.9533 |
-| 200 | 0.9596 | 1.0029 | 1.4954 | 0.9546 |
+| 50 | 0.9784 | 1.0118 | 1.5653 | 0.9503 |
+| 100 | 0.9355 | 0.9785 | 1.5084 | 0.9538 |
+| 200 | 0.9076 | 0.9809 | 1.499 | 0.9544 |
 
-The table uses the **endpoint weights at epochs 50, 100 and 200** of one trajectory without early stopping. Because the trajectories are nested, this is a controlled budget experiment, not three independent replicates. The best checkpoint of this diagnostic trajectory is at epoch 127 (MAE 0.9917). The run is not promoted to the candidate.
+Tabel memakai bobot **endpoint epoch 50, 100, 200** dari satu trajectory tanpa early stopping, dengan seed/urutan batch yang sama. Endpoint bukan checkpoint minimum sebelum epoch tersebut. Karena trajectory bersarang, ini eksperimen budget terkontrol, bukan tiga replikasi independen. Model fixed-epoch tidak dipakai memilih ulang kandidat; tabel ini menjelaskan efek melanjutkan training. Best checkpoint diagnostik trajectory 200 epoch ada di epoch 191 (MAE 0.9669), berbeda dari endpoint 200. Perbaikan yang muncul setelah early stopping menunjukkan patience hanyalah heuristik dan dapat melewatkan perbaikan terlambat. Run diagnostik ini sengaja tidak dipromosikan diam-diam menjadi kandidat dari protokol early stopping.
 
-## 7. Underfitting and overfitting
+## 7. Konfirmasi seed dan batas ketidakpastian
 
-Reproducing LC 7 on this dataset:
-
-| scenario | run_id | hidden_layers | train_rows | max_epochs | max_error | epochs_actual | stop_reason | train_mae_pp | validation_mae_pp | gap_pp | final_train_mae_pp | final_validation_mae_pp | final_gap_pp |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| underfitting | run_990e876cb506 | 2 | 34929 | 50 | 0.5 | 1 | max_error | 1.5179 | 1.5465 | 0.0286 | 1.5179 | 1.5465 | 0.0286 |
-| overfitting | run_19e4fd829263 | 128 | 1963 | 1000 | 0.0 | 1000 | max_epoch | 0.7704 | 1.2468 | 0.4764 | 0.6173 | 1.3662 | 0.7489 |
-
-![Underfitting and overfitting](07_underfitting_overfitting.png)
-
-- **Underfitting:** hidden [2], max_epoch 50 and max_error 0.5. Training stopped after 1 epoch(s) (max_error). Train MAE 1.518 and validation MAE 1.547 are both high: the model is too small and stops learning too early.
-- **Overfitting:** hidden [128] trained for 1000 epochs without early stopping on only 1,963 rows (5% of train). After the last epoch, train MAE is 0.617 while validation MAE is 1.366, a gap of 0.749 points: the network memorises the small training set. Its best validation epoch was 278, after which validation error rises while train error keeps falling.
-
-The full study does not overfit strongly because it trains on 34,929 rows with early stopping.
-
-## 8. Seed confirmation
-
-![Seed confirmation](05_seed_confirmation.png)
+![Konfirmasi seed](05_seed_confirmation.png)
 
 | group | seed | run_id | validation_mae_pp | validation_rmse_pp | validation_r2 | train_mae_pp | best_epoch |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| baseline | 42 | run_cd4e6f80a183 | 1.0068 | 1.4866 | 0.9551 | 0.9473 | 62 |
-| baseline | 123 | run_96e0465b8c5f | 0.9988 | 1.5041 | 0.9541 | 0.9601 | 41 |
-| baseline | 2026 | run_27c8116694bb | 0.9943 | 1.4917 | 0.9548 | 0.9452 | 49 |
-| candidate | 42 | run_0015e8ebf51d | 0.9943 | 1.5039 | 0.9541 | 0.9629 | 96 |
-| candidate | 123 | run_17e82e31806b | 1.0094 | 1.514 | 0.9535 | 0.9749 | 56 |
-| candidate | 2026 | run_125d105f67b2 | 0.9959 | 1.492 | 0.9548 | 0.9705 | 58 |
+| baseline | 42 | run_83aa5197bac6 | 1.0495 | 1.535 | 0.9522 | 0.8861 | 22 |
+| baseline | 123 | run_567cd20b04c3 | 1.0456 | 1.526 | 0.9527 | 0.8805 | 23 |
+| baseline | 2026 | run_e8aecfd9751c | 1.0452 | 1.5337 | 0.9523 | 0.8693 | 22 |
+| candidate | 42 | run_417429878fc7 | 0.9726 | 1.4973 | 0.9545 | 0.9228 | 123 |
+| candidate | 123 | run_312fdc17ada1 | 0.9761 | 1.5 | 0.9543 | 0.9285 | 116 |
+| candidate | 2026 | run_73d0ae8e6140 | 0.9771 | 1.508 | 0.9538 | 0.9323 | 100 |
 
-SD is the sample standard deviation (ddof = 1) over three training seeds, which control the initial weights and the shuffling order. It is not a confidence interval over batteries.
+SD menggunakan sample standard deviation (ddof=1) dari tiga seed inisialisasi/pengacakan training. Bukan confidence interval baterai/populasi atau ketidakpastian semua kemungkinan split. Konfigurasi kandidat dikunci dari pencarian seed 42 sebelum konfirmasi; tidak memilih seed terbaik untuk dilaporkan. Evaluasi akhir kelak harus mencakup seluruh seed final yang ditetapkan.
 
-## 9. Validation error analysis
+Jika keunggulan terhadap baseline kecil atau tidak konsisten antar-seed, jangan menyebut satu konfigurasi pasti lebih baik. Validation telah digunakan untuk banyak keputusan sehingga estimasi ini bisa optimistis; test independen tetap diperlukan.
 
-![Validation errors](06_validation_errors.png)
+## 8. Analisis error validation
+
+![Error validation](06_validation_errors.png)
 
 | soh_band | rows | batteries | mae_pp |
 | --- | --- | --- | --- |
-| <70 | 106 | 28 | 3.6015 |
-| 70–<80 | 338 | 80 | 2.1118 |
-| 80–<90 | 1390 | 218 | 1.3309 |
-| 90–<95 | 1814 | 305 | 0.9797 |
-| >=95 | 3851 | 384 | 0.7098 |
+| <70 | 106 | 28 | 3.4 |
+| 70–<80 | 338 | 80 | 2.0567 |
+| 80–<90 | 1390 | 218 | 1.298 |
+| 90–<95 | 1814 | 305 | 0.9519 |
+| >=95 | 3851 | 384 | 0.7029 |
 
-Predictions are not clipped to 0 to 100. The seed-42 candidate produces 0.240% predictions outside that range. The mean per-battery MAE is **0.9970** points.
+Residual bertanda adalah prediksi−aktual. Tidak memotong prediksi ke 0..100 demi mempercantik metrik. Kandidat seed 42 menghasilkan 0.413% prediksi di luar batas tersebut. Selain MAE per observasi, rerata MAE per baterai kandidat adalah **0.9765** poin, sehingga baterai dengan banyak baris tidak selalu mendominasi ringkasan kedua.
 
-## 10. Sanity check against train constants
+Rentang SOH rendah lebih jarang menurut EDA. Baca error per rentang bersama n dan jumlah baterai; skor agregat bagus tidak menjamin semua kondisi sama baik. Analisis ini tetap validation; jangan mengubah kebijakan berdasarkan test nanti.
+
+## 9. Pemeriksaan kewajaran terhadap konstanta train
 
 | reference | constant_soh | mae | rmse | r2 | bias_pp | outside_0_100_pct | battery_mean_mae |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | train_median | 95.23 | 4.9432 | 7.3623 | -0.1 | 2.2199 | 0.0 | 4.9363 |
 | train_mean | 92.9187 | 5.2697 | 7.0202 | -0.0002 | -0.0913 | 0.0 | 5.2737 |
 
-The train median and mean are not competing models. They show that the MLP does more than predict the dominant high-SOH region.
+Konstanta median/rerata train bukan algoritma ML pesaing dan tidak belajar dari validation; ini kontrol kewajaran agar MLP tidak dianggap berhasil hanya karena target dominan SOH tinggi. Model prediksi yang dilatih tetap hanya MLP/backpropagation.
 
-## 11. Artifacts and reproduction
+## 10. Overfitting, underfitting, dan yang belum dapat diklaim
 
-- `configs/mlp_study.json`: baseline, stages and protocol.
-- `results/experiments/run_summary.csv`: one row per unique training run.
-- `runs/<run_id>/`: config, per-epoch history, summary and status.
-- `models/mlp/<run_id>/`: best, last and fixed-epoch weights as `.npz`, local and ignored by Git.
+Pada checkpoint terpilih, gap validation−train MAE baseline **0.1634** poin dan kandidat **0.0498** poin. Gap perlu dibaca bersama seluruh kurva, bukan satu ambang universal. Bertambahnya epoch dapat memperbaiki train dan memperburuk validation; eksperimen budget dan early stopping memperlihatkan perilaku aktualnya.
 
-Command: `python -m ev_battery train`, or run notebook 03. Identical runs are reused through a fingerprint of the code, data and configuration.
+Underfitting bukan sekadar “R² kurang dari angka tertentu”. Periksa apakah train loss tetap tinggi, apakah melebihi kontrol konstanta, dan apakah kapasitas/optimasi belum memadai. Kecilnya gap juga tidak membuktikan model pasti bebas masalah, terutama pada data sintetis dan split terbatas.
+
+## 11. Artefak, reproduksi, dan pemeriksaan
+
+- `configs/mlp_study.json`: konfigurasi/protokol yang dipakai.
+- `results/experiments/run_summary.csv`: satu baris per training run unik.
+- `runs/<run_id>/`: config, history, summary, dan status. Prediksi per-baris validation dibuat lokal dan diabaikan Git.
+- `models/mlp/<run_id>/`: best/last serta endpoint checkpoint fixed-epoch; lokal, diabaikan Git.
+- `study.json`: kandidat sementara, baseline, seed, fingerprint, versi, dan status test belum dimuat.
+
+Perintah: `python -m src.mlp_experiments`; atau jalankan notebook 03. Cache memakai source/data/config fingerprint, sehingga notebook dapat menampilkan ulang run yang sudah selesai. Ubah source/config/data secara sengaja bila bereksperimen dan catat hasil baru; jangan mengedit skor CSV manual. Determinisme dikonfigurasi pada CPU ini, namun hasil numerik lintas versi/hardware tidak dijamin identik.
+
+Pengujian mencakup gradien manual vs autograd, parameter count, batch satu, eval/dropout, metrik, loader tanpa test, checkpoint epoch minimum, reload prediksi, dan cache. Hasil data aktual juga diverifikasi melalui notebook.
+
+## 12. Langkah setelah notebook ini
+
+Kandidat masih **sementara berdasarkan validation**. Feature engineering domain dapat diuji sebagai tahap lanjutan dengan prosedur yang sama sebelum konfigurasi final dibekukan. Setelah seluruh keputusan disepakati, barulah notebook 04 mengevaluasi test satu tahap akhir pada baseline/kandidat serta semua seed final yang dikunci. Tidak membuat klaim performa dunia nyata dari dataset sintetis ini.
+
+Referensi: [optimasi dan backward PyTorch](https://docs.pytorch.org/tutorials/beginner/basics/optimization_tutorial.html), [checkpoint state_dict](https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html), [reproducibility](https://docs.pytorch.org/docs/stable/notes/randomness.html). Versi runtime dipin pada PyTorch 2.11.0; dokumentasi stable dapat menunjukkan versi lebih baru.

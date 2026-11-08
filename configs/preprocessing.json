@@ -1,77 +1,33 @@
 {
   "schema_version": 1,
   "default_recipe": "baseline_standard",
-  "selection_status": "Four prespecified recipes, compared on validation in the MLP study, never on test.",
+  "selection_status": "Three prespecified candidates, not ranked by validation/test or model performance.",
   "categorical_missing_token": "__MISSING__",
   "numeric_missing": "train median with a fixed indicator for every numeric input",
-  "binary_missing": "train mode with a fixed missing indicator, keep 0/1 unscaled",
-  "categorical_encoding": "explicit missing + one-hot, unknown categories map to all-zero within their feature block",
-  "target_transform": "StandardScaler fit on train only, no clipping or resampling of y",
+  "binary_missing": "train mode with a fixed missing indicator; keep 0/1 unscaled",
+  "categorical_encoding": "explicit missing + one-hot; unknown categories map to all-zero within their feature block",
+  "target_transform": "StandardScaler fit on train only; no clipping or resampling of y",
   "recipes": {
     "baseline_standard": {
       "drop_features": [],
       "log_features": [],
       "clip_features": [],
-      "clip_quantiles": [
-        0.005,
-        0.995
-      ],
-      "reason": "Reference retaining all 21 safe raw inputs, median, missing indicators, one-hot, StandardScaler.",
-      "scaler": "standard"
-    },
-    "baseline_minmax": {
-      "drop_features": [],
-      "log_features": [],
-      "clip_features": [],
-      "clip_quantiles": [
-        0.005,
-        0.995
-      ],
-      "scaler": "minmax",
-      "reason": "Same inputs as baseline_standard, numeric features scaled to [0, 1] with train min and max, as minmax_scale in the course modules."
+      "clip_quantiles": [0.005, 0.995],
+      "reason": "Reference retaining all 21 safe raw inputs; median, missing indicators, one-hot, StandardScaler."
     },
     "log_sensor_caps": {
       "drop_features": [],
-      "log_features": [
-        "cycle_count",
-        "total_energy_throughput_kwh",
-        "avg_daily_distance_km",
-        "altitude_m",
-        "service_count"
-      ],
-      "clip_features": [
-        "avg_charging_power_kw",
-        "avg_ambient_temp_c",
-        "peak_temp_during_fast_charge_c"
-      ],
-      "clip_quantiles": [
-        0.005,
-        0.995
-      ],
-      "reason": "Prespecified alternative for long right tails and sensor extremes. Signed log1p preserves valid negative altitude. Caps are exploratory, not verified error labels.",
-      "scaler": "standard"
+      "log_features": ["cycle_count", "total_energy_throughput_kwh", "avg_daily_distance_km", "altitude_m", "service_count"],
+      "clip_features": ["avg_charging_power_kw", "avg_ambient_temp_c", "peak_temp_during_fast_charge_c"],
+      "clip_quantiles": [0.005, 0.995],
+      "reason": "Prespecified alternative for long right tails and sensor extremes. Signed log1p preserves valid negative altitude. Caps are exploratory, not verified error labels."
     },
     "compact_log_sensor_caps": {
-      "drop_features": [
-        "total_energy_throughput_kwh",
-        "peak_temp_during_fast_charge_c"
-      ],
-      "log_features": [
-        "cycle_count",
-        "avg_daily_distance_km",
-        "altitude_m",
-        "service_count"
-      ],
-      "clip_features": [
-        "avg_charging_power_kw",
-        "avg_ambient_temp_c"
-      ],
-      "clip_quantiles": [
-        0.005,
-        0.995
-      ],
-      "reason": "Ablation dropping throughput (rho with cycles 0.984) and peak temperature (rho with ambient 0.920), retaining age + cycles for distinct calendar/use signals. Not a final feature selection.",
-      "scaler": "standard"
+      "drop_features": ["total_energy_throughput_kwh", "peak_temp_during_fast_charge_c"],
+      "log_features": ["cycle_count", "avg_daily_distance_km", "altitude_m", "service_count"],
+      "clip_features": ["avg_charging_power_kw", "avg_ambient_temp_c"],
+      "clip_quantiles": [0.005, 0.995],
+      "reason": "Ablation dropping throughput (rho with cycles 0.984) and peak temperature (rho with ambient 0.920), retaining age + cycles for distinct calendar/use signals. Not a final feature selection."
     }
   }
 }
