@@ -1,25 +1,26 @@
-# Artefak model lokal
+# Local models
 
-> Folder ini mendokumentasikan artefak PyTorch pada rilis awal. Pipeline NumPy menyimpan bobot lokal di `data/processed/numpy_workspace/models/`.
+This folder is ignored by Git except for this README. The pipeline recreates its
+contents:
 
-Model prediksi MLP sudah dilatih melalui backpropagation dalam study 17 run unik, ditambah 6 run final ablation feature engineering, hanya menggunakan train/validation. Checkpoint best/last serta endpoint epoch tertentu tersedia lokal di `mlp/<run_id>/`; enam best checkpoint validation sudah dipakai untuk evaluasi test final tanpa retraining/fit. Identitas bobot dan preprocessing dicatat sebelum scoring dalam results/final_evaluation/evaluation_lock.json. Fitted preprocessing bundle tersedia lokal di `preprocessing/<recipe>.joblib` setelah notebook 02/modul preprocessing dijalankan. Isi folder ini diabaikan Git kecuali README ini.
+| Path | Created by | Contents |
+|---|---|---|
+| `preprocessing/<recipe>.joblib` | `python -m ev_battery preprocess` | Train-fitted preprocessor, target scaler, feature order, state hash |
+| `mlp/<run_id>/best.npz`, `last.npz`, `epoch_XXX.npz` | `python -m ev_battery train` and `features` | NumPy weight matrices (bias in the last row) plus config, feature names and data fingerprint |
+| `feature_engineering/<variant>.joblib` | `python -m ev_battery features` | Frozen base preprocessor plus the extra feature transforms |
 
-Saat pelatihan tersedia, simpan model bersama:
-- Pipeline imputasi, encoding, dan scaling yang cocok.
-- Urutan fitur, definisi/satuan target, serta timesteps/horizon bila dipakai.
-- Konfigurasi arsitektur, seed, versi library, dan identitas run.
-- Aturan checkpoint dan epoch terpilih.
+Load artifacts through the functions that verify compatibility instead of calling
+`np.load` or `joblib.load` directly:
 
-Jangan memasukkan model besar ke riwayat Git biasa. Bila model perlu dibagikan, sepakati media penyimpanan artefak dan dokumentasikan cara mendapatkannya. Jangan memuat berkas serialisasi dari sumber yang tidak dipercaya.
+```python
+from ev_battery.training import load_checkpoint, load_training_data
 
-Bundle preprocessing menyertakan preprocessor, target scaler, urutan fitur, resep, versi library, provenance, dan hash state. Gunakan `src.preprocessing.load_prepared_split` untuk memeriksa kecocokannya dengan array. Artefak ini dapat dibuat ulang dari data asli dan konfigurasi yang tersimpan; joblib tidak diunggah ke Git.
+data = load_training_data("baseline_standard")
+model, checkpoint = load_checkpoint("models/mlp/<run_id>/best.npz", data)
+predictions = model.predict(data["validation"]["X"])  # standardised SOH
+```
 
-Checkpoint MLP menyimpan state_dict (bukan seluruh objek model), konfigurasi, nama fitur, epoch, fingerprint input, optimizer, dan RNG. Gunakan `src.mlp_experiments.load_checkpoint` dengan data preprocessing yang cocok. Metadata/hasil run dibagikan di results/experiments, sedangkan bobot tidak dikomit. File checkpoint yang tidak ada pada clone baru dibuat ulang saat study dijalankan. Resume tengah-epoch belum diimplementasikan.
-
-Bundle feature engineering tersimpan lokal di `feature_engineering/<variant>.joblib`. Bundle menggabungkan frozen base preprocessing dan transformasi ekstra; fingerprint parameter tetap sama setelah serialisasi. Array FE hanya train/validation pada tahap 03b. Gunakan `src.feature_engineering.load_engineered_data` untuk memeriksa pasangan pipeline/array sebelum memuat checkpoint MLP yang cocok.
-
-## Model evaluasi final
-
-`configs/final_evaluation.json` menetapkan semua run ID dan seed 42/123/2026. Baseline memakai baseline_standard, 67→[64,32] ReLU→1 linear, MSE; kandidat memakai log_sensor_caps, 67→[32] sigmoid→1 linear, MAE. Kandidat tanpa FE domain ditetapkan sebagai keluarga utama sebelum test. Semua seed dilaporkan, tanpa memilih seed test terbaik atau ensemble.
-
-Bobot tetap lokal dan tidak diubah selama evaluasi. Pipeline cocok diverifikasi dengan fingerprint. Pelatihan ulang pada clone baru dapat menghasilkan hash biner berbeda; gunakan mode `--reproduce` evaluator agar hasil rilis tidak tertimpa. Lock tidak menggantikan kebutuhan menyimpan bobot/pipeline lokal untuk reproduksi bit-identik.
+A `run_id` is derived from a hash of the configuration, the data, and the training
+code (`model.py` and `training.py`), so changing any of them produces a new run.
+The run IDs of the six final checkpoints are listed in
+`results/experiments/final_runs.csv`. Only load joblib files from trusted sources.

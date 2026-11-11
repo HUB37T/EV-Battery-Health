@@ -2,6 +2,9 @@ recipe,split,rows,batteries,raw_features,input_neurons,numeric_missing_after,fin
 baseline_standard,train,34929,1820,21,67,0,True,float32
 baseline_standard,validation,7499,390,21,67,0,True,float32
 baseline_standard,test,7572,390,21,67,0,True,float32
+baseline_minmax,train,34929,1820,21,67,0,True,float32
+baseline_minmax,validation,7499,390,21,67,0,True,float32
+baseline_minmax,test,7572,390,21,67,0,True,float32
 log_sensor_caps,train,34929,1820,21,67,0,True,float32
 log_sensor_caps,validation,7499,390,21,67,0,True,float32
 log_sensor_caps,test,7572,390,21,67,0,True,float32

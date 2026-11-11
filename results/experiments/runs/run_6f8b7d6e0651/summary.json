@@ -1,0 +1,90 @@
+{
+  "status": "complete",
+  "run_id": "run_6f8b7d6e0651",
+  "fingerprint": "6f8b7d6e065134b310b65f3ae60b077e955891c2117b9abd1e417592632e9802",
+  "config": {
+    "recipe": "baseline_standard",
+    "hidden_layers": [
+      128,
+      64,
+      32
+    ],
+    "activation": "sigmoid",
+    "loss": "mse",
+    "huber_delta": 1.0,
+    "optimizer": "gd",
+    "learning_rate": 0.1,
+    "batch_size": 32,
+    "max_epochs": 200,
+    "max_error": 0.0,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta_pp": 0.001,
+    "sample_weighting": "none",
+    "train_batteries": 0,
+    "seed": 42
+  },
+  "layer_conf": [
+    67,
+    128,
+    64,
+    32,
+    1
+  ],
+  "input_features": 67,
+  "train_rows": 34929,
+  "parameters": 19073,
+  "epochs_actual": 77,
+  "best_epoch": 65,
+  "stop_reason": "early_stopping",
+  "final_epoch_mse_scaled": 0.03942619796391103,
+  "training_seconds": 49.64467990000048,
+  "train": {
+    "mae": 0.9494960503084026,
+    "rmse": 1.4162063584056899,
+    "r2": 0.9612320822280807,
+    "bias_pp": 0.02262411183186634,
+    "outside_0_100_pct": 0.022903604454751064,
+    "battery_mean_mae": 0.9499067973836329
+  },
+  "validation": {
+    "mae": 0.9965834706347579,
+    "rmse": 1.5072098699054153,
+    "r2": 0.9538978389021605,
+    "bias_pp": -0.04477705809328407,
+    "outside_0_100_pct": 0.04000533404453927,
+    "battery_mean_mae": 0.9992522038293002
+  },
+  "train_objective_scaled": 0.03876791815758285,
+  "validation_objective_scaled": 0.043910346327107996,
+  "first_batch_gradient_l2_norm": 1.4811721576015862,
+  "checkpoint_best": "models/mlp/run_6f8b7d6e0651/best.npz",
+  "checkpoint_last": "models/mlp/run_6f8b7d6e0651/last.npz",
+  "identity": {
+    "config": {
+      "recipe": "baseline_standard",
+      "hidden_layers": [
+        128,
+        64,
+        32
+      ],
+      "activation": "sigmoid",
+      "loss": "mse",
+      "huber_delta": 1.0,
+      "optimizer": "gd",
+      "learning_rate": 0.1,
+      "batch_size": 32,
+      "max_epochs": 200,
+      "max_error": 0.0,
+      "early_stopping": true,
+      "patience": 15,
+      "min_delta_pp": 0.001,
+      "sample_weighting": "none",
+      "train_batteries": 0,
+      "seed": 42
+    },
+    "data_fingerprint": "6c91eeb59bc2829774eaf5eebac47b523b1bef0df5254599a974c4c525438125",
+    "training_source_sha256": "4d1f1fb86eb21106bbc51d3f71b3d046b4f37bb2e0b20cb457ba9e5562ee7cc6",
+    "numpy": "2.2.5"
+  }
+}

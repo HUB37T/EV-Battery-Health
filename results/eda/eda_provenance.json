@@ -6,7 +6,7 @@
   "train_batteries": 1820,
   "seed": 42,
   "bootstrap_replicates": 1000,
-  "bootstrap_unit": "battery-band means within each chemistry/age cell; pointwise percentile interval",
+  "bootstrap_unit": "battery-band means within each chemistry/age cell, pointwise percentile interval",
   "minimum_batteries_for_supported_cell": 30,
   "python": "3.13.1",
   "figures": [
@@ -75,6 +75,6 @@
     "nbformat": "5.10.4",
     "nbclient": "0.10.2"
   },
-  "feature_contract_sha256": "c73100ae49744a0caf87ee1ce561149d06195014d9845e47602f03be9ef6171a",
-  "eda_source_sha256": "62dbb30fb4aa4614072ca105df98c40468420497e33fbba3215de026756c484f"
+  "feature_contract_sha256": "1cffec850bb7b84a5837d635ec4055d6d6fd1921dd54e7e56f587eb4138edb8b",
+  "eda_source_sha256": "7ab27d0e30226025171cf28d009e573de42e9397139a36fd813151f80d9b8cc9"
 }

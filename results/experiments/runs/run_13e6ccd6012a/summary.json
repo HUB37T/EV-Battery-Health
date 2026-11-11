@@ -1,0 +1,84 @@
+{
+  "status": "complete",
+  "run_id": "run_13e6ccd6012a",
+  "fingerprint": "13e6ccd6012a98e20b7f43026ca1a872db7c6d3e5fbaa53fd64a18cf475847e1",
+  "config": {
+    "recipe": "baseline_standard",
+    "hidden_layers": [
+      32
+    ],
+    "activation": "sigmoid",
+    "loss": "mse",
+    "huber_delta": 1.0,
+    "optimizer": "gd",
+    "learning_rate": 0.1,
+    "batch_size": 32,
+    "max_epochs": 200,
+    "max_error": 0.0,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta_pp": 0.001,
+    "sample_weighting": "none",
+    "train_batteries": 0,
+    "seed": 2026
+  },
+  "layer_conf": [
+    67,
+    32,
+    1
+  ],
+  "input_features": 67,
+  "train_rows": 34929,
+  "parameters": 2209,
+  "epochs_actual": 64,
+  "best_epoch": 49,
+  "stop_reason": "early_stopping",
+  "final_epoch_mse_scaled": 0.039238581995240024,
+  "training_seconds": 34.52686220000032,
+  "train": {
+    "mae": 0.9452253179063822,
+    "rmse": 1.4059108559209545,
+    "r2": 0.9617937014860853,
+    "bias_pp": 0.03817971532589932,
+    "outside_0_100_pct": 0.3177875118096711,
+    "battery_mean_mae": 0.9467783410542829
+  },
+  "validation": {
+    "mae": 0.9942653857688776,
+    "rmse": 1.4917017965971218,
+    "r2": 0.9548416723070285,
+    "bias_pp": -0.03263947757038165,
+    "outside_0_100_pct": 0.33337778370449395,
+    "battery_mean_mae": 0.9956393397871478
+  },
+  "train_objective_scaled": 0.03820629885140757,
+  "validation_objective_scaled": 0.043011385174087466,
+  "first_batch_gradient_l2_norm": 2.4330766663541006,
+  "checkpoint_best": "models/mlp/run_13e6ccd6012a/best.npz",
+  "checkpoint_last": "models/mlp/run_13e6ccd6012a/last.npz",
+  "identity": {
+    "config": {
+      "recipe": "baseline_standard",
+      "hidden_layers": [
+        32
+      ],
+      "activation": "sigmoid",
+      "loss": "mse",
+      "huber_delta": 1.0,
+      "optimizer": "gd",
+      "learning_rate": 0.1,
+      "batch_size": 32,
+      "max_epochs": 200,
+      "max_error": 0.0,
+      "early_stopping": true,
+      "patience": 15,
+      "min_delta_pp": 0.001,
+      "sample_weighting": "none",
+      "train_batteries": 0,
+      "seed": 2026
+    },
+    "data_fingerprint": "6c91eeb59bc2829774eaf5eebac47b523b1bef0df5254599a974c4c525438125",
+    "training_source_sha256": "4d1f1fb86eb21106bbc51d3f71b3d046b4f37bb2e0b20cb457ba9e5562ee7cc6",
+    "numpy": "2.2.5"
+  }
+}

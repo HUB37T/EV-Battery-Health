@@ -254,7 +254,7 @@ def build_report(root=ROOT):
 
 Do derived features reduce MLP error when the hidden layers, activation, output, loss, learning rate, batch size, seeds, checkpointing and early stopping are unchanged? The control is frozen from run `{study["reference_candidate_run_id"]}`: {config_sentence(study["reference_config"], int(control_selected.input_neurons))}, at most {study["reference_config"]["max_epochs"]} epochs, patience {study["reference_config"]["patience"]}.
 
-Four variants are screened on seed 42, then only the variant with the lowest screening MAE is confirmed on seeds 42, 123 and 2026. The three existing control runs are reused with identical fingerprints. This final version adds **{study["new_training_runs"]} new training runs**, and the notebook 03 study history stays intact.
+Four variants are screened on seed 42, then only the variant with the lowest screening MAE is confirmed on seeds 42, 123 and 2026. The three existing control runs are reused with identical fingerprints. The engineered variants add **{study["engineered_variant_runs"]} training runs**, and the notebook 03 study history stays intact.
 
 Validation is used for both screening and confirmation, so this is not yet an independent final evaluation. The search is not extended until results look good, and no best seed is selected.
 

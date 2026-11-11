@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "device": "cpu",
+  "cpu_threads": 2,
+  "selection_metric": "validation MAE in original SOH percentage points",
+  "baseline": {
+    "recipe": "baseline_standard",
+    "hidden_layers": [64, 32],
+    "activation": "relu",
+    "loss": "mse",
+    "huber_delta": 1.0,
+    "learning_rate": 0.001,
+    "batch_size": 256,
+    "max_epochs": 200,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta_pp": 0.001,
+    "weight_decay": 0.0,
+    "dropout": 0.0,
+    "seed": 42
+  },
+  "preprocessing_recipes": ["baseline_standard", "log_sensor_caps", "compact_log_sensor_caps"],
+  "hidden_layers": [[32], [64], [64, 32], [128, 64, 32]],
+  "activations": ["relu", "tanh", "sigmoid"],
+  "losses": ["mse", "mae", "huber"],
+  "regularization_probes": [
+    {"weight_decay": 0.0001, "dropout": 0.0},
+    {"weight_decay": 0.0, "dropout": 0.1}
+  ],
+  "fixed_epoch_budgets": [50, 100, 200],
+  "confirmation_seeds": [42, 123, 2026],
+  "notes": [
+    "Sequential search, not a full factorial design; validation is reused for selection.",
+    "Batch size 256 is fixed for every model; selected for practical CPU training, not tuned from validation.",
+    "Xavier uniform gain=1 and zero biases for all activations; linear single output.",
+    "Epoch experiment uses endpoints of one uninterrupted 200-epoch trajectory with early stopping disabled.",
+    "Test arrays are not loaded by the experiment runner; final test evaluation belongs to notebook 04.",
+    "Domain feature engineering is deferred; existing preprocessing recipes are compared first."
+  ]
+}

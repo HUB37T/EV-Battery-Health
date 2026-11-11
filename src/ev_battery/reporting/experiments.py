@@ -373,7 +373,7 @@ def write_report(root=ROOT):
 - Baseline ({describe_config(baseline)}): validation MAE **{baseline["validation"]["mae"]:.4f}** SOH percentage points.
 - Candidate ({describe_config(candidate)}): validation MAE **{candidate["validation"]["mae"]:.4f}**, RMSE **{candidate["validation"]["rmse"]:.4f}**, R² **{candidate["validation"]["r2"]:.4f}**.
 - Seed confirmation: baseline **{confirmation.loc["baseline", "validation_mae_mean"]:.4f} ± {confirmation.loc["baseline", "validation_mae_std"]:.4f}**, candidate **{confirmation.loc["candidate", "validation_mae_mean"]:.4f} ± {confirmation.loc["candidate", "validation_mae_std"]:.4f}**, three seeds on the fixed split.
-- Validation was reused throughout the search, so these are not test scores. Notebook 05 reproduces the recorded NumPy configurations on the previously evaluated test split.
+- Validation was reused throughout the search, so these are not test scores. The test split is scored once, in notebook 05.
 
 ## 1. Implementation
 
@@ -420,7 +420,7 @@ Plain gradient descent (the course rule) uses one fixed learn_rate for every wei
 
 ## 5. Balancing with SOH-band weights
 
-The target is continuous, so class balancing in the classification sense does not apply. The regression counterpart is to weight each training sample by the inverse frequency of its SOH band, so that rare low-SOH observations contribute more to the loss. Weights are computed on train only and normalised to a mean of 1. Inverse frequency equalises the total raw weight assigned to each band across the training set. Each mini-batch divides by its own weight sum, so the effective gradient contribution also depends on batch composition and need not be equal across bands.
+The target is continuous, so class balancing in the classification sense does not apply. The regression counterpart is to weight each training sample by the inverse frequency of its SOH band, so that rare low-SOH observations contribute more to the loss. Weights are computed on train only and normalised to a mean of 1. `inverse` gives every band the same total weight over the training set, `inverse_sqrt` is a milder version. Each sample contributes `weight / batch_size` to the gradient, so a mini-batch is an unbiased estimate of the weighted training loss.
 
 {markdown_table(balancing.round(4))}
 

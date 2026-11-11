@@ -1,0 +1,69 @@
+{
+  "status": "complete",
+  "baseline_run_id": "run_83aa5197bac6",
+  "candidate_run_id": "run_417429878fc7",
+  "fixed_epoch_run_id": "run_2e4db02d0c5c",
+  "unique_training_runs": 17,
+  "train_rows": 34929,
+  "validation_rows": 7499,
+  "test_loaded": false,
+  "candidate_config": {
+    "recipe": "log_sensor_caps",
+    "hidden_layers": [
+      32
+    ],
+    "activation": "sigmoid",
+    "loss": "mae",
+    "huber_delta": 1.0,
+    "learning_rate": 0.001,
+    "batch_size": 256,
+    "max_epochs": 200,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta_pp": 0.001,
+    "weight_decay": 0.0001,
+    "dropout": 0.0,
+    "seed": 42
+  },
+  "baseline_config": {
+    "recipe": "baseline_standard",
+    "hidden_layers": [
+      64,
+      32
+    ],
+    "activation": "relu",
+    "loss": "mse",
+    "huber_delta": 1.0,
+    "learning_rate": 0.001,
+    "batch_size": 256,
+    "max_epochs": 200,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta_pp": 0.001,
+    "weight_decay": 0.0,
+    "dropout": 0.0,
+    "seed": 42
+  },
+  "confirmation_seeds": [
+    42,
+    123,
+    2026
+  ],
+  "source_sha256": "54492bf7b0f745f1b6c695cc37cda6f5a6bfc901810ad060a69a95e5ececcd6a",
+  "settings_sha256": "c1f9b044432a5ef4767c57a5ad71dd8e92ae9545216e3123a9192db812c9a15f",
+  "packages": {
+    "torch": "2.11.0",
+    "numpy": "2.2.5",
+    "pandas": "2.3.2",
+    "scikit-learn": "1.7.2"
+  },
+  "data_fingerprints": {
+    "baseline_standard": "d7be74f7931fb45900794de3385988c918595b89dd7bde625a846ee750a78f8c",
+    "log_sensor_caps": "5a1ec612c42eaf854e9fd409adf3e48a1da726536226155acc722d42140a6e03",
+    "compact_log_sensor_caps": "6421952456f4a2fa3f23e280049b7ecff146f58480ca0dba3f55bf8aee6072da"
+  },
+  "device": "cpu",
+  "cpu_threads": 2,
+  "selection": "Sequential seed-42 validation MAE, three-seed confirmation; no global optimum or unbiased final test claim.",
+  "total_training_seconds": 125.6284906000019
+}

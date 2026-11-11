@@ -9,7 +9,7 @@ description = "State-of-health estimation for EV batteries with a from-scratch N
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.12,<3.14"
-# Pin the environment used for the NumPy experiments. Local locks record actual artifacts.
+# Exact pins: run IDs and the evaluation lock depend on bit-identical training.
 dependencies = [
     "numpy==2.2.5",
     "pandas==2.3.2",
@@ -34,6 +34,8 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# pyparsing deprecations raised inside matplotlib, not by this project.
+filterwarnings = ["ignore::DeprecationWarning:matplotlib.*"]
 
 [tool.ruff]
 line-length = 110

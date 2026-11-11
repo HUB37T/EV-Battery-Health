@@ -15,12 +15,12 @@ PYTHON ?= $(if $(wildcard $(VENV_PYTHON)),"$(VENV_PYTHON)",python)
 # Package installer. With a uv environment use: make install PIP="uv pip"
 PIP ?= $(PYTHON) -m pip
 # Notebook for `make notebook`.
-NB ?= notebooks/numpy/03_mlp_experiments.ipynb
+NB ?= notebooks/03_mlp_experiments.ipynb
 
 export PYTHONIOENCODING := utf-8
 
 .DEFAULT_GOAL := help
-.PHONY: help venv install audit eda preprocess train features evaluate all \
+.PHONY: help venv install data audit eda preprocess train features evaluate all \
 	notebooks notebook test lint format check clean
 
 help: ## List the available targets
@@ -31,6 +31,9 @@ venv: ## Create the .venv virtual environment
 
 install: ## Install the package with dev dependencies
 	$(PIP) install -e ".[dev]"
+
+data: ## Download the Kaggle files into data/raw and verify the CSV hash
+	$(PYTHON) scripts/download_data.py
 
 audit: ## Schema and quality audit, feature contract, battery split
 	$(PYTHON) -m ev_battery audit
@@ -47,7 +50,7 @@ train: ## Staged MLP study on train and validation
 features: ## Feature-engineering ablation on validation
 	$(PYTHON) -m ev_battery features
 
-evaluate: ## Reproduce the NumPy follow-up on the shared test split
+evaluate: ## Score the six frozen checkpoints once on the test split
 	$(PYTHON) -m ev_battery evaluate
 
 all: ## Run every pipeline stage in order
@@ -56,7 +59,7 @@ all: ## Run every pipeline stage in order
 notebooks: ## Execute notebooks 00 to 05 in order
 	$(PYTHON) scripts/run_notebook.py --all
 
-notebook: ## Execute one notebook, e.g. make notebook NB=notebooks/numpy/01_eda.ipynb
+notebook: ## Execute one notebook, e.g. make notebook NB=notebooks/01_eda.ipynb
 	$(PYTHON) scripts/run_notebook.py $(NB)
 
 test: ## Run the test suite

@@ -1,18 +1,28 @@
-"""Score rebuilt NumPy checkpoints in a local, fingerprinted follow-up directory."""
+"""Score the six frozen checkpoints once on the test split. No fitting or training.
+
+The lock is written before any test prediction. It records content hashes of the
+checkpoints, the fitted preprocessing, the test arrays and the configurations, so
+rebuilding identical artifacts reproduces the same lock. If a recorded lock exists
+and the local artifacts differ (for example after training on another machine),
+the evaluation is written to ``data/processed/evaluation_reproduction/<id>``
+instead and the recorded results stay untouched.
+
+python -m ev_battery evaluate
+"""
 
 from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
 
-from ev_battery.followup import load_plan
-from ev_battery.paths import ROOT, prepare_workspace
+from ev_battery.final_models import final_config, load_plan
+from ev_battery.paths import ROOT
 from ev_battery.preprocessing import load_prepared_split
 from ev_battery.training import (
     RunConfig,
@@ -25,6 +35,9 @@ from ev_battery.training import (
     write_json,
 )
 
+RECORDED = Path("results/final_evaluation")
+REPRODUCTION = Path("data/processed/evaluation_reproduction")
+
 
 def file_sha256(path):
     digest = hashlib.sha256()
@@ -34,6 +47,29 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
+def content_sha256(path):
+    """Hash what a file contains, ignoring incidental bytes.
+
+    NumPy writes the current time into every ``.npz`` archive, so identical weights
+    saved twice give different file hashes. ``.npz`` files are therefore hashed by
+    array name, dtype, shape and values, and ``.joblib`` bundles by their fitted
+    preprocessing state. Every other file is hashed byte for byte.
+    """
+    path = Path(path)
+    if path.suffix == ".npz":
+        digest = hashlib.sha256()
+        with np.load(path, allow_pickle=False) as stored:
+            for name in sorted(stored.files):
+                array = np.ascontiguousarray(stored[name])
+                digest.update(f"{name}|{array.dtype.str}|{array.shape}|".encode())
+                digest.update(array.tobytes())
+        return digest.hexdigest()
+    if path.suffix == ".joblib":
+        bundle = joblib.load(path)
+        return joblib.hash((bundle["preprocessor"], bundle["target_scaler"]))
+    return file_sha256(path)
+
+
 def canonical_sha256(value):
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, ensure_ascii=False, allow_nan=False).encode()
@@ -41,7 +77,7 @@ def canonical_sha256(value):
 
 
 def lock_payload(output, payload):
-    """Create the audit lock before inference, refuse to replace changed models."""
+    """Create the audit lock before inference, refuse to replace a different lock."""
     output.mkdir(parents=True, exist_ok=True)
     path = output / "evaluation_lock.json"
     fingerprint = canonical_sha256(payload)
@@ -49,7 +85,8 @@ def lock_payload(output, payload):
         locked = json.loads(path.read_text(encoding="utf-8"))
         if locked["fingerprint"] != fingerprint or canonical_sha256(locked["payload"]) != fingerprint:
             raise ValueError(
-                "Evaluation is already locked with different artifacts or protocol. Do not overwrite test results, use a separate reproduction output."
+                "Evaluation is already locked with different artifacts or protocol, "
+                "refusing to overwrite test results."
             )
         return locked
     locked = {
@@ -61,44 +98,57 @@ def lock_payload(output, payload):
     return locked
 
 
+def test_split_size(root):
+    """Rows and batteries of the test split as recorded by the audit."""
+    summary = pd.read_csv(root / "results/audit/split_summary.csv").set_index("split")
+    return int(summary.loc["test", "rows"]), int(summary.loc["test", "batteries"])
+
+
+def selection_evidence(root, plan):
+    """Record whether the pre-test decisions on validation agree with the frozen plan."""
+    study = json.loads((root / "results/experiments/study.json").read_text(encoding="utf-8"))
+    features = json.loads((root / "results/feature_engineering/study.json").read_text(encoding="utf-8"))
+    candidate = final_config(plan, "candidate", 42)
+    return {
+        "validation_study_candidate_matches_plan": RunConfig(**study["candidate_config"]) == candidate,
+        "feature_engineering_recommendation": features["recommendation"],
+    }
+
+
 def prepare_locked_inputs(root):
     plan = load_plan(root)
-    confirmation_path = "results/experiments/followup_runs.csv"
-    confirmation = pd.read_csv(root / confirmation_path)
+    runs_path = "results/experiments/final_runs.csv"
+    runs = pd.read_csv(root / runs_path)
     expected_pairs = {(group, seed) for group in plan["groups"] for seed in plan["seeds"]}
-    if (
-        len(confirmation) != len(expected_pairs)
-        or set(zip(confirmation.group, confirmation.seed)) != expected_pairs
-    ):
-        raise ValueError("Run the NumPy train stage to rebuild all six follow-up checkpoints.")
+    if len(runs) != len(expected_pairs) or set(zip(runs.group, runs.seed)) != expected_pairs:
+        raise ValueError("Run the train stage first to build all six final checkpoints.")
     training = {}
     models = []
     files = {
-        "configs/followup.json",
+        "configs/final_evaluation.json",
         "configs/feature_contract.json",
         "configs/preprocessing.json",
         "data/splits/battery_split.csv",
-        confirmation_path,
+        runs_path,
     }
-    for group, spec in plan["groups"].items():
-        recipe = spec["recipe"]
-        if recipe not in training:
-            training[recipe] = load_training_data(recipe, root)
-        data = training[recipe]
-        files.update((f"models/preprocessing/{recipe}.joblib", f"data/processed/{recipe}/test.npz"))
+    for group in plan["groups"]:
         for seed in plan["seeds"]:
-            row = confirmation.loc[confirmation.group.eq(group) & confirmation.seed.eq(seed)].iloc[0]
-            run_id = row.run_id
-            record_path = root / "results/experiments/runs" / run_id / "summary.json"
-            record = json.loads(record_path.read_text(encoding="utf-8"))
-            expected = replace(RunConfig(**spec["config"]), seed=seed)
+            expected = final_config(plan, group, seed)
+            recipe = expected.recipe
+            if recipe not in training:
+                training[recipe] = load_training_data(recipe, root)
+                files.update((f"models/preprocessing/{recipe}.joblib", f"data/processed/{recipe}/test.npz"))
+            data = training[recipe]
+            run_id = runs.loc[runs.group.eq(group) & runs.seed.eq(seed), "run_id"].item()
+            summary_path = root / "results/experiments/runs" / run_id / "summary.json"
+            record = json.loads(summary_path.read_text(encoding="utf-8"))
             if RunConfig(**record["config"]) != expected or record["status"] != "complete":
-                raise ValueError("Rebuilt checkpoint configuration differs from the NumPy follow-up plan.")
+                raise ValueError("A checkpoint configuration differs from the final plan.")
             path = root / record["checkpoint_best"]
             model, checkpoint = load_checkpoint(path, data)
             if checkpoint["run_id"] != run_id or checkpoint["epoch"] != record["best_epoch"]:
                 raise ValueError("Checkpoint does not match the best validation epoch.")
-            files.update((path.relative_to(root).as_posix(), record_path.relative_to(root).as_posix()))
+            files.add(path.relative_to(root).as_posix())
             models.append(
                 {
                     "group": group,
@@ -112,18 +162,33 @@ def prepare_locked_inputs(root):
     payload = {
         "plan": plan,
         "source_sha256": file_sha256(Path(__file__)),
-        "selection_reference_commit": plan["selection_reference_commit"],
-        "original_pytorch_release_commit": plan["original_pytorch_release_commit"],
-        "checkpoint_selection": "best validation epoch of the recorded NumPy configuration",
-        "test_split_previously_evaluated": True,
-        "files_sha256": {name: file_sha256(root / name) for name in sorted(files)},
+        "checkpoint_selection": "best validation epoch of each frozen configuration",
+        "test_predictions_computed_at_lock": False,
+        "files_content_sha256": {name: content_sha256(root / name) for name in sorted(files)},
+        "checkpoints": [
+            {
+                "group": item["group"],
+                "seed": item["seed"],
+                "run_id": item["run_id"],
+                "best_epoch": item["record"]["best_epoch"],
+                "validation_mae_pp": item["record"]["validation"]["mae"],
+            }
+            for item in models
+        ],
         "data_fingerprints": {recipe: data["fingerprint"] for recipe, data in training.items()},
+        **selection_evidence(root, plan),
     }
     return plan, training, models, payload
 
 
-def evaluation_directory(root, fingerprint):
-    return root / "results/numpy_followup" / fingerprint
+def output_directory(root, fingerprint):
+    """The recorded results, or a separate reproduction when the recorded lock differs."""
+    lock_path = root / RECORDED / "evaluation_lock.json"
+    if lock_path.is_file():
+        locked = json.loads(lock_path.read_text(encoding="utf-8"))
+        if locked["fingerprint"] != fingerprint:
+            return root / REPRODUCTION / fingerprint[:16]
+    return root / RECORDED
 
 
 def describe_subgroup(y, pred, battery_ids):
@@ -145,11 +210,17 @@ def evaluate_locked_predictions(model, test, bundle):
 
 def run_final_evaluation(root=ROOT):
     plan, training, models, payload = prepare_locked_inputs(root)
-    output = evaluation_directory(root, canonical_sha256(payload))
+    output = output_directory(root, canonical_sha256(payload))
+    if output != root / RECORDED:
+        print(
+            f"The local checkpoints differ from the recorded lock in {RECORDED.as_posix()}. "
+            f"Writing a separate reproduction to {output.relative_to(root).as_posix()}.",
+            flush=True,
+        )
     locked = lock_payload(output, payload)
     configure_runtime(42)
     print(
-        f"LOCKED {len(models)} NumPy checkpoints for this follow-up: {locked['fingerprint'][:16]}", flush=True
+        f"LOCKED {len(models)} checkpoints before test predictions: {locked['fingerprint'][:16]}", flush=True
     )
     status_path = output / "evaluation.json"
     required = [
@@ -168,7 +239,8 @@ def run_final_evaluation(root=ROOT):
         if previous["lock_fingerprint"] != locked["fingerprint"]:
             raise ValueError("Cached final results do not match the lock.")
         if previous["status"] == "complete" and all((output / name).is_file() for name in required):
-            return previous
+            return {**previous, "output": output}
+    test_rows, test_batteries = test_split_size(root)
     test_data = {}
     manifest = pd.read_csv(root / "data/splits/battery_split.csv")
     expected_test_ids = set(manifest.loc[manifest.split.eq("test"), "battery_id"])
@@ -183,10 +255,10 @@ def run_final_evaluation(root=ROOT):
             set(data["train"]["battery_id"]) | set(data["validation"]["battery_id"])
         ):
             raise ValueError("Test batteries leaked into train/validation.")
-        if len(test["X"]) != 7572 or len(expected_test_ids) != 390:
+        if len(test["X"]) != test_rows or len(expected_test_ids) != test_batteries:
             raise ValueError("Test size does not match the audit.")
         test_data[recipe] = test
-    first = test_data[plan["groups"]["baseline"]["recipe"]]
+    first = test_data[plan["groups"]["baseline"]["config"]["recipe"]]
     for test in test_data.values():
         if not np.array_equal(first["observation_id"], test["observation_id"]) or not np.array_equal(
             first["y_original"], test["y_original"]
@@ -320,7 +392,7 @@ def run_final_evaluation(root=ROOT):
     comparison["test_minus_validation_pp"] = comparison.test_mae_mean_pp - comparison.validation_mae_mean_pp
     comparison.to_csv(output / "validation_test_comparison.csv", index=False, lineterminator="\n")
     constants = []
-    train_y = training[plan["groups"]["baseline"]["recipe"]]["train"]["y_original"]
+    train_y = training[plan["groups"]["baseline"]["config"]["recipe"]]["train"]["y_original"]
     for name, value in [("train_median", np.median(train_y)), ("train_mean", train_y.mean())]:
         constants.append(
             {
@@ -333,8 +405,8 @@ def run_final_evaluation(root=ROOT):
         )
     pd.DataFrame(constants).to_csv(output / "constant_references.csv", index=False, lineterminator="\n")
     # Verify that inference did not change any frozen source/model/data files.
-    for relative, sha in locked["payload"]["files_sha256"].items():
-        if file_sha256(root / relative) != sha:
+    for relative, sha in locked["payload"]["files_content_sha256"].items():
+        if content_sha256(root / relative) != sha:
             raise AssertionError("A locked artifact changed during evaluation.")
     result = {
         "status": "complete",
@@ -344,13 +416,10 @@ def run_final_evaluation(root=ROOT):
         "model_selection_from_test": False,
         "training_or_fit_performed": False,
         "test_evaluated": True,
-        "evaluation_scope": plan["evaluation_scope"],
-        "selection_reference_commit": plan["selection_reference_commit"],
-        "original_pytorch_release_commit": plan["original_pytorch_release_commit"],
-        "test_split_previously_evaluated": True,
+        "test_split_previously_evaluated": plan["test_history"]["test_split_previously_evaluated"],
         "n_checkpoints": len(models),
-        "test_rows": 7572,
-        "test_batteries": 390,
+        "test_rows": test_rows,
+        "test_batteries": test_batteries,
         "seeds": plan["seeds"],
         "prediction_policy": "Unclipped, original SOH scale, per-seed predictions, no ensemble.",
         "sd_interpretation": "Sample SD over three training seeds on the same test batteries, not population confidence interval.",
@@ -358,9 +427,8 @@ def run_final_evaluation(root=ROOT):
         "all_locked_files_unchanged_after_inference": True,
     }
     write_json(status_path, result)
-    return result
+    return {**result, "output": output}
 
 
 if __name__ == "__main__":
-    prepare_workspace()
-    run_final_evaluation()
+    print(run_final_evaluation()["output"])

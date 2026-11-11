@@ -1,9 +1,9 @@
 {
-  "locked_at_utc": "2026-11-06T04:46:57.766275+00:00",
-  "fingerprint": "bd989baf6c7a34b7c7a8cec0c73209b2d95f32deda3d8d4e193089592d74a430",
+  "locked_at_utc": "2026-11-11T02:40:51.948278+00:00",
+  "fingerprint": "4a8a221ceb6dc36ad4ac43d127b4d0519cf718fb6a6bd643d7465452a7f90558",
   "payload": {
     "plan": {
-      "schema_version": 1,
+      "schema_version": 3,
       "primary_group_fixed_before_test": "candidate",
       "seeds": [
         42,
@@ -12,23 +12,50 @@
       ],
       "groups": {
         "baseline": {
-          "recipe": "baseline_standard",
-          "run_ids_by_seed": {
-            "42": "run_83aa5197bac6",
-            "123": "run_567cd20b04c3",
-            "2026": "run_e8aecfd9751c"
+          "config": {
+            "recipe": "baseline_standard",
+            "hidden_layers": [
+              32
+            ],
+            "activation": "sigmoid",
+            "loss": "mse",
+            "huber_delta": 1.0,
+            "optimizer": "gd",
+            "learning_rate": 0.1,
+            "batch_size": 32,
+            "max_epochs": 200,
+            "max_error": 0.0,
+            "early_stopping": true,
+            "patience": 15,
+            "min_delta_pp": 0.001,
+            "sample_weighting": "none",
+            "train_batteries": 0,
+            "seed": 42
           }
         },
         "candidate": {
-          "recipe": "log_sensor_caps",
-          "run_ids_by_seed": {
-            "42": "run_417429878fc7",
-            "123": "run_312fdc17ada1",
-            "2026": "run_73d0ae8e6140"
+          "config": {
+            "recipe": "baseline_standard",
+            "hidden_layers": [
+              8
+            ],
+            "activation": "sigmoid",
+            "loss": "mse",
+            "huber_delta": 1.0,
+            "optimizer": "gd",
+            "learning_rate": 0.1,
+            "batch_size": 32,
+            "max_epochs": 200,
+            "max_error": 0.0,
+            "early_stopping": true,
+            "patience": 15,
+            "min_delta_pp": 0.001,
+            "sample_weighting": "none",
+            "train_batteries": 0,
+            "seed": 42
           }
         }
       },
-      "cpu_threads": 2,
       "soh_band_edges": [
         0,
         70,
@@ -44,48 +71,89 @@
         "90–<95",
         ">=95"
       ],
+      "test_history": {
+        "test_split_previously_evaluated": true,
+        "pytorch_release_commit": "479ed842d141017591a3fe755647040c237dfd6c",
+        "pytorch_test_scored_utc": "2026-11-06T04:47:00+00:00",
+        "numpy_configurations_commit": "83b1b360c9e08267227d3dc0f76dc47860b33089",
+        "numpy_test_first_scored_utc": "2026-11-07T22:22:26+00:00",
+        "note": "The same 390 test batteries were scored first by the PyTorch release and then by the NumPy implementation. NumPy configurations were chosen on validation, never from test results."
+      },
       "rules": [
-        "Use validation-selected best.pt from the six locked runs; no new training or fit.",
-        "All three seeds are reported; do not select a winning seed from test.",
+        "Train the two frozen configurations with the listed seeds and evaluate their best validation checkpoints.",
+        "All three seeds are reported, do not select a winning seed from test.",
         "The primary model family remains the candidate chosen before test, regardless of test ranking.",
         "Domain feature engineering stays a validation ablation and is not added to this test comparison.",
-        "Keep original SOH units and un-clipped predictions; no resampling or test-driven threshold adjustment.",
-        "Test subgroup analyses are descriptive final assessment, not grounds for retuning against the same test set."
+        "Keep original SOH units and un-clipped predictions, no resampling or test-driven threshold adjustment.",
+        "Test subgroup analyses are descriptive, not grounds for retuning against the same test set."
       ]
     },
-    "source_sha256": "f5dd73251e94053245dd6b6802b1a2a4624b035052c451ebb834fc50b16c3c1e",
-    "selection_source_commit": "ed55f113393bb38dc568a79b38c33f56dcbca305",
-    "files_sha256": {
-      "configs/feature_contract.json": "c73100ae49744a0caf87ee1ce561149d06195014d9845e47602f03be9ef6171a",
-      "configs/final_evaluation.json": "9d0693c497d1a6bb496ca8eb9000632ae88387ddb67e19e3e0451ebcd43845da",
-      "configs/mlp_study.json": "c1f9b044432a5ef4767c57a5ad71dd8e92ae9545216e3123a9192db812c9a15f",
-      "configs/preprocessing.json": "1be8c02046b7f58ef0be9e875d75a1f09ae9984fe66b1620635cdddbd23283b9",
-      "data/processed/baseline_standard/test.npz": "b441d5a7a068e726d35127ffb6de5bdafa625aa06c5920a00f118fdc9b4274d1",
-      "data/processed/log_sensor_caps/test.npz": "94ab8c2f794d1e6c45ee57c5139556cec98a617aac2ea278387e3362693504fa",
-      "data/splits/battery_split.csv": "9529f65692528d6f9ed63773880a84c75d0b28d0a8b7803018a2bcd9ac00b8ad",
-      "models/mlp/run_312fdc17ada1/best.pt": "de4bc835a69599fed2ff9c39e67ba7db6331a324a6381b287d4472c090745557",
-      "models/mlp/run_417429878fc7/best.pt": "6d6af5ac0e4604bdc1280726fbf3dba9c96eb12adf2ab0e8af865a17cd3860a0",
-      "models/mlp/run_567cd20b04c3/best.pt": "bd2e07fec264be0426ed80d37588927a63547e41f43e843ac106fca75217d219",
-      "models/mlp/run_73d0ae8e6140/best.pt": "56773f0a832658ee9839ffa6792c69164a53a8e0958fd1b24dcc1e14129162cb",
-      "models/mlp/run_83aa5197bac6/best.pt": "2025a8f5bdfa7802c62f0b07998ca2a599f4a70eff9b999c5b1184b106d7ea2d",
-      "models/mlp/run_e8aecfd9751c/best.pt": "035e8d3af6e4be64a1559f1738a441bb69bfcb366418d1991af03ed9c9b82c1c",
-      "models/preprocessing/baseline_standard.joblib": "c7c91a82d6d55d8f33a33d1c7d74cd4c606c31d688e186691b02f9e9499e6ab9",
-      "models/preprocessing/log_sensor_caps.joblib": "b72f774ef421387bfc5b84fbe1ea7930daf2949f3ad2de4983b3eba8d1d6ebab",
-      "results/experiments/runs/run_312fdc17ada1/summary.json": "9296accd6c9b1ed7d8143800382f87637a20ca7ad171c92c05e51258d3ff8099",
-      "results/experiments/runs/run_417429878fc7/summary.json": "9cee56b4961a1d6fbc5b2456f0daf701559c5ec0589a384830094efaade54252",
-      "results/experiments/runs/run_567cd20b04c3/summary.json": "05ed28c203e5d531bcad91e6a501e6d6d5bb37cd16afbb94abd84dea1eb05684",
-      "results/experiments/runs/run_73d0ae8e6140/summary.json": "79aef4232779cc6decb4d697a41cdba083c97e612551512ad093d6a8d4a49321",
-      "results/experiments/runs/run_83aa5197bac6/summary.json": "edd4a67140fa3a4406ede7d7f8c23cbdcf5d71cb44280fd0418abd407534d2e0",
-      "results/experiments/runs/run_e8aecfd9751c/summary.json": "4e2f5c0712d988668efa5e82041b50e29b3f02a7e044f21a5cc983f8cb5e73ab",
-      "results/experiments/seed_confirmation.csv": "678cb86d90e85f128b211716af6f23b28b06d6170afea9574c00a12ccd4da858",
-      "results/experiments/study.json": "a0d0c9c4b068e6235b26a79c5d0d7f0960f5d5daa3b948262cdf52199e5e9e8c",
-      "results/feature_engineering/study.json": "8c392ae5a14e310aa4b55a22be0e4956a462080d283cfd2c091616c4532cfe04"
-    },
-    "checkpoint_selection": "best validation epoch, fixed before test",
+    "source_sha256": "f09232a687c3539fd7ecc54a192a39ac9d95e8f384eeaa3353438a91efc04d88",
+    "checkpoint_selection": "best validation epoch of each frozen configuration",
     "test_predictions_computed_at_lock": false,
+    "files_content_sha256": {
+      "configs/feature_contract.json": "1cffec850bb7b84a5837d635ec4055d6d6fd1921dd54e7e56f587eb4138edb8b",
+      "configs/final_evaluation.json": "ec5314f03de755b105792d4385c0eb2734344aaa9977faa35dcd2f1802876ce1",
+      "configs/preprocessing.json": "d2d8ec51a4242f10fe58d9cb24f80b4352bf8c3282ae8859a9e351ed6dcffbdb",
+      "data/processed/baseline_standard/test.npz": "fa5fb345da1ff189b0e043bc95c0dc63104e521a777fdbd69664c44067475751",
+      "data/splits/battery_split.csv": "9529f65692528d6f9ed63773880a84c75d0b28d0a8b7803018a2bcd9ac00b8ad",
+      "models/mlp/run_13e6ccd6012a/best.npz": "42235aabc32db94f364c398dbfd669d50e997f42f3cf5bacdc208477bd024bc7",
+      "models/mlp/run_33f5d9ade4e4/best.npz": "b1afebc738fab3d48ca685b32be4c62e0d1475421a908f8356a8ccc1a3465a38",
+      "models/mlp/run_57ffa55b9468/best.npz": "80e163208763abd8935a97270e1a163df103a572ee9c07c4bf37503e962dcacf",
+      "models/mlp/run_751e42b98db0/best.npz": "37a2932aadd704df7d45ff8e3b0434f0e5d3ca5f8fc80051eb14e6095fe79433",
+      "models/mlp/run_b5aa2af40e50/best.npz": "6ce7f195a561bee39d59204e24c038d7e6f22c70a121ec4d7e512e4208a6836e",
+      "models/mlp/run_d38f33266c77/best.npz": "aff7dcd58090c3ba27438a60fb60d2bc1e8a62b064e2a76050821ecc5f1d36f7",
+      "models/preprocessing/baseline_standard.joblib": "a5aec9b576bd409719ebf97ed5ccce93",
+      "results/experiments/final_runs.csv": "3c6ad99e79667b596a61e331fda96954f82b210720af0bd872967f7167108dc6"
+    },
+    "checkpoints": [
+      {
+        "group": "baseline",
+        "seed": 42,
+        "run_id": "run_57ffa55b9468",
+        "best_epoch": 62,
+        "validation_mae_pp": 1.0068239678152235
+      },
+      {
+        "group": "baseline",
+        "seed": 123,
+        "run_id": "run_751e42b98db0",
+        "best_epoch": 41,
+        "validation_mae_pp": 0.9988140836467023
+      },
+      {
+        "group": "baseline",
+        "seed": 2026,
+        "run_id": "run_13e6ccd6012a",
+        "best_epoch": 49,
+        "validation_mae_pp": 0.9942653857688776
+      },
+      {
+        "group": "candidate",
+        "seed": 42,
+        "run_id": "run_d38f33266c77",
+        "best_epoch": 96,
+        "validation_mae_pp": 0.9942758504902472
+      },
+      {
+        "group": "candidate",
+        "seed": 123,
+        "run_id": "run_33f5d9ade4e4",
+        "best_epoch": 56,
+        "validation_mae_pp": 1.0094240332959719
+      },
+      {
+        "group": "candidate",
+        "seed": 2026,
+        "run_id": "run_b5aa2af40e50",
+        "best_epoch": 58,
+        "validation_mae_pp": 0.9959397346638763
+      }
+    ],
     "data_fingerprints": {
-      "baseline_standard": "d7be74f7931fb45900794de3385988c918595b89dd7bde625a846ee750a78f8c",
-      "log_sensor_caps": "5a1ec612c42eaf854e9fd409adf3e48a1da726536226155acc722d42140a6e03"
-    }
+      "baseline_standard": "6c91eeb59bc2829774eaf5eebac47b523b1bef0df5254599a974c4c525438125"
+    },
+    "validation_study_candidate_matches_plan": true,
+    "feature_engineering_recommendation": "control_no_domain_features"
   }
 }

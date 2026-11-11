@@ -1,0 +1,3 @@
+scenario,run_id,hidden_layers,train_rows,max_epochs,max_error,epochs_actual,stop_reason,train_mae_pp,validation_mae_pp,gap_pp,final_train_mae_pp,final_validation_mae_pp,final_gap_pp
+underfitting,run_addd8b4dad9a,2,34929,50,0.5,1,max_error,1.51786801537564,1.5465017660807636,0.02863375070512353,1.51786801537564,1.5465017660807636,0.02863375070512353
+overfitting,run_9c363b490c89,128,1963,1000,0.0,1000,max_epoch,0.7703683535534613,1.2468166349480763,0.4764482813946149,0.617288061141688,1.3662201108278476,0.7489320496861596
