@@ -5,16 +5,14 @@
     python -m ev_battery --list       # show stages
 
 Stages only read what earlier stages wrote, so they must run in the order below
-on a fresh clone. Training and evaluation reuse finished runs whose source/data/config
-fingerprints match, so re-running ``all`` is cheap once everything exists.
+on a fresh clone. Training and evaluation reuse finished runs whose source, data and
+configuration fingerprints match, so re-running ``all`` is cheap once everything exists.
 """
 
 from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
-
-from ev_battery.paths import ROOT, prepare_workspace
 
 
 def _audit() -> None:
@@ -36,12 +34,12 @@ def _preprocess() -> None:
 
 
 def _train() -> None:
-    from ev_battery.followup import train_followup_runs
+    from ev_battery.final_models import train_final_runs
     from ev_battery.reporting.experiments import build_report
     from ev_battery.training import run_study
 
     run_study()
-    train_followup_runs()
+    train_final_runs()
     build_report()
 
 
@@ -54,22 +52,21 @@ def _features() -> None:
 
 
 def _evaluate() -> None:
-    from ev_battery.evaluation import evaluation_directory, run_final_evaluation
+    from ev_battery.evaluation import run_final_evaluation
     from ev_battery.reporting.final import build_report
 
     result = run_final_evaluation()
-    output = evaluation_directory(ROOT, result["lock_fingerprint"])
-    report = build_report(output)["report"]
-    print(f"NumPy follow-up report: {report}", flush=True)
+    report = build_report(result["output"])["report"]
+    print(f"Final report: {report}", flush=True)
 
 
 STAGES: dict[str, tuple[Callable[[], None], str]] = {
-    "audit": (_audit, "schema/quality audit, feature contract, battery split"),
+    "audit": (_audit, "schema and quality audit, feature contract, battery split"),
     "eda": (_eda, "train-only exploratory analysis, figures and report"),
     "preprocess": (_preprocess, "fit preprocessing recipes on train, write model inputs"),
-    "train": (_train, "staged MLP study (backpropagation) on train/validation"),
+    "train": (_train, "staged MLP study (backpropagation) on train and validation"),
     "features": (_features, "domain feature-engineering ablation on validation"),
-    "evaluate": (_evaluate, "score frozen NumPy configurations on the previously evaluated split"),
+    "evaluate": (_evaluate, "score the six frozen checkpoints once on the test split"),
 }
 
 
@@ -84,7 +81,6 @@ def main(argv: list[str] | None = None) -> None:
         for name, (_, help_text) in STAGES.items():
             print(f"{name:<11} {help_text}")
         return
-    prepare_workspace()
     selected = list(STAGES) if args.stage == "all" else [args.stage]
     for name in selected:
         print(f"==> {name}", flush=True)

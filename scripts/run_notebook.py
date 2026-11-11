@@ -1,6 +1,6 @@
 """Execute project notebooks in place with the Python environment running this script.
 
-python scripts/run_notebook.py notebooks/numpy/01_eda.ipynb
+python scripts/run_notebook.py notebooks/01_eda.ipynb
 python scripts/run_notebook.py --all          # 00 -> 05 in order
 """
 
@@ -36,13 +36,13 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("notebook", nargs="?", help="path to one notebook inside notebooks/")
-    parser.add_argument("--all", action="store_true", help="execute the NumPy notebooks in numeric order")
+    parser.add_argument("--all", action="store_true", help="execute every notebook in numeric order")
     parser.add_argument("--timeout", type=int, default=3600, help="maximum seconds per code cell")
     args = parser.parse_args()
     if args.all == bool(args.notebook):
         parser.error("Give exactly one notebook path or --all.")
     if args.all:
-        paths = sorted((NOTEBOOKS / "numpy").glob("[0-9][0-9]_*.ipynb"))
+        paths = sorted(NOTEBOOKS.glob("[0-9][0-9]_*.ipynb"))
     else:
         path = (ROOT / args.notebook).resolve()
         if not path.is_relative_to(NOTEBOOKS) or path.suffix != ".ipynb" or not path.is_file():
