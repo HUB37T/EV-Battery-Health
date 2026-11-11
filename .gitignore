@@ -48,24 +48,20 @@ models/*
 *.joblib
 checkpoints/
 
-# Local run caches and logs; keep curated results versioned
+# Local run caches and logs, curated results stay versioned
 runs/
 wandb/
 mlruns/
 lightning_logs/
 *.log
 
-# Recomputed row-level EDA intermediates; curated aggregate tables stay tracked.
-results/eda/temporal_pairs.csv
-results/eda/battery_age_means.csv
-
-# Recomputed row-level validation predictions; aggregate experiment results stay tracked.
+# Row-level intermediates are recomputed locally, aggregate results stay tracked.
+**/eda/temporal_pairs.csv
+**/eda/battery_age_means.csv
 !/results/experiments/runs/
-!/results/numpy/experiments/runs/
-results/experiments/runs/*/validation_predictions.csv
-
-# Frozen-model test predictions are recreated locally; aggregate results stay tracked.
-results/final_evaluation/predictions/
+!/archive/pytorch/results/experiments/runs/
+**/experiments/runs/*/validation_predictions.csv
+**/final_evaluation/predictions/
 
 # Editor / OS files
 .vscode/
