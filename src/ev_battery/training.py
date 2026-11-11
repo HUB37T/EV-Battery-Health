@@ -143,9 +143,9 @@ def original_scale(scaled, bundle):
 def soh_band_weights(y_original, scheme):
     """Per-sample weights that balance SOH bands (regression form of class balancing).
 
-    ``inverse`` gives equal total weight per band across the training set before
-    mini-batch normalisation. Each update divides by its batch weight sum, so
-    effective contributions depend on batch composition. ``inverse_sqrt`` is milder.
+    ``inverse`` gives every band the same total weight over the training set,
+    ``inverse_sqrt`` is a milder version. Weights are normalised to a mean of 1 and
+    computed from train only.
     """
     if scheme == "none":
         return None

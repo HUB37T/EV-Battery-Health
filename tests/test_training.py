@@ -172,6 +172,32 @@ class BackpropagationTests(unittest.TestCase):
             )
             self.assertLess(loss_value("mse", bp_predict(X, w, "tanh"), y), start / 2, optimizer)
 
+    def test_weighted_mini_batches_average_to_the_full_weighted_gradient(self):
+        rng = np.random.default_rng(5)
+        X = rng.normal(size=(8, 3))
+        t = rng.normal(size=(8, 1))
+        weight = np.array([4.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1.0])
+        weight = weight / weight.mean()
+        w = init_weights((3, 4, 1), seed=6)
+
+        def gradient(rows):
+            nets, out = forward(X[rows], w, "sigmoid")
+            return backward(nets, out, w, loss_gradient("mse", out[-1], t[rows], weight[rows]), "sigmoid")
+
+        full = gradient(slice(0, 8))
+        halves = [gradient(slice(0, 4)), gradient(slice(4, 8))]
+        for k in range(len(w)):
+            np.testing.assert_allclose(full[k], (halves[0][k] + halves[1][k]) / 2, atol=1e-12)
+
+    def test_unit_sample_weights_change_nothing(self):
+        rng = np.random.default_rng(7)
+        X = rng.normal(size=(50, 2))
+        y = X[:, 0] - X[:, 1]
+        plain, _, _ = bp_fit(X, y, (2, 3, 1), max_epoch=5, batch_size=16)
+        ones, _, _ = bp_fit(X, y, (2, 3, 1), max_epoch=5, batch_size=16, sample_weight=np.full(50, 3.0))
+        for a, b in zip(plain, ones):
+            np.testing.assert_array_equal(a, b)
+
     def test_soh_band_weights_balance_bands(self):
         y = np.array([60.0] * 2 + [96.0] * 8)
         weights = soh_band_weights(y, "inverse")

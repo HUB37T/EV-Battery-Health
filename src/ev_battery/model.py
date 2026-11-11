@@ -89,7 +89,11 @@ def _weights_or_ones(sample_weight, n):
 
 
 def loss_value(name, output, target, sample_weight=None, huber_delta=1.0):
-    """Weighted mean loss. MSE is reported as mean(e^2), the way the course prints it."""
+    """Mean loss over the samples, ``sum(weight * loss) / n``. MSE is mean(e^2), as the course prints it.
+
+    Sample weights are expected to average 1 over the training set, which ``bp_fit``
+    guarantees. A mini-batch is then an unbiased estimate of the weighted training loss.
+    """
     e = np.asarray(output, dtype=np.float64) - np.asarray(target, dtype=np.float64)
     weight = _weights_or_ones(sample_weight, len(e))
     if name == "mse":
@@ -101,14 +105,17 @@ def loss_value(name, output, target, sample_weight=None, huber_delta=1.0):
         per_sample = np.where(small, 0.5 * e**2, huber_delta * (np.abs(e) - 0.5 * huber_delta))
     else:
         raise ValueError(f"Unsupported loss {name!r}.")
-    return float(np.sum(weight * per_sample) / np.sum(weight))
+    return float(np.sum(weight * per_sample) / len(e))
 
 
 def loss_gradient(name, output, target, sample_weight=None, huber_delta=1.0):
     """Gradient of the batch loss with respect to every output value.
 
     As in the course, the MSE update uses the error ``e`` itself, which is the
-    derivative of ``0.5 * e^2``. The batch gradient is the weighted mean.
+    derivative of ``0.5 * e^2``. Each sample contributes ``weight / n`` to the batch
+    gradient. Dividing by the batch size rather than the batch weight sum keeps the
+    reweighting intact: a batch that happens to contain rare, heavily weighted
+    samples moves the weights further than a batch without them.
     """
     e = output - target
     weight = _weights_or_ones(sample_weight, len(e))
@@ -120,7 +127,7 @@ def loss_gradient(name, output, target, sample_weight=None, huber_delta=1.0):
         g = np.clip(e, -huber_delta, huber_delta)
     else:
         raise ValueError(f"Unsupported loss {name!r}.")
-    return g * (weight / np.sum(weight))[:, None]
+    return g * (weight / len(e))[:, None]
 
 
 # ---------------------------------------------------------------------------
@@ -274,6 +281,7 @@ def bp_fit(
     if X.shape[1] != layer_conf[0] or target.shape[1] != layer_conf[-1]:
         raise ValueError("layer_conf does not match the input and target widths.")
     weight_all = _weights_or_ones(sample_weight, len(X))
+    weight_all = weight_all / weight_all.mean()  # mean 1, so unweighted training is unchanged
     w = init_weights(layer_conf, seed) if w is None else [np.array(x, dtype=np.float64) for x in w]
     state = AdamState.for_weights(w) if optimizer == "adam" else None
     rng = np.random.default_rng(seed)
