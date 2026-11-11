@@ -412,7 +412,7 @@ Train rows: {len(train):,}. Train SOH: min {train[TARGET].min():.2f}, median {tr
 
 {markdown_table(bands.round(3))}
 
-The target is unevenly distributed. Because the target is continuous, SMOTE or class balancing is not applied. Final evaluation must report errors per SOH band with sample counts instead of relying on aggregate MAE alone.
+The target is unevenly distributed. Because the target is continuous, SMOTE or class balancing is not applied. Weighting the loss by SOH band is tested later as the regression counterpart, and the final evaluation reports errors per SOH band with sample counts instead of relying on aggregate MAE alone.
 
 ![Missing values in train](01_missing_train.png)
 

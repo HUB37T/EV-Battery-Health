@@ -400,7 +400,7 @@ def make_figures(train, variants, output):
     fig, ax = plt.subplots(figsize=(8, 4))
     names = list(variants)
     counts = [variants[n]["preprocessor"].n_features_out_ for n in names]
-    bars = ax.barh(names, counts, color=["#247e88", "#3674b5", "#c47a21"])
+    bars = ax.barh(names, counts, color=["#247e88", "#7a5aa6", "#3674b5", "#c47a21"][: len(names)])
     for bar, count in zip(bars, counts):
         ax.text(count + 0.5, bar.get_y() + bar.get_height() / 2, str(count), va="center")
     ax.set(
@@ -468,7 +468,7 @@ No value is filled from future observations or battery-level groupings. Inferenc
 
 ## 3. Target and balancing
 
-The original SOH is kept: no target clipping, no binning into classes, no oversampling, no SMOTE and no removal of low-SOH rows. Class balancing does not apply to a continuous target, and evaluation follows the original split distribution.
+The original SOH is kept: no target clipping, no binning into classes, no oversampling, no SMOTE and no removal of low-SOH rows. Class balancing does not apply to a continuous target, and evaluation follows the original split distribution. The regression counterpart, weighting the loss by SOH band, is tested as an experiment in notebook 03.
 
 The target scaler is fitted on `y_train` only: mean **{target_scaler.mean_[0]:.6f}**, scale **{target_scaler.scale_[0]:.6f}** percentage points. A standardised target lets the linear output neuron start near zero. It does not fix tail behaviour and does not guarantee better scores.
 
@@ -522,7 +522,7 @@ Reproduce with `python -m ev_battery preprocess`, then `python scripts/run_noteb
 
 1. Start from `baseline_standard`, then compare alternatives with the same architecture, seeds and training policy.
 2. High train and validation error suggests underfitting or an optimisation problem: check capacity, learning rate, epochs and features.
-3. Improving train error with worsening validation error suggests overfitting: check L2 or dropout, hidden size, early stopping and seed stability.
+3. Improving train error with worsening validation error suggests overfitting: check hidden size, the epoch budget, early stopping and seed stability.
 4. Never add or remove features, or choose caps, based on the test split.
 
 ## References
