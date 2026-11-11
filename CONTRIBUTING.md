@@ -5,29 +5,30 @@ first so that every change respects the same problem definition and protocol.
 
 ## Setup
 
-```bash
-python -m venv .venv
-.venv/Scripts/activate          # Linux/macOS: source .venv/bin/activate
-pip install -e ".[dev]"
-```
+Follow the step-by-step setup in the [README](README.md#getting-started). In short:
 
-Place the Kaggle archive in `data/raw/` as described in [data/README.md](data/README.md).
+```bash
+make venv && make install    # virtual environment and dependencies
+make data                    # Kaggle files into data/raw/
+make all                     # run the pipeline
+```
 
 ## Ground rules
 
 1. **One target, one split.** Every experiment uses `state_of_health_pct` and `data/splits/battery_split.csv`. Never re-split or change the seed to chase a better score.
 2. **Fit on train only.** Imputers, encoders, scalers, caps and any data-driven selection learn from train. Validation chooses configurations.
-3. **Test is locked.** The NumPy evaluation stage scores only configurations recorded in `configs/numpy/followup.json`. Treat the shared test scores as a descriptive follow-up and use validation for experiment selection.
-4. **Record every run.** Keep failed and losing runs with their configurations. Historical PyTorch and NumPy runs live under `results/experiments/` and `results/numpy/experiments/`. Fresh NumPy runs stay in the local workspace.
+3. **Test is locked.** Only `python -m ev_battery evaluate` touches the test split, and only for the configurations in `configs/final_evaluation.json`. Never tune on test results. The test split has already been scored by the PyTorch version and by the NumPy version, so any new idea needs validation evidence, not another look at test.
+4. **Record every run.** Failed and losing runs stay in `results/experiments/` with their configuration. Never edit generated CSVs or reports by hand.
 5. **MLP only.** The only predictive model is the feedforward MLP trained with backpropagation. Constant train mean and median references are sanity checks, not competing models.
 6. **No claims without a run.** Every number in the report or slides must come from a file in `results/`.
 
 ## Making changes
 
+- `archive/` holds read-only records of earlier versions. Never edit or regenerate it.
 - Pipeline logic lives in `src/ev_battery/`. Notebooks call these functions and add the narrative, so do not duplicate logic inside notebooks.
 - Configuration changes go into `configs/*.json`. Run IDs derive from a hash of code, data and configuration, so any change produces new runs instead of silently overwriting old ones.
 - After changing code, regenerate the affected stages (`python -m ev_battery <stage>`) and re-execute the matching notebook with `python scripts/run_notebook.py`.
-- Keep commits focused, and describe what changed and why in the commit message.
+- Keep commits atomic, with a one-line conventional message (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `build:`, `chore:`).
 
 Before opening a pull request:
 
@@ -78,7 +79,7 @@ Every member should be able to answer these questions in their own words:
 7. How does the gradient reach the first hidden layer?
 8. What is the difference between an epoch, a batch and the learning rate?
 9. Why are imputers and scalers fitted on train only?
-10. How are SOH-band weights computed and normalised in each mini-batch?
+10. How are SOH-band weights computed, and why is each sample's gradient divided by the batch size?
 11. How was the final model chosen without using the test split?
 12. What does the epoch experiment show?
 13. How stable are the results across seeds?
@@ -91,4 +92,3 @@ Every member should be able to answer these questions in their own words:
 - [ ] Every figure has labels, units and an interpretation.
 - [ ] Limitations are stated: synthetic data, low-SOH weakness, unclipped linear output.
 - [ ] The notebooks run top to bottom on a clean clone after `python -m ev_battery all`.
-- [ ] The course requirement on framework vs from-scratch backpropagation is confirmed with the lecturer.

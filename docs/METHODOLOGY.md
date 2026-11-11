@@ -22,8 +22,8 @@ classification, real fleet deployment, and any model family other than the MLP.
 ### Terminology
 
 - **SOH** (state of health) describes battery health relative to its reference capacity. **SOC** (state of charge) is the current charge level. They are different quantities.
-- **MLP** is the network architecture. **Backpropagation** computes the gradient of the loss with respect to every weight. **The optimizer** (Adam here) uses those gradients to update the weights. These three terms are not synonyms.
-- **Train** fits parameters, **validation** chooses configurations, and the original PyTorch **test** evaluation used locked models. The NumPy follow-up reuses that same split for descriptive comparison.
+- **MLP** is the network architecture. **Backpropagation** computes the gradient of the loss with respect to every weight. **The optimizer** (plain gradient descent here, Adam as a comparison) uses those gradients to update the weights. These three terms are not synonyms.
+- **Train** fits parameters, **validation** chooses configurations, and **test** is scored only for configurations locked beforehand. Section 8 describes the history of the test split.
 - **Leakage** is any path through which target, future or evaluation information influences training.
 
 ### Relation to the course material
@@ -86,7 +86,7 @@ only and then applied unchanged to validation and test.
 | Normalisation | `StandardScaler` on numeric features, with a `MinMaxScaler` recipe (as `minmax_scale` in the course) as comparison. Target standardised separately | Features span very different ranges, which slows gradient descent |
 | Outliers | Kept in the baseline. An alternative recipe caps three sensors at the 0.5% and 99.5% train quantiles and applies signed `log1p` to five skewed features | The source injects outliers without a mask, and extreme values can be genuine degraded batteries |
 | Feature selection | Leakage removal (section 3) plus a compact recipe that drops two redundant features (throughput, rho 0.984 with cycles, and peak temperature, rho 0.920 with ambient) | Low marginal correlation is not a reason to drop a feature for a nonlinear model |
-| Balancing | No resampling. SOH-band sample weights in the loss are tested as an experiment | The target is continuous, so class balancing does not apply. The regression counterpart is to weight rare SOH bands more |
+| Balancing | No resampling. SOH-band sample weights in the loss are tested as an experiment (section 6.5) | The target is continuous, so class balancing does not apply. The regression counterpart is to weight rare SOH bands more |
 | Timesteps | Not used, inputs are single observations | 2,216 rows lack `observation_date` and cumulative counters sometimes decrease |
 
 This yields four recipes defined in `configs/preprocessing.json`:
@@ -230,6 +230,23 @@ The next forward pass gives `a1 = 1.12`, `y_hat = 0.5752` and a loss of about
 with the project code. A common mistake is to compute `delta_hidden` with the already updated
 `w2`.
 
+### 6.5 Sample weights for balancing
+
+Balancing gives every training sample a weight `w_i` from the frequency of its SOH
+band (`inverse`: `1 / count`, `inverse_sqrt`: `1 / sqrt(count)`), normalised so
+that the weights average 1 over the training set. In a mini-batch of `B` samples
+the output gradient of sample `i` is multiplied by `w_i / B`:
+
+```text
+batch gradient = (1/B) * sum_i w_i * dLoss_i/dW
+```
+
+Because the weights average 1, the expected batch gradient equals the gradient of
+the weighted loss over the whole training set. Dividing by the batch weight sum
+`sum_i w_i` instead would cancel the reweighting batch by batch: a batch with
+several rare low-SOH samples would move the weights no further than a batch
+without them. Without weighting, `w_i = 1` and both forms are identical.
+
 ## 7. Experiment design
 
 All runs share the battery split, batch size 32, at most 200 epochs, early stopping
@@ -260,6 +277,10 @@ exact minimum validation MAE, and identical runs are reused through a fingerprin
 of code, data and configuration. This sequential search is not a full factorial
 design and does not prove a global optimum.
 
+The balancing runs are the only runs that use sample weights. Their effect on the
+error per SOH band is reported in section 5 of the
+[experiment report](../results/experiments/EXPERIMENT_REPORT.md).
+
 Most differences between configurations are around 0.01 MAE points. The three-seed
 confirmation shows that this is the size of the seed noise: the baseline scored
 0.99997 ± 0.0064 and the candidate 0.99988 ± 0.0083. The candidate therefore
@@ -272,8 +293,8 @@ the mean by only 0.00286 points, so the control stayed the main candidate.
 ## 8. Evaluation protocol
 
 1. Fix every feature, preprocessing, architecture, checkpoint and seed decision on train and validation.
-2. Rebuild the configurations and seeds in `configs/numpy/followup.json`. The plan keeps the original NumPy reference IDs, while the local training stage resolves new run IDs.
-3. Hash the six local checkpoints, fitted preprocessing, test arrays and recorded NumPy configurations into the follow-up workspace lock before computing this run’s predictions.
+2. Write the two final configurations, the seeds and the SOH bands to `configs/final_evaluation.json`. The training stage builds exactly these six runs and lists them in `results/experiments/final_runs.csv`.
+3. Hash the six checkpoints, the fitted preprocessing, the test arrays and the configuration into `results/final_evaluation/evaluation_lock.json` before any test prediction exists. Hashes are taken over file contents, so identical weights saved twice give the same lock.
 4. Score the baseline and candidate on test for all three seeds in one step.
 5. Report every seed, the mean and the sample SD. Never select a seed, ensemble, clip or retune after seeing test.
 6. Report errors per SOH band and per battery, plus constant train mean and median references as a sanity check.
@@ -281,11 +302,31 @@ the mean by only 0.00286 points, so the control stayed the main candidate.
 The sample SD across seeds measures training variability on a fixed split. It is
 not a confidence interval over batteries.
 
+If the local checkpoints differ from the recorded lock (for example after training
+on another CPU), the evaluator writes a separate reproduction to
+`data/processed/evaluation_reproduction/` and leaves the recorded results untouched.
+
+### History of the test split
+
+The test split has been scored more than once, and the report states this openly:
+
+| Date | Version | What was scored |
+|---|---|---|
+| 6 November 2026 | PyTorch release (`479ed84`) | Its own baseline and candidate, selected on validation |
+| 8 November 2026 (WIB) | NumPy rewrite (pull request #1) | The NumPy baseline and candidate, selected on validation |
+| Current tree | NumPy | The same two NumPy configurations, rebuilt and scored again |
+
+The rewrite to NumPy was made to follow the course modules, not in response to
+test results, and no NumPy setting was tuned on test. Re-scoring frozen
+configurations is a reproduction, not a new independent test. A comparison
+between the PyTorch and NumPy versions uses the same test batteries, so it is
+descriptive. The records are kept in [`archive/`](../archive/README.md).
+
 ## 9. Limitations
 
 - The data is synthetic. Results describe the simulator, not real vehicles.
 - Error is highest for SOH below 70%, which is rare in train. Both models overestimate SOH in that band, and SOH-band weighting trades better low-SOH error for worse overall error.
 - The linear output can predict values outside 0 to 100. They are reported, not clipped.
-- Validation informed many decisions, so validation scores can be optimistic. The PyTorch release contains the original holdout evaluation. NumPy scores describe the same previously evaluated split.
+- Validation informed many decisions, so validation scores can be optimistic. The test split had already been scored by the PyTorch version before the NumPy models were scored (section 8).
 - The candidate selected on seed 42 did not beat the baseline on test (MAE 0.973 vs 0.960), consistent with the seed confirmation. Selection gains of about 0.01 points are within seed noise.
-- The NumPy implementation follows the course modules. Local reproduction freezes the configurations recorded in PR #1. The historical results, configuration reference and original holdout report are listed in the [NumPy archive](../results/numpy/README.md).
+- Mini-batches of 32 replace the per-sample updates of the course code for speed. With `batch_size=1` the implementation is identical to the course `bp_fit`.
