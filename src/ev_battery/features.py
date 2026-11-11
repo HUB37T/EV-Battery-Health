@@ -1,4 +1,4 @@
-"""Feature-only ablation on the frozen candidate-03 MLP, train/validation only."""
+"""Feature-engineering ablation on the frozen candidate MLP, train and validation only."""
 
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.validation import check_is_fitted
 
-from ev_battery.followup import load_plan
+from ev_battery.final_models import final_config, load_plan
 from ev_battery.paths import ROOT
 from ev_battery.preprocessing import MISSING
-from ev_battery.training import RunConfig, load_training_data, train_run, write_json
+from ev_battery.training import load_training_data, train_run, write_json
 
 
 class EngineeredPreprocessor:
@@ -312,15 +312,10 @@ def load_engineered_data(recipe, root=ROOT):
 
 def run_feature_study(root=ROOT):
     settings = read_settings(root)
-    candidate = load_plan(root)["groups"]["candidate"]
-    control_cfg = RunConfig(**candidate["config"])
     screening_seed = settings["screening_seed"]
-    if (
-        settings["base_recipe"] != control_cfg.recipe
-        or settings["reference_candidate_run_id"]
-        != candidate["reference_run_ids_by_seed"][str(screening_seed)]
-    ):
-        raise ValueError("Feature-engineering settings differ from the recorded NumPy control configuration.")
+    control_cfg = final_config(load_plan(root), "candidate", screening_seed)
+    if settings["base_recipe"] != control_cfg.recipe:
+        raise ValueError("base_recipe in configs/feature_engineering.json must be the candidate recipe.")
     control_data = load_training_data(control_cfg.recipe, root)
     raw = load_raw_observations(control_data, root)
     output = root / "results/feature_engineering"
@@ -418,7 +413,6 @@ def run_feature_study(root=ROOT):
     study = {
         "status": "complete",
         "reference_candidate_run_id": control["run_id"],
-        "archived_candidate_run_id": settings["reference_candidate_run_id"],
         "reference_config": control["config"],
         "selected_engineered_variant": best,
         "recommendation": best if promote else "control_no_domain_features",
@@ -427,7 +421,9 @@ def run_feature_study(root=ROOT):
         "seed_wins": wins,
         "confirmation_seeds": settings["confirmation_seeds"],
         "unique_runs_referenced": len(all_runs),
-        "new_training_runs": len(all_runs) - 3,
+        "engineered_variant_runs": sum(
+            run["config"]["recipe"] != control_cfg.recipe for run in all_runs.values()
+        ),
         "test_arrays_loaded": False,
         "test_transformed": False,
         "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -440,9 +436,9 @@ def run_feature_study(root=ROOT):
             k: len(v["bundle"]["preprocessor"].extra_columns_) for k, v in prepared.items()
         },
         "decision_threshold_pp": settings["minimum_mean_mae_improvement_pp"],
-        "train_rows": 34929,
-        "validation_rows": 7499,
-        "caution": "Validation reused for screening/confirmation, feature-derived gains and any tail changes require independent final test. No claim of causal battery effects.",
+        "train_rows": len(control_data["train"]["X"]),
+        "validation_rows": len(control_data["validation"]["X"]),
+        "caution": "Validation is reused for screening and confirmation, so gains and tail changes need an independent test. No claim of causal battery effects.",
     }
     write_json(output / "study.json", study)
     print(
