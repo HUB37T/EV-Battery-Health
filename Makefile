@@ -20,7 +20,7 @@ NB ?= notebooks/03_mlp_experiments.ipynb
 export PYTHONIOENCODING := utf-8
 
 .DEFAULT_GOAL := help
-.PHONY: help venv install audit eda preprocess train features evaluate all \
+.PHONY: help venv install data audit eda preprocess train features evaluate all \
 	notebooks notebook test lint format check clean
 
 help: ## List the available targets
@@ -31,6 +31,9 @@ venv: ## Create the .venv virtual environment
 
 install: ## Install the package with dev dependencies
 	$(PIP) install -e ".[dev]"
+
+data: ## Download the Kaggle files into data/raw and verify the CSV hash
+	$(PYTHON) scripts/download_data.py
 
 audit: ## Schema and quality audit, feature contract, battery split
 	$(PYTHON) -m ev_battery audit
