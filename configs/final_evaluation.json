@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "primary_group_fixed_before_test": "candidate",
   "seeds": [
     42,
@@ -8,12 +8,6 @@
   ],
   "groups": {
     "baseline": {
-      "recipe": "baseline_standard",
-      "reference_run_ids_by_seed": {
-        "42": "run_cd4e6f80a183",
-        "123": "run_96e0465b8c5f",
-        "2026": "run_27c8116694bb"
-      },
       "config": {
         "recipe": "baseline_standard",
         "hidden_layers": [
@@ -36,12 +30,6 @@
       }
     },
     "candidate": {
-      "recipe": "baseline_standard",
-      "reference_run_ids_by_seed": {
-        "42": "run_0015e8ebf51d",
-        "123": "run_17e82e31806b",
-        "2026": "run_125d105f67b2"
-      },
       "config": {
         "recipe": "baseline_standard",
         "hidden_layers": [
@@ -79,15 +67,20 @@
     "90–<95",
     ">=95"
   ],
+  "test_history": {
+    "test_split_previously_evaluated": true,
+    "pytorch_release_commit": "479ed842d141017591a3fe755647040c237dfd6c",
+    "pytorch_test_scored_utc": "2026-11-06T04:47:00+00:00",
+    "numpy_configurations_commit": "83b1b360c9e08267227d3dc0f76dc47860b33089",
+    "numpy_test_first_scored_utc": "2026-11-07T22:22:26+00:00",
+    "note": "The same 390 test batteries were scored first by the PyTorch release and then by the NumPy implementation. NumPy configurations were chosen on validation, never from test results."
+  },
   "rules": [
-    "Rebuild the frozen configurations on train with the listed seeds, then evaluate their best validation checkpoints.",
+    "Train the two frozen configurations with the listed seeds and evaluate their best validation checkpoints.",
     "All three seeds are reported, do not select a winning seed from test.",
     "The primary model family remains the candidate chosen before test, regardless of test ranking.",
     "Domain feature engineering stays a validation ablation and is not added to this test comparison.",
     "Keep original SOH units and un-clipped predictions, no resampling or test-driven threshold adjustment.",
-    "Test subgroup analyses are descriptive final assessment, not grounds for retuning against the same test set."
-  ],
-  "evaluation_scope": "numpy_followup_same_previously_evaluated_test_split",
-  "original_pytorch_release_commit": "479ed842d141017591a3fe755647040c237dfd6c",
-  "selection_reference_commit": "83b1b360c9e08267227d3dc0f76dc47860b33089"
+    "Test subgroup analyses are descriptive, not grounds for retuning against the same test set."
+  ]
 }

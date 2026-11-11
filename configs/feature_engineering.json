@@ -1,6 +1,5 @@
 {
-  "schema_version": 1,
-  "reference_candidate_run_id": "run_0015e8ebf51d",
+  "schema_version": 2,
   "base_recipe": "baseline_standard",
   "screening_seed": 42,
   "confirmation_seeds": [
@@ -32,12 +31,12 @@
   "minimum_seed_wins": 2,
   "decision_note": "Provisional promotion only if confirmation mean improves by at least 0.01 pp and wins at least 2 of 3 seeds, heuristic, not significance test. Report tail errors separately.",
   "constraints": [
-    "Freeze the notebook 03 candidate: hidden layers, activation, loss, optimizer, learning rate, batch size, early stopping and seeds.",
+    "The control is the candidate configuration in configs/final_evaluation.json: hidden layers, activation, loss, optimizer, learning rate, batch size, early stopping and seeds stay fixed.",
     "Original preprocessing output is preserved exactly as the first 67 columns, engineered columns are appended.",
     "Compute arithmetic before imputation from cleaned allowed current-observation inputs, do not construct ratios from imputed operands.",
     "Ratios with denominator <=0 or missing inputs become missing, never forced with an arbitrary epsilon.",
     "Additional imputation, clipping and scaling fit only train, target scaler is reused without refit.",
     "Screen four variants on seed 42, confirm the best engineered variant and unchanged control across three seeds.",
-    "Test arrays are never requested or created by this stage, original study is retained as historical evidence."
+    "Test arrays are never requested or created by this stage."
   ]
 }
