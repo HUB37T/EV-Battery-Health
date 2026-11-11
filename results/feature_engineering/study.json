@@ -1,0 +1,57 @@
+{
+  "status": "complete",
+  "reference_candidate_run_id": "run_d38f33266c77",
+  "reference_config": {
+    "recipe": "baseline_standard",
+    "hidden_layers": [
+      8
+    ],
+    "activation": "sigmoid",
+    "loss": "mse",
+    "huber_delta": 1.0,
+    "optimizer": "gd",
+    "learning_rate": 0.1,
+    "batch_size": 32,
+    "max_epochs": 200,
+    "max_error": 0.0,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta_pp": 0.001,
+    "sample_weighting": "none",
+    "train_batteries": 0,
+    "seed": 42
+  },
+  "selected_engineered_variant": "fe_context",
+  "recommendation": "control_no_domain_features",
+  "promoted_by_prespecified_gate": false,
+  "mean_validation_mae_improvement_pp": 0.0028561674449459895,
+  "seed_wins": 2,
+  "confirmation_seeds": [
+    42,
+    123,
+    2026
+  ],
+  "unique_runs_referenced": 9,
+  "engineered_variant_runs": 6,
+  "test_arrays_loaded": false,
+  "test_transformed": false,
+  "source_sha256": "6b32fac5943a037b81772297b87adf0ffff12d8449ec6aac004baf6eb939e6ec",
+  "settings_sha256": "3f0018ec4a18afbc1a5c4aa82403f2a5f43e9f7d851b7b202a18f6a7a2a68816",
+  "control_data_fingerprint": "6c91eeb59bc2829774eaf5eebac47b523b1bef0df5254599a974c4c525438125",
+  "variant_data_fingerprints": {
+    "fe_usage_rates": "72b5d0e0009b83025de2ec537b19d12607ec7736a3facf06d62afb7100c08c5c",
+    "fe_context": "eebddafd1ace3182290948d472051645116c2b8381466eae003c43ad87c7fa68",
+    "fe_chemistry": "cb005e238cf48a75d9fce0a0e384a6f9b67909b812dc8dde9c00609b79306973",
+    "fe_combined": "acedc3041302c12d1e92573101a336274eb871e8535c8ff3dd2559f2855fae32"
+  },
+  "extra_feature_counts": {
+    "fe_usage_rates": 2,
+    "fe_context": 2,
+    "fe_chemistry": 8,
+    "fe_combined": 12
+  },
+  "decision_threshold_pp": 0.01,
+  "train_rows": 34929,
+  "validation_rows": 7499,
+  "caution": "Validation is reused for screening and confirmation, so gains and tail changes need an independent test. No claim of causal battery effects."
+}

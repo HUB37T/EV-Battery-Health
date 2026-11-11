@@ -1,0 +1,7 @@
+group,seed,run_id
+baseline,42,run_57ffa55b9468
+baseline,123,run_751e42b98db0
+baseline,2026,run_13e6ccd6012a
+candidate,42,run_d38f33266c77
+candidate,123,run_33f5d9ade4e4
+candidate,2026,run_b5aa2af40e50

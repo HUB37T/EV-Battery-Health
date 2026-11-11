@@ -1,0 +1,159 @@
+{
+  "locked_at_utc": "2026-11-11T02:40:51.948278+00:00",
+  "fingerprint": "4a8a221ceb6dc36ad4ac43d127b4d0519cf718fb6a6bd643d7465452a7f90558",
+  "payload": {
+    "plan": {
+      "schema_version": 3,
+      "primary_group_fixed_before_test": "candidate",
+      "seeds": [
+        42,
+        123,
+        2026
+      ],
+      "groups": {
+        "baseline": {
+          "config": {
+            "recipe": "baseline_standard",
+            "hidden_layers": [
+              32
+            ],
+            "activation": "sigmoid",
+            "loss": "mse",
+            "huber_delta": 1.0,
+            "optimizer": "gd",
+            "learning_rate": 0.1,
+            "batch_size": 32,
+            "max_epochs": 200,
+            "max_error": 0.0,
+            "early_stopping": true,
+            "patience": 15,
+            "min_delta_pp": 0.001,
+            "sample_weighting": "none",
+            "train_batteries": 0,
+            "seed": 42
+          }
+        },
+        "candidate": {
+          "config": {
+            "recipe": "baseline_standard",
+            "hidden_layers": [
+              8
+            ],
+            "activation": "sigmoid",
+            "loss": "mse",
+            "huber_delta": 1.0,
+            "optimizer": "gd",
+            "learning_rate": 0.1,
+            "batch_size": 32,
+            "max_epochs": 200,
+            "max_error": 0.0,
+            "early_stopping": true,
+            "patience": 15,
+            "min_delta_pp": 0.001,
+            "sample_weighting": "none",
+            "train_batteries": 0,
+            "seed": 42
+          }
+        }
+      },
+      "soh_band_edges": [
+        0,
+        70,
+        80,
+        90,
+        95,
+        101
+      ],
+      "soh_band_labels": [
+        "<70",
+        "70–<80",
+        "80–<90",
+        "90–<95",
+        ">=95"
+      ],
+      "test_history": {
+        "test_split_previously_evaluated": true,
+        "pytorch_release_commit": "479ed842d141017591a3fe755647040c237dfd6c",
+        "pytorch_test_scored_utc": "2026-11-06T04:47:00+00:00",
+        "numpy_configurations_commit": "83b1b360c9e08267227d3dc0f76dc47860b33089",
+        "numpy_test_first_scored_utc": "2026-11-07T22:22:26+00:00",
+        "note": "The same 390 test batteries were scored first by the PyTorch release and then by the NumPy implementation. NumPy configurations were chosen on validation, never from test results."
+      },
+      "rules": [
+        "Train the two frozen configurations with the listed seeds and evaluate their best validation checkpoints.",
+        "All three seeds are reported, do not select a winning seed from test.",
+        "The primary model family remains the candidate chosen before test, regardless of test ranking.",
+        "Domain feature engineering stays a validation ablation and is not added to this test comparison.",
+        "Keep original SOH units and un-clipped predictions, no resampling or test-driven threshold adjustment.",
+        "Test subgroup analyses are descriptive, not grounds for retuning against the same test set."
+      ]
+    },
+    "source_sha256": "f09232a687c3539fd7ecc54a192a39ac9d95e8f384eeaa3353438a91efc04d88",
+    "checkpoint_selection": "best validation epoch of each frozen configuration",
+    "test_predictions_computed_at_lock": false,
+    "files_content_sha256": {
+      "configs/feature_contract.json": "1cffec850bb7b84a5837d635ec4055d6d6fd1921dd54e7e56f587eb4138edb8b",
+      "configs/final_evaluation.json": "ec5314f03de755b105792d4385c0eb2734344aaa9977faa35dcd2f1802876ce1",
+      "configs/preprocessing.json": "d2d8ec51a4242f10fe58d9cb24f80b4352bf8c3282ae8859a9e351ed6dcffbdb",
+      "data/processed/baseline_standard/test.npz": "fa5fb345da1ff189b0e043bc95c0dc63104e521a777fdbd69664c44067475751",
+      "data/splits/battery_split.csv": "9529f65692528d6f9ed63773880a84c75d0b28d0a8b7803018a2bcd9ac00b8ad",
+      "models/mlp/run_13e6ccd6012a/best.npz": "42235aabc32db94f364c398dbfd669d50e997f42f3cf5bacdc208477bd024bc7",
+      "models/mlp/run_33f5d9ade4e4/best.npz": "b1afebc738fab3d48ca685b32be4c62e0d1475421a908f8356a8ccc1a3465a38",
+      "models/mlp/run_57ffa55b9468/best.npz": "80e163208763abd8935a97270e1a163df103a572ee9c07c4bf37503e962dcacf",
+      "models/mlp/run_751e42b98db0/best.npz": "37a2932aadd704df7d45ff8e3b0434f0e5d3ca5f8fc80051eb14e6095fe79433",
+      "models/mlp/run_b5aa2af40e50/best.npz": "6ce7f195a561bee39d59204e24c038d7e6f22c70a121ec4d7e512e4208a6836e",
+      "models/mlp/run_d38f33266c77/best.npz": "aff7dcd58090c3ba27438a60fb60d2bc1e8a62b064e2a76050821ecc5f1d36f7",
+      "models/preprocessing/baseline_standard.joblib": "a5aec9b576bd409719ebf97ed5ccce93",
+      "results/experiments/final_runs.csv": "3c6ad99e79667b596a61e331fda96954f82b210720af0bd872967f7167108dc6"
+    },
+    "checkpoints": [
+      {
+        "group": "baseline",
+        "seed": 42,
+        "run_id": "run_57ffa55b9468",
+        "best_epoch": 62,
+        "validation_mae_pp": 1.0068239678152235
+      },
+      {
+        "group": "baseline",
+        "seed": 123,
+        "run_id": "run_751e42b98db0",
+        "best_epoch": 41,
+        "validation_mae_pp": 0.9988140836467023
+      },
+      {
+        "group": "baseline",
+        "seed": 2026,
+        "run_id": "run_13e6ccd6012a",
+        "best_epoch": 49,
+        "validation_mae_pp": 0.9942653857688776
+      },
+      {
+        "group": "candidate",
+        "seed": 42,
+        "run_id": "run_d38f33266c77",
+        "best_epoch": 96,
+        "validation_mae_pp": 0.9942758504902472
+      },
+      {
+        "group": "candidate",
+        "seed": 123,
+        "run_id": "run_33f5d9ade4e4",
+        "best_epoch": 56,
+        "validation_mae_pp": 1.0094240332959719
+      },
+      {
+        "group": "candidate",
+        "seed": 2026,
+        "run_id": "run_b5aa2af40e50",
+        "best_epoch": 58,
+        "validation_mae_pp": 0.9959397346638763
+      }
+    ],
+    "data_fingerprints": {
+      "baseline_standard": "6c91eeb59bc2829774eaf5eebac47b523b1bef0df5254599a974c4c525438125"
+    },
+    "validation_study_candidate_matches_plan": true,
+    "feature_engineering_recommendation": "control_no_domain_features"
+  }
+}
